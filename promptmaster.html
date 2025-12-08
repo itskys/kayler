@@ -195,6 +195,7 @@
             #promptPreview { border-top: 1px solid #eee; }
             .builder-actions { flex-direction: column; gap: 10px; }
             .left-actions, .right-actions { width: 100%; justify-content: space-between; }
+            th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者列 */
         }
     </style>
 </head>
@@ -220,14 +221,14 @@
         
         <div>
             <div class="section-title">
-                <span>🎨 提示词撰写助手 (支持 Markdown)</span>
+                <span>🎨 提示词撰写助手</span>
                 <button class="refresh-btn" onclick="openSettings()">⚙️ 管理员配置</button>
             </div>
             
             <div class="builder-area">
                 <div class="meta-row">
                     <span style="font-size:14px; font-weight:bold; color:#666;">文件名:</span>
-                    <input type="text" id="filenameInput" class="filename-input" placeholder="例如: 新提示词.md (必填)">
+                    <input type="text" id="filenameInput" class="filename-input" placeholder="例如: 概念拆解_v3.2_新版.md (建议格式: 名称_版本_描述.md)">
                 </div>
 
                 <div class="editor-split">
@@ -269,7 +270,7 @@
 
         <div>
             <div class="section-title">
-                📚 提示词知识库 (已存档)
+                📚 提示词知识库 (自动同步)
                 <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新列表</button>
             </div>
             <div class="list-container">
@@ -280,7 +281,7 @@
                 <table id="dataTable" style="display:none;">
                     <thead>
                         <tr>
-                            <th style="width: 250px;">文件名</th>
+                            <th>文件名</th>
                             <th style="width: 80px;">版本</th>
                             <th>智能描述</th>
                             <th style="width: 100px;">作者</th>
@@ -342,27 +343,34 @@
 
     <script>
         // === 常量配置 ===
-        // 用于列表读取的公共配置 (无需 Token)
-        const REPO_READ_CONFIG = {
-            owner: 'itskys',
-            repo: 'kayler',
-            path: 'prompt'
-        };
-
         const promptInput = document.getElementById('promptInput');
         const promptPreview = document.getElementById('promptPreview');
         const filenameInput = document.getElementById('filenameInput');
         const btnPublish = document.getElementById('btnPublish');
         const settingsModal = document.getElementById('settings-modal');
+        const tableBody = document.getElementById('tableBody');
+        const loadingState = document.getElementById('loadingState');
+        const dataTable = document.getElementById('dataTable');
+
+        // 默认配置（用于读取列表，无需Token）
+        const DEFAULT_CONFIG = {
+            owner: 'itskys',
+            repo: 'kayler',
+            path: 'prompt'
+        };
 
         // === 1. 编辑器逻辑 ===
         promptInput.addEventListener('input', () => {
             const text = promptInput.value;
             promptPreview.innerHTML = marked.parse(text);
-            // 自动填充文件名 (如果为空)
+            
+            // 智能自动填充文件名
             if(!filenameInput.value) {
                 const match = text.match(/^#\s+(.*)$/m);
-                if (match) filenameInput.value = match[1].trim() + ".md";
+                if (match) {
+                    const cleanName = match[1].trim().replace(/[\\/:*?"<>|]/g, "");
+                    filenameInput.value = cleanName + ".md";
+                }
             }
         });
 
@@ -412,6 +420,7 @@
         }
 
         function openSettings() {
+            // 预填本地缓存
             if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
             if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
             document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
@@ -425,14 +434,17 @@
             localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
             localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
             alert('配置已保存！');
-            checkAdminStatus(); // 刷新按钮状态
+            checkAdminStatus(); 
+            // 刷新列表（使用新配置）
+            fetchRepoData();
             closeSettings();
         }
 
         async function pushToGitHub() {
-            const owner = localStorage.getItem('gh_owner');
-            const repo = localStorage.getItem('gh_repo');
+            const owner = localStorage.getItem('gh_owner') || DEFAULT_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || DEFAULT_CONFIG.repo;
             const token = localStorage.getItem('gh_token');
+            const pathPrefix = 'prompt/';
             
             const content = promptInput.value;
             let filename = filenameInput.value || "untitled.md";
@@ -446,10 +458,10 @@
             btn.disabled = true;
 
             try {
-                const fullPath = `prompt/${filename}`;
+                const fullPath = pathPrefix + filename;
                 const checkUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`;
                 
-                // 1. Check
+                // 1. Check file existence
                 let sha = null;
                 const checkRes = await fetch(checkUrl, {
                     headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
@@ -475,8 +487,8 @@
                 });
 
                 if (putRes.ok) {
-                    alert(`✅ 发布成功！\n列表将在几分钟后自动更新。`);
-                    // 尝试立即刷新列表 (虽然CDN可能有缓存，但值得一试)
+                    alert(`✅ 发布成功！\n文件已推送到 GitHub。\n列表将在几分钟后自动更新（Cloudflare 构建延迟）。`);
+                    // 尝试立即刷新列表 (虽然是CDN缓存，但可能有新数据)
                     setTimeout(fetchRepoData, 2000); 
                 } else {
                     const err = await putRes.json();
@@ -492,24 +504,28 @@
         }
 
 
-        // === 3. 列表逻辑 (自动读取) ===
-        const tableBody = document.getElementById('tableBody');
-        const loadingState = document.getElementById('loadingState');
-        const dataTable = document.getElementById('dataTable');
-
+        // === 3. 列表逻辑 (自动读取 GitHub) ===
         async function fetchRepoData() {
             loadingState.style.display = 'flex';
             dataTable.style.display = 'none';
             tableBody.innerHTML = '';
 
+            // 优先使用用户配置的 repo，否则使用默认
+            const owner = localStorage.getItem('gh_owner') || DEFAULT_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || DEFAULT_CONFIG.repo;
+            // 列表读取可以用 Token (如果有的话，可以提高限流)，也可以不用 (公开仓库)
+            const token = localStorage.getItem('gh_token');
+            const headers = token ? { 'Authorization': `token ${token}` } : {};
+
             try {
-                // 使用公共接口读取
-                const url = `https://api.github.com/repos/${REPO_READ_CONFIG.owner}/${REPO_READ_CONFIG.repo}/contents/${REPO_READ_CONFIG.path}`;
-                const response = await fetch(url);
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt`;
+                const response = await fetch(url, { headers });
                 
-                if (!response.ok) throw new Error("无法读取列表 (可能是 API 限制或路径错误)");
+                if (!response.ok) throw new Error(`无法读取列表 (HTTP ${response.status})`);
                 
                 const files = await response.json();
+                
+                // 过滤只显示文本文件
                 const validFiles = files.filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
 
                 if(validFiles.length === 0) {
@@ -517,36 +533,64 @@
                 } else {
                     validFiles.forEach(file => {
                         const meta = parseFilename(file.name);
-                        const html = `
-                            <tr>
-                                <td><a class="prompt-link" onclick="viewPrompt('${file.name}', '${meta.name}', '${meta.author}')">📄 ${file.name}</a></td>
-                                <td><span class="badge ${meta.version.includes('v')?'v-new':''}">${meta.version}</span></td>
-                                <td>${meta.desc}</td>
-                                <td>${meta.author}</td>
-                            </tr>
-                        `;
-                        tableBody.insertAdjacentHTML('beforeend', html);
+                        renderRow(file, meta);
                     });
                 }
+                
                 loadingState.style.display = 'none';
                 dataTable.style.display = 'table';
 
             } catch (error) {
-                loadingState.innerHTML = `<div style="color:red">⚠️ ${error.message}</div>`;
+                console.error(error);
+                loadingState.innerHTML = `<div style="color:red; text-align:center">⚠️ 读取失败<br>${error.message}<br><button class="refresh-btn" onclick="fetchRepoData()" style="margin-top:10px">重试</button></div>`;
             }
         }
 
         // 简易文件名解析器: "Name_v1.0_Desc.md"
+        // 示例：概念拆解_v3.1_重版.md -> Name:概念拆解, Ver:v3.1, Desc:重版
         function parseFilename(name) {
             const clean = name.replace(/\.(md|txt)$/, '');
-            const parts = clean.split(/[_-]/);
+            const parts = clean.split(/[_-]/); // 按下划线或短横线分割
             
-            return {
+            let result = {
                 name: parts[0] || clean,
-                version: parts.find(p => /^v\d/.test(p)) || 'v1.0',
-                desc: parts.slice(2).join(' ') || 'AI 提示词文件',
-                author: 'Kaylerris' // 默认作者
+                version: "v1.0",
+                desc: "AI 提示词文件",
+                author: "Kaylerris"
             };
+
+            // 智能识别版本号 (v开头+数字)
+            const verIndex = parts.findIndex(p => /^v\d/.test(p.toLowerCase()));
+            if (verIndex !== -1) {
+                result.version = parts[verIndex];
+                // 版本号后面的内容作为描述
+                if (verIndex + 1 < parts.length) {
+                    result.desc = parts.slice(verIndex + 1).join(' ');
+                }
+            } else if (parts.length > 1) {
+                // 如果没有版本号，取第二段做描述
+                result.desc = parts.slice(1).join(' ');
+            }
+
+            return result;
+        }
+
+        function renderRow(file, meta) {
+            let badgeClass = meta.version.includes('v3') || meta.version.includes('v2') ? 'badge v-new' : 'badge';
+            
+            const html = `
+                <tr>
+                    <td style="font-family:monospace; font-size:13px;">
+                        <a class="prompt-link" onclick="viewPrompt('${file.name}', '${meta.name}', '${meta.author}')">
+                            📄 ${file.name}
+                        </a>
+                    </td>
+                    <td><span class="${badgeClass}">${meta.version}</span></td>
+                    <td>${meta.desc}</td>
+                    <td>${meta.author}</td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', html);
         }
 
         // === 4. 弹窗逻辑 ===
@@ -559,10 +603,26 @@
             fileContent.innerText = "⏳ 读取中...";
             modal.classList.add('active');
 
-            // 优先读 Raw 内容 (绕过 API 频率限制)
-            const rawUrl = `https://raw.githubusercontent.com/${REPO_READ_CONFIG.owner}/${REPO_READ_CONFIG.repo}/main/${REPO_READ_CONFIG.path}/${fileName}`;
-            fetch(rawUrl).then(res => res.text()).then(text => fileContent.innerText = text)
-            .catch(() => fileContent.innerText = "读取失败");
+            // 优先读 GitHub Raw (避免 Cloudflare 缓存延迟)
+            const owner = localStorage.getItem('gh_owner') || DEFAULT_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || DEFAULT_CONFIG.repo;
+            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
+            
+            // 备用：如果 Raw 失败（比如私有仓库），尝试用 API 读取内容 (需 Token)
+            // 这里简化逻辑：直接 fetch Raw，失败再提示
+            fetch(rawUrl)
+                .then(res => {
+                    if(!res.ok) throw new Error("Fetch error");
+                    return res.text();
+                })
+                .then(text => fileContent.innerText = text)
+                .catch(() => {
+                    // 如果 Raw 失败，尝试本地相对路径 (Cloudflare Pages)
+                    fetch('prompt/' + fileName + '?t=' + new Date().getTime())
+                        .then(res => res.text())
+                        .then(text => fileContent.innerText = text)
+                        .catch(() => fileContent.innerText = "❌ 无法读取文件内容，请检查文件名或网络。");
+                });
         }
 
         function closeModal() { modal.classList.remove('active'); }
