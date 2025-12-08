@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 图片展 - Kayler</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+
+    <style>
+        :root {
+            --bg-body: #f2f4f7; --brand-brown: #8b5e3c;
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-body); margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; color: #333;
+        }
+
+        /* 顶部导航 */
+        .top-nav {
+            width: 100%; max-width: 1200px; display: flex; justify-content: flex-end;
+            gap: 25px; margin-bottom: 40px; padding: 0 10px;
+        }
+        .top-nav a {
+            text-decoration: none; color: #555; font-size: 18px; font-weight: 600;
+            transition: color 0.2s;
+        }
+        .top-nav a:hover, .top-nav a.active { color: var(--brand-brown); }
+
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+
+        /* 瀑布流布局 */
+        .gallery-container {
+            column-count: 3; /* 默认3列 */
+            column-gap: 20px;
+            width: 100%; max-width: 1200px;
+        }
+
+        .gallery-item {
+            background: white; border-radius: 12px;
+            margin-bottom: 20px; overflow: hidden;
+            break-inside: avoid; /* 防止图片被切断 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s; cursor: zoom-in;
+            position: relative;
+        }
+        .gallery-item:hover { transform: translateY(-5px); }
+
+        .gallery-item img {
+            width: 100%; height: auto; display: block;
+        }
+
+        /* 悬停显示提示词遮罩 */
+        .item-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.7); color: white;
+            padding: 15px; transform: translateY(100%);
+            transition: transform 0.3s;
+            font-size: 13px; line-height: 1.4;
+        }
+        .gallery-item:hover .item-overlay { transform: translateY(0); }
+
+        /* 模态框 (Lightbox) */
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center; align-items: center;
+            flex-direction: column;
+        }
+        .modal.active { display: flex; }
+        .modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .modal-prompt {
+            color: #ccc; margin-top: 20px; max-width: 600px; text-align: center;
+            background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;
+        }
+        .close-modal {
+            position: absolute; top: 30px; right: 30px; color: white;
+            font-size: 40px; cursor: pointer;
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) { .gallery-container { column-count: 2; } }
+        @media (max-width: 600px) { .gallery-container { column-count: 1; } }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="index.html">🏠 卡片生成器</a>
+        <a href="promptmaster.html">💡 提示词管理器</a>
+        <a href="aiGallery.html" class="active">🖼️ AI图片展</a>
+        <a href="contact.html">📩 联系博主</a>
+    </nav>
+
+    <header>
+        <h1>
+            <img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">
+            Kayler AI 艺术馆
+        </h1>
+        <p style="color:#888">精选 AI 生成作品展示与提示词分享</p>
+    </header>
+
+    <div class="gallery-container">
+        <div class="gallery-item" onclick="openModal(this)">
+            <img src="https://placehold.co/600x800/e8dcc5/8b5e3c?text=Portrait+Example" alt="AI Portrait" data-prompt="A cinematic portrait of a young woman, cyberpunk style, neon lighting, 8k resolution, highly detailed.">
+            <div class="item-overlay">
+                Prompt: A cinematic portrait of a young woman...
+            </div>
+        </div>
+
+        <div class="gallery-item" onclick="openModal(this)">
+            <img src="https://placehold.co/600x400/2c2c2c/FFF?text=Landscape" alt="AI Landscape" data-prompt="Wide angle landscape shot of futuristic city, golden hour, volumetric lighting, unreal engine 5 render.">
+            <div class="item-overlay">
+                Prompt: Wide angle landscape shot of futuristic city...
+            </div>
+        </div>
+
+        <div class="gallery-item" onclick="openModal(this)">
+            <img src="https://placehold.co/600x600/fdfbf7/2c2c2c?text=Logo+Design" alt="AI Logo" data-prompt="Minimalist vector logo of a fox, flat design, white background, orange and black colors.">
+            <div class="item-overlay">
+                Prompt: Minimalist vector logo of a fox...
+            </div>
+        </div>
+
+        <div class="gallery-item" onclick="openModal(this)">
+            <img src="https://placehold.co/600x900/8b5e3c/FFF?text=Oil+Painting" alt="Oil Painting" data-prompt="Impasto oil painting of a rainy street in Paris, colorful reflections, thick brushstrokes.">
+            <div class="item-overlay">
+                Prompt: Impasto oil painting of a rainy street...
+            </div>
+        </div>
+        
+        <div class="gallery-item" onclick="openModal(this)">
+            <img src="https://placehold.co/600x500/e0e0e0/555?text=Product+Shot" alt="Product" data-prompt="Professional product photography of a perfume bottle, splashing water background, studio lighting.">
+            <div class="item-overlay">
+                Prompt: Professional product photography...
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal" onclick="if(event.target === this) closeModal()">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <img id="modalImg" src="">
+        <div class="modal-prompt" id="modalPrompt"></div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImg');
+        const modalPrompt = document.getElementById('modalPrompt');
+
+        function openModal(element) {
+            const img = element.querySelector('img');
+            modalImg.src = img.src;
+            // 获取 data-prompt 属性中的完整提示词
+            modalPrompt.innerText = img.getAttribute('data-prompt') || "暂无提示词";
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+    </script>
+
+</body>
+</html>

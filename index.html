@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
+    <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制、PWA支持。">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayler文字卡片生成器 v1.4</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
+    <link rel="manifest" href="/manifest.json"> 
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === 全局变量 === */
+        :root {
+            --bg-body: #f2f4f7; 
+            --paper-bg: #fdfbf7; 
+            --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px);
+            --text-color: #2c2c2c;
+            --title-color: #000;
+            --shadow-color: rgba(0,0,0,0.08);
+            --footer-color: #999;
+            --brand-brown: #8b5e3c;
+            --brand-brown-hover: #6d4c41;
+
+            /* 字体变量 */
+            --font-songti: "Songti SC", "SimSun", "Times New Roman", serif;
+            --font-heiti: "PingFang SC", "Microsoft YaHei", sans-serif;
+            --font-handwriting: "Ma Shan Zheng", cursive; 
+        }
+
+        /* 主题配置 */
+        [data-theme="default"] { }
+        [data-theme="white"] { --paper-bg: #ffffff; --paper-texture: none; --text-color: #333333; }
+        [data-theme="green"] { --paper-bg: #f1f7f3; --paper-texture: none; --text-color: #2b402b; --title-color: #1e331e; --footer-color: #5c7a5c; }
+        [data-theme="dark"] { --paper-bg: #1a1a1a; --paper-texture: none; --text-color: #e0e0e0; --title-color: #ffffff; --shadow-color: rgba(0,0,0,0.5); --footer-color: #666; }
+        [data-theme="kraft"] { --paper-bg: #e8dcc5; --paper-texture: none; --text-color: #3e2b1d; --title-color: #291b12; --footer-color: #8c7b6a; }
+        [data-theme="blue"] { --paper-bg: #f2f6fa; --paper-texture: none; --text-color: #2c3e50; --title-color: #1a252f; --footer-color: #7f8c8d; }
+
+        body {
+            font-family: var(--font-heiti);
+            background-color: var(--bg-body);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; color: #333;
+        }
+
+        /* === 顶部导航栏 === */
+        .top-nav {
+            width: 100%; max-width: 1200px;
+            display: flex; justify-content: flex-end; align-items: center;
+            gap: 25px; margin-bottom: 15px; padding: 0 10px;
+        }
+        .top-nav a {
+            text-decoration: none; color: #555; 
+            font-size: 18px; 
+            font-weight: 600;
+            transition: color 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .top-nav a:hover { color: var(--brand-brown); }
+
+        header { text-align: center; width: 100%; max-width: 800px; margin-bottom: 30px; }
+        h1 { font-size: 36px; margin: 0 0 15px 0; font-weight: 800; letter-spacing: -1px; color: #222; }
+        
+        .global-counter {
+            font-size: 15px; color: #888; font-family: "PingFang SC", sans-serif;
+            font-weight: 500; letter-spacing: 0.5px;
+        }
+
+        /* === 工具栏区域 (核心修改：宽度调整) === */
+        .toolbar-wrapper {
+            background: white; padding: 25px 35px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            margin-bottom: 40px; display: flex; flex-direction: column; gap: 20px; align-items: center;
+            width: 100%; 
+            max-width: 1200px; /* 修改这里：从 900px 改为 1200px，与下方 container 保持一致 */
+            box-sizing: border-box;
+        }
+
+        .tool-row { 
+            display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; width: 100%; align-items: center; 
+        }
+        
+        .tool-label {
+            font-size: 14px; color: #666; font-weight: bold; margin-right: 5px;
+        }
+
+        .tool-divider { width: 100%; height: 1px; background: #eee; margin: 5px 0; }
+        
+        .theme-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 2px solid #f0f0f0; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .theme-btn:hover { transform: scale(1.1); border-color: #ddd; }
+        .theme-btn.active { border-color: var(--brand-brown); transform: scale(1.15); box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2; }
+        
+        .btn-default { background: #f9f7f1; }
+        .btn-white { background: #ffffff; }
+        .btn-green { background: #f1f7f3; }
+        .btn-dark { background: #1a1a1a; }
+        .btn-kraft { background: #e8dcc5; }
+        .btn-blue { background: #f2f6fa; }
+
+        .select-container {
+            position: relative; display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; border-radius: 8px;
+            background: #f8f8f8; border: 1px solid #eee;
+            cursor: pointer; transition: all 0.2s; font-size: 14px; color: #555;
+        }
+        .select-container:hover { border-color: #ccc; background: #fff; }
+        .select-container select {
+            appearance: none; background: transparent; border: none; outline: none;
+            padding-right: 20px; font-size: 14px; color: #333; cursor: pointer; font-family: inherit;
+        }
+        .select-container::after {
+            content: '▼'; position: absolute; right: 10px; font-size: 10px; color: #999; pointer-events: none;
+        }
+
+        .signature-input-container {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; border-radius: 8px;
+            background: #fff; border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .signature-input-container label { font-size: 13px; color: #888; font-weight: bold; }
+        .signature-input-container input {
+            border: none; outline: none; background: transparent;
+            font-size: 14px; color: #333; width: 120px; border-bottom: 1px dashed #ccc;
+        }
+        .signature-input-container input:focus { border-bottom-color: var(--brand-brown); }
+        .signature-input-container span { font-size: 13px; color: #999; white-space: nowrap; }
+
+        .upload-btn {
+            font-size: 14px; padding: 8px 16px; border-radius: 8px; border: 1px dashed #ccc;
+            background: #fafafa; color: #666; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .upload-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: #fff; }
+        .upload-btn.loading { opacity: 0.6; cursor: wait; }
+        
+        .slider-container { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666; }
+        input[type=range] { width: 100px; cursor: pointer; }
+
+        .split-control-container {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+        }
+        .split-input {
+            width: 50px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; text-align: center;
+        }
+
+        /* === 主布局 === */
+        .container {
+            display: flex; gap: 60px; width: 100%; 
+            max-width: 1200px; /* 下方内容区域的宽度，与上方保持一致 */
+            flex-wrap: wrap; justify-content: center; align-items: flex-start;
+        }
+
+        .input-area { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
+
+        .emoji-bar {
+            display: flex; gap: 12px; padding: 0 5px; margin-bottom: 5px;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .emoji-bar::-webkit-scrollbar { display: none; }
+        
+        .emoji-item {
+            font-size: 20px; cursor: pointer; padding: 6px;
+            border-radius: 8px; transition: background 0.2s; user-select: none;
+        }
+        .emoji-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
+
+        .textarea-wrapper { position: relative; width: 100%; }
+        
+        textarea {
+            width: 100%; padding: 25px; padding-bottom: 40px;
+            border: none; border-radius: 16px;
+            font-size: 16px; line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            resize: none; overflow-y: hidden; outline: none;
+            min-height: 320px; font-family: inherit; background: #fff;
+            transition: box-shadow 0.3s;
+        }
+        textarea:focus { box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+
+        .word-count {
+            position: absolute; bottom: 15px; right: 20px;
+            font-size: 12px; color: #bbb; pointer-events: none;
+        }
+
+        .action-buttons { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+        
+        .btn-base {
+            flex: 1; padding: 15px; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: flex; justify-content: center;
+            align-items: center; gap: 8px; min-width: 110px;
+        }
+        .btn-base:active { transform: scale(0.98); }
+
+        .btn-download { background-color: var(--brand-brown); color: #fff; box-shadow: 0 4px 15px rgba(139, 94, 60, 0.2); }
+        .btn-download:hover { background-color: var(--brand-brown-hover); box-shadow: 0 6px 20px rgba(139, 94, 60, 0.3); }
+        .btn-copy { background-color: #e3f2fd; color: #1565c0; }
+        .btn-copy:hover { background-color: #bbdefb; }
+        .btn-share { background-color: #e8f5e9; color: #2e7d32; display: none; }
+        .btn-share:hover { background-color: #c8e6c9; }
+
+        .hint-text { font-size: 13px; color: #aaa; text-align: center; margin-top: 10px; }
+
+        /* === 预览区 === */
+        .preview-area { 
+            flex: 1; min-width: 350px; 
+            display: flex; flex-direction: column; gap: 40px;
+            align-items: center;
+        }
+
+        .card-container {
+            width: 100%; max-width: 480px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+
+        .paper-card {
+            width: 100%; 
+            background-color: var(--paper-bg);
+            background-image: var(--paper-texture);
+            background-size: 20px 20px;
+            padding: 60px 45px;
+            box-shadow: 20px 20px 60px var(--shadow-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        .card-bg-layer {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-position: top center; background-repeat: repeat-y; 
+            background-size: 100% auto; z-index: 0; pointer-events: none;
+        }
+
+        .card-toolbar {
+            display: flex; justify-content: flex-end; gap: 10px;
+            padding: 0 5px; opacity: 0.8;
+        }
+        .mini-btn {
+            font-size: 13px; padding: 6px 12px; border-radius: 6px; border: none;
+            background: rgba(0,0,0,0.05); color: #666; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+        }
+        .mini-btn:hover { background: #e3f2fd; color: #1565c0; }
+
+        .paper-content, .paper-footer, .paper-title, .paper-subtitle, .page-indicator {
+            position: relative; z-index: 1;
+        }
+
+        .paper-content {
+            font-family: var(--active-font-family);
+            font-size: 18pt; line-height: 1.75; text-align: justify;
+            min-height: 200px; 
+        }
+
+        .paper-title {
+            font-family: var(--active-font-family);
+            font-size: 26pt; font-weight: bold; text-align: center;
+            margin-bottom: 25px; color: var(--title-color); line-height: 1.3;
+        }
+        .paper-subtitle {
+            font-family: var(--active-font-family);
+            font-size: 20pt; font-weight: bold; text-align: center;
+            margin-top: -15px; margin-bottom: 30px;
+            color: var(--title-color); opacity: 0.85; letter-spacing: 1px;
+        }
+
+        .paper-p { margin: 0; margin-top: 10pt; }
+        .indent-cn { text-indent: 2em; }
+        .indent-en { text-indent: 1.37cm; }
+
+        .paper-footer {
+            margin-top: 60px; text-align: right; font-size: 14px;
+            color: var(--footer-color); border-top: 1px solid rgba(0,0,0,0.06);
+            padding-top: 18px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .paper-footer a { color: inherit; text-decoration: none; border-bottom: 1px dashed currentColor; font-weight: 600; }
+
+        .page-indicator {
+            position: absolute; top: -25px; left: 0;
+            font-size: 12px; color: #ccc; font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container { gap: 40px; }
+            body { padding: 10px; }
+            h1 { font-size: 28px; }
+            .paper-card { padding: 40px 25px; }
+            .toolbar-wrapper { padding: 15px; width: 100%; }
+            .tool-row { gap: 10px; justify-content: space-between; }
+            .signature-input-container { width: 100%; margin-top: 10px; }
+            .signature-input-container input { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="editor.html" target="_blank" style="color: #2e7d32;">📝 在线编辑器</a>
+        <a href="promptmaster.html">💡 提示词管理器</a>
+        <a href="aiGallery.html">🖼️ AI图片展</a>
+        <a href="contact.html">📩 联系博主</a>
+    </nav>
+
+    <header>   
+        <h1>
+            <img src="/logo.png" alt="Logo" style="height: 40px; vertical-align: middle; margin-right: 10px; margin-top: -6px;">
+            Kayler文字卡片生成器
+        </h1>
+        <div class="global-counter" id="counterDisplay">
+            ✨ 已累计协助生成 12,581 张精致卡片
+        </div>
+    </header>
+
+    <div class="toolbar-wrapper">
+        <div class="tool-row">
+            <span class="tool-label">背景设置:</span>
+            <div class="theme-btn btn-default active" onclick="setTheme('default', this)" title="经典羊皮"></div>
+            <div class="theme-btn btn-white" onclick="setTheme('white', this)" title="极简纯白"></div>
+            <div class="theme-btn btn-green" onclick="setTheme('green', this)" title="护眼绿"></div>
+            <div class="theme-btn btn-blue" onclick="setTheme('blue', this)" title="静谧蓝"></div>
+            <div class="theme-btn btn-kraft" onclick="setTheme('kraft', this)" title="复古牛皮"></div>
+            <div class="theme-btn btn-dark" onclick="setTheme('dark', this)" title="暗夜极客"></div>
+        </div>
+
+        <div class="tool-divider"></div>
+
+        <div class="tool-row">
+            <div class="select-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                <select id="fontSelector" onchange="setFontFamily(this.value)">
+                    <option value="heiti" selected>现代黑体</option>
+                    <option value="songti">文艺宋体</option>
+                    <option value="handwriting">优雅手写</option>
+                </select>
+            </div>
+
+            <div class="signature-input-container">
+                <label>@</label>
+                <input type="text" id="signatureInput" placeholder="输入你的署名" value="Kaylerris" oninput="updateSignature(this.value)">
+                <span>with x.aisai.cc</span>
+            </div>
+        </div>
+        
+        <div class="tool-row" id="splitControlRow" style="background:#fafafa; padding:10px; border-radius:8px; width:100%; display:flex; justify-content:center;">
+             <div class="split-control-container">
+                <span class="tool-label">📄 长文排版:</span>
+                <div class="select-container" style="background:white;">
+                    <select id="splitMode" onchange="renderCards()">
+                        <option value="count" selected>等分成 X 张图 (默认2)</option>
+                        <option value="single">生成单张长图</option>
+                        <option value="length">每 1000 字一张</option>
+                    </select>
+                </div>
+                <input type="number" id="splitCount" class="split-input" value="2" min="2" max="10" onchange="renderCards()" title="分成几张">
+            </div>
+        </div>
+
+        <div class="tool-divider"></div>
+
+        <div class="tool-row">
+            <input type="file" id="bgInput" accept="image/*" style="display: none;" onchange="handleBgUpload(this)">
+            <button id="uploadBtn" class="upload-btn" onclick="document.getElementById('bgInput').click()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>上传背景图</span>
+            </button>
+            
+            <div class="slider-container">
+                <span>透明度:</span>
+                <input type="range" id="opacitySlider" min="0.05" max="0.8" step="0.05" value="0.15" oninput="updateOpacity(this.value)">
+                <span id="opacityValue">15%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="input-area">
+            <div class="emoji-bar">
+                <span class="emoji-item" onclick="insertEmoji('✨')" title="闪光">✨</span>
+                <span class="emoji-item" onclick="insertEmoji('✒️')" title="钢笔">✒️</span>
+                <span class="emoji-item" onclick="insertEmoji('🌿')" title="绿植">🌿</span>
+                <span class="emoji-item" onclick="insertEmoji('💡')" title="灵感">💡</span>
+                <span class="emoji-item" onclick="insertEmoji('📖')" title="阅读">📖</span>
+                <span class="emoji-item" onclick="insertEmoji('💭')" title="思考">💭</span>
+                <span class="emoji-item" onclick="insertEmoji('📌')" title="图钉">📌</span>
+                <span class="emoji-item" onclick="insertEmoji('🌟')" title="星星">🌟</span>
+                <span class="emoji-item" onclick="insertEmoji('❤️')" title="爱心">❤️</span>
+                <span class="emoji-item" onclick="insertEmoji('☕')" title="咖啡">☕</span>
+            </div>
+
+            <div class="textarea-wrapper">
+                <textarea id="inputText" placeholder="在此粘贴文章...&#10;&#10;自动保存功能已启用，不用担心内容丢失。&#10;可以在上方工具栏修改 @署名。"></textarea>
+                <div id="wordCount" class="word-count">0 字</div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn-base btn-download" onclick="generateBatch('download')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>批量下载</span>
+                </button>
+                <button id="btnCopy" class="btn-base btn-copy" onclick="generateBatch('copy')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span>复制第一张</span>
+                </button>
+                <button id="btnShare" class="btn-base btn-share" onclick="generateBatch('share')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    <span>分享</span>
+                </button>
+            </div>
+            
+            <p class="hint-text">
+                提示：右侧每张卡片下方均可单独复制或保存
+            </p>
+        </div>
+
+        <div class="preview-area" id="previewContainer">
+            </div>
+    </div>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const previewContainer = document.getElementById('previewContainer');
+        const wordCountEl = document.getElementById('wordCount');
+        const btnShare = document.getElementById('btnShare');
+        const counterDisplay = document.getElementById('counterDisplay');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const opacityValueLabel = document.getElementById('opacityValue');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const signatureInput = document.getElementById('signatureInput');
+        const splitModeSelect = document.getElementById('splitMode');
+        const splitCountInput = document.getElementById('splitCount');
+
+        let customBgUrl = null;
+        let currentOpacity = 0.15; 
+        let currentFont = 'heiti';
+        let currentSignature = 'Kaylerris';
+
+        // 初始化
+        const savedDraft = localStorage.getItem('kayler_draft');
+        if (savedDraft) { inputText.value = savedDraft; }
+        
+        const BASE_COUNT = 12580; 
+        function updateCounter() {
+            let userCount = parseInt(localStorage.getItem('kayler_usage_count') || '0');
+            let total = BASE_COUNT + userCount;
+            counterDisplay.innerText = `✨ 已累计协助生成 ${total.toLocaleString()} 张精致卡片`;
+        }
+        function incrementCounter() {
+            let userCount = parseInt(localStorage.getItem('kayler_usage_count') || '0');
+            userCount++;
+            localStorage.setItem('kayler_usage_count', userCount);
+            updateCounter();
+        }
+        updateCounter();
+
+        // 事件监听
+        inputText.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            wordCountEl.innerText = `${this.value.length} 字`;
+            localStorage.setItem('kayler_draft', this.value);
+            renderCards(); 
+        });
+
+        // 字体与签名
+        function setFontFamily(font) {
+            currentFont = font;
+            let fontFamilyVal = '';
+            if (font === 'songti') fontFamilyVal = 'var(--font-songti)';
+            else if (font === 'heiti') fontFamilyVal = 'var(--font-heiti)';
+            else if (font === 'handwriting') fontFamilyVal = 'var(--font-handwriting)';
+            document.documentElement.style.setProperty('--active-font-family', fontFamilyVal);
+        }
+        setFontFamily('heiti');
+
+        function updateSignature(val) {
+            currentSignature = val;
+            const sigs = document.querySelectorAll('.signature-display');
+            sigs.forEach(el => el.innerText = '@' + val);
+        }
+
+        // 渲染核心
+        function renderCards() {
+            const rawText = inputText.value;
+            if (!rawText.trim()) return;
+
+            const lines = rawText.split('\n');
+            let mainTitle = "";
+            let paragraphs = [];
+            
+            if (lines.length > 0) {
+                mainTitle = lines[0].trim();
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) paragraphs.push(lines[i]);
+                }
+            }
+            if (!mainTitle) mainTitle = "无标题";
+
+            // 分页逻辑
+            const totalChars = paragraphs.join('').length;
+            const mode = splitModeSelect.value;
+            const splitCount = parseInt(splitCountInput.value) || 2;
+            let charsPerPageTarget = 1000;
+
+            if (mode === 'count') {
+                splitCountInput.style.display = 'inline-block';
+                charsPerPageTarget = Math.max(100, Math.ceil(totalChars / splitCount));
+            } else {
+                splitCountInput.style.display = 'none';
+                if (mode === 'single') charsPerPageTarget = 9999999;
+                else if (mode === 'length') charsPerPageTarget = 1000;
+            }
+
+            let pages = [];
+            let currentPageContent = [];
+            let currentLength = 0;
+
+            paragraphs.forEach((p, index) => {
+                currentPageContent.push(p);
+                currentLength += p.length;
+                if (currentLength >= charsPerPageTarget && index < paragraphs.length - 1) {
+                    pages.push(currentPageContent);
+                    currentPageContent = [];
+                    currentLength = 0;
+                }
+            });
+            if (currentPageContent.length > 0) pages.push(currentPageContent);
+            if (pages.length === 0) pages.push([]);
+
+            // HTML 构建
+            let html = '';
+            pages.forEach((pageParas, index) => {
+                let cardContent = "";
+                if (index === 0) {
+                    cardContent += `<div class="paper-title">${escapeHtml(mainTitle)}</div>`;
+                } else {
+                    const numMap = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+                    let suffix = numMap[index] ? numMap[index] : index;
+                    cardContent += `<div class="paper-title" style="margin-bottom:15px">${escapeHtml(mainTitle)}</div>`;
+                    cardContent += `<div class="paper-subtitle">（续${suffix}）</div>`;
+                }
+                
+                pageParas.forEach(p => {
+                    const hasChinese = /[\u4e00-\u9fa5]/.test(p);
+                    const indentClass = hasChinese ? 'indent-cn' : 'indent-en';
+                    cardContent += `<div class="paper-p ${indentClass}">${escapeHtml(p)}</div>`;
+                });
+
+                let pageIndicator = pages.length > 1 ? `<div class="page-indicator">第 ${index+1} / ${pages.length} 页</div>` : '';
+                let bgStyle = customBgUrl ? `background-image: url('${customBgUrl}'); opacity: ${currentOpacity};` : `opacity: 0;`;
+
+                html += `
+                <div class="card-container">
+                    <div class="paper-card" id="card-${index}">
+                        ${pageIndicator}
+                        <div class="card-bg-layer" style="${bgStyle}"></div>
+                        <div class="paper-content">${cardContent}</div>
+                        <div class="paper-footer">
+                            Created by <span class="signature-display">@${escapeHtml(currentSignature)}</span> with <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a>
+                        </div>
+                    </div>
+                    <div class="card-toolbar">
+                        <button class="mini-btn" onclick="downloadSingle(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>保存此张</span>
+                        </button>
+                        <button class="mini-btn" onclick="copySingle(${index}, this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            <span>复制此张</span>
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            previewContainer.innerHTML = html;
+        }
+
+        // 辅助函数
+        function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        function setTheme(themeName, btnElement) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+        function insertEmoji(emoji) {
+            const start = inputText.selectionStart;
+            const end = inputText.selectionEnd;
+            const text = inputText.value;
+            const before = text.substring(0, start);
+            const after  = text.substring(end, text.length);
+            inputText.value = before + emoji + after;
+            inputText.selectionStart = inputText.selectionEnd = start + emoji.length;
+            inputText.focus();
+            inputText.dispatchEvent(new Event('input'));
+        }
+        function getFileNamePrefix() {
+            let fileNamePrefix = "Kayler_Card";
+            const rawText = inputText.value;
+            if (rawText.trim()) {
+                const firstLine = rawText.split('\n')[0].trim();
+                const cleanName = firstLine.replace(/[^\w\u4e00-\u9fa5]/g, ""); 
+                if (cleanName.length > 0) fileNamePrefix = cleanName.substring(0, 5);
+            }
+            return fileNamePrefix;
+        }
+        function updateOpacity(val) {
+            currentOpacity = val;
+            opacityValueLabel.innerText = Math.round(val * 100) + '%';
+            document.querySelectorAll('.card-bg-layer').forEach(layer => layer.style.opacity = currentOpacity);
+        }
+        
+        // 背景图处理
+        function handleBgUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const originalText = uploadBtn.innerHTML; // 保存原始的SVG和文字
+                
+                // 简单的加载状态
+                uploadBtn.querySelector('span').innerText = "⏳ 压缩中...";
+                uploadBtn.classList.add('loading');
+                
+                compressImage(file, 800, 0.6, (compressedDataUrl) => {
+                    customBgUrl = compressedDataUrl;
+                    renderCards(); 
+                    uploadBtn.querySelector('span').innerText = "✅ 已设置";
+                    setTimeout(() => {
+                        uploadBtn.innerHTML = originalText; // 恢复原始HTML结构
+                        uploadBtn.classList.remove('loading');
+                    }, 2000);
+                });
+            }
+        }
+        function compressImage(file, maxWidth, quality, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    callback(dataUrl);
+                }
+            }
+        }
+
+        // 下载与复制
+        function downloadSingle(index) {
+            incrementCounter();
+            const card = document.getElementById(`card-${index}`);
+            const prefix = getFileNamePrefix();
+            html2canvas(card, { scale: 1.4, useCORS: true, backgroundColor: null }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${prefix}_${index + 1}.png`; 
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+        function copySingle(index, btn) {
+            incrementCounter();
+            const card = document.getElementById(`card-${index}`);
+            // 保存原始SVG内容
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerText = "⏳";
+            html2canvas(card, { scale: 1.4, useCORS: true, backgroundColor: null }).then(canvas => {
+                canvas.toBlob(blob => {
+                    try {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        navigator.clipboard.write([item]).then(() => {
+                            btn.innerText = "✅ 已复制";
+                            btn.style.color = "#2e7d32";
+                            setTimeout(() => { 
+                                btn.innerHTML = originalHTML; // 恢复
+                                btn.style.color = ""; 
+                            }, 2000);
+                        });
+                    } catch (e) {
+                        alert('复制失败'); btn.innerHTML = originalHTML;
+                    }
+                });
+            });
+        }
+        async function generateBatch(action) {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            if (action === 'copy') { copySingle(0, btn); return; }
+            
+            btn.querySelector('span').innerText = "⏳ 处理中...";
+            incrementCounter();
+            const cards = document.querySelectorAll('.paper-card');
+            const prefix = getFileNamePrefix();
+            
+            if (action === 'share') {
+                const canvas = await html2canvas(cards[0], { scale: 1.4, useCORS: true, backgroundColor: null });
+                canvas.toBlob(blob => {
+                    const file = new File([blob], `${prefix}.png`, { type: 'image/png' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({ files: [file], title: 'Kayler Card' });
+                    }
+                    btn.innerHTML = originalHTML;
+                });
+            } else if (action === 'download') {
+                try {
+                    for (let i = 0; i < cards.length; i++) {
+                        const canvas = await html2canvas(cards[i], { scale: 1.4, useCORS: true, backgroundColor: null });
+                        const link = document.createElement('a');
+                        let suffix = cards.length > 1 ? `_${i + 1}` : '';
+                        link.download = `${prefix}${suffix}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        await new Promise(r => setTimeout(r, 300));
+                    }
+                    btn.innerHTML = originalHTML;
+                } catch (e) { btn.innerHTML = originalHTML; }
+            }
+        }
+
+        if (navigator.share) { btnShare.style.display = 'flex'; }
+        
+        // 初始渲染一次，确保有内容
+        if(inputText.value.trim() === "") {
+             inputText.value = "欢迎使用 Kayler 文字卡片生成器！\n\n在此输入您的文字，系统会自动排版。\n支持自定义背景、签名和长图分页。";
+        }
+        inputText.style.height = '300px';
+        inputText.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>
