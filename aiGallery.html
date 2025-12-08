@@ -4,252 +4,603 @@
     <meta charset="UTF-8">
     <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 图片展 - Kayler</title>
+    <title>提示词管理器 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
-    <script src="layout.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <style>
+        /* === 全局变量 === */
         :root {
-            --bg-body: #f2f4f7; 
-            --brand-brown: #8b5e3c;
+            --bg-body: #f2f4f7; --text-color: #2c2c2c;
+            --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
             --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            /* 宽屏变量 */
+            --layout-width: 94%;
+            --layout-max-width: 1400px;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-body); margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: #333;
+            min-height: 100vh; color: var(--text-color);
         }
 
-        /* 顶部导航由 layout.js 注入 */
+        /* 顶部导航 */
+        .top-nav {
+            width: 100%; max-width: var(--layout-max-width); display: flex; justify-content: flex-end;
+            gap: 25px; margin-bottom: 40px; padding: 0 10px;
+        }
+        .top-nav a {
+            text-decoration: none; color: #555; font-size: 18px; font-weight: 600;
+            transition: color 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .top-nav a:hover, .top-nav a.active { color: var(--brand-brown); }
 
-        header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
+        header { text-align: center; margin-bottom: 40px; }
         h1 { 
-            font-size: 32px; font-weight: 800; margin-bottom: 10px; 
+            font-size: 32px; font-weight: 800; color: #222; margin-bottom: 10px; 
             display: flex; align-items: center; justify-content: center;
         }
         
-        /* 刷新按钮 */
-        .refresh-bar {
-            display: flex; justify-content: center; margin-bottom: 30px;
-        }
-        .btn-refresh {
-            padding: 8px 20px; border-radius: 50px; border: 1px solid #ddd;
-            background: white; color: #666; cursor: pointer; font-size: 14px;
-            display: flex; align-items: center; gap: 6px; transition: all 0.2s;
-        }
-        .btn-refresh:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
-
-        /* 瀑布流布局 */
-        .gallery-container {
-            column-count: 4; /* 大屏4列 */
-            column-gap: 20px;
-            width: 100%; max-width: 1400px;
-            min-height: 300px; /* 避免加载时高度坍塌 */
+        /* === 主布局容器 (加宽) === */
+        .main-container {
+            width: var(--layout-width); max-width: var(--layout-max-width);
+            display: flex; flex-direction: column; gap: 40px;
+            flex: 1; 
         }
 
-        .gallery-item {
-            background: white; border-radius: 12px;
-            margin-bottom: 20px; overflow: hidden;
-            break-inside: avoid; /* 防止图片被切断 */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s; 
-            cursor: zoom-in;
-            position: relative;
-            opacity: 0; animation: fadeIn 0.5s forwards; /* 加载动画 */
+        .section-title {
+            font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown);
+            padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
         }
-        .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 
-        .gallery-item img {
-            width: 100%; height: auto; display: block;
-            border-radius: 12px 12px 0 0;
+        /* === 区域 1: 专注编辑器 (Builder) === */
+        .builder-area {
+            background: white; padding: 30px; border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* 文件名输入行 */
+        .meta-row { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .filename-input {
+            flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; outline: none; transition: border 0.2s;
+        }
+        .filename-input:focus { border-color: var(--brand-brown); }
+
+        /* 单一输入框 (替代原来的分栏) */
+        #promptInput {
+            width: 100%; height: 300px; /* 增加高度 */
+            border: 1px solid #eee; border-radius: 8px;
+            resize: vertical; outline: none; padding: 20px; 
+            font-family: "Menlo", monospace; font-size: 15px; line-height: 1.7;
+            background: #fafafa; color: #333;
+        }
+        #promptInput:focus { background: #fff; border-color: #ddd; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
+
+        /* 按钮组 */
+        .builder-actions {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .left-actions { display: flex; gap: 10px; }
+        .right-actions { display: flex; gap: 10px; }
+
+        .btn {
+            padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
+            font-size: 14px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: var(--brand-brown); color: white; }
+        .btn-secondary { background: #f0f0f0; color: #666; }
+        .btn-preview { background: #e3f2fd; color: #1565c0; } /* 预览按钮 */
+        .btn-preview:hover { background: #bbdefb; }
+        
+        /* 管理员按钮样式 */
+        .btn-admin { background: #ccc; color: white; cursor: not-allowed; }
+        .btn-admin.active { background: #2e7d32; cursor: pointer; } 
+        .btn-admin.active:hover { background: #1b5e20; }
+
+        /* 标签库 */
+        .library-area { margin-top: 10px; padding-top: 20px; border-top: 1px dashed #eee; }
+        .category-group h3 { font-size: 14px; color: #888; margin: 0 0 10px 0; }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .tag {
+            background: white; padding: 6px 12px; border-radius: 50px;
+            border: 1px solid #eee; color: #555; cursor: pointer;
+            font-size: 12px; transition: all 0.2s; user-select: none;
+        }
+        .tag:hover {
+            border-color: var(--brand-brown); color: var(--brand-brown);
+            transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* === 区域 2: 知识库列表 (优化版) === */
+        .list-container {
+            background: white; border-radius: 16px;
+            box-shadow: var(--card-shadow); overflow: hidden;
+            padding: 0; min-height: 200px;
+        }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; /* 固定布局，方便控制列宽 */ }
+        thead { background: #f9f7f1; }
+        th, td { 
+            padding: 18px 20px; text-align: left; 
+            border-bottom: 1px solid #eee; font-size: 14px; 
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; /* 防止换行撑破 */
+        }
+        th { font-weight: bold; color: #8b5e3c; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #fafafa; }
+
+        .prompt-link {
+            color: #2c2c2c; font-weight: 600; text-decoration: none;
+            cursor: pointer; transition: color 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .prompt-link:hover { color: var(--brand-brown); text-decoration: underline; }
+        
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555;
+        }
+        .badge.v-new { background: #e8f5e9; color: #2e7d32; }
+
+        .loading-state {
+            display: flex; justify-content: center; align-items: center; height: 200px; color: #999; flex-direction: column; gap: 10px;
+        }
+
+        /* === 弹窗 (通用) === */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white; width: 90%; max-width: 900px; height: 85vh;
+            border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fdfbf7; }
+        .modal-title { font-size: 18px; font-weight: bold; color: #333; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        
+        .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
+        
+        /* Markdown 渲染样式 */
+        .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
+        .markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 20px; margin-top: 20px; }
+        .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: "Menlo", monospace; font-size: 13px; line-height: 1.5; color: #333; }
+        .markdown-body code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; color: #c7254e; }
+        
+        /* 纯文本代码模式 (用于查看源码) */
+        pre.raw-code { white-space: pre-wrap; word-wrap: break-word; font-family: "Menlo", monospace; margin: 0; color: #333; }
+        
+        .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; }
+        .copy-btn { padding: 8px 16px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; }
+
+        footer { 
+            margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; width: 100%; max-width: 1000px; text-align: center; color: #999; font-size: 13px; 
+            padding-bottom: 40px;
         }
         
-        /* 图片信息栏 */
-        .item-info {
-            padding: 15px; border-top: 1px solid #f5f5f5;
-        }
-        .item-title {
-            font-size: 14px; font-weight: bold; color: #333;
-            margin-bottom: 5px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .item-meta {
-            font-size: 12px; color: #999; display: flex; justify-content: space-between;
-        }
+        /* 管理员入口链接 */
+        .admin-link { color: #ddd; text-decoration: none; font-size: 12px; margin-left: 10px; cursor: pointer; }
+        .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
 
-        /* Loading 状态 */
-        #loadingState {
-            width: 100%; text-align: center; color: #999; margin-top: 50px;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        @media (max-width: 768px) {
+            .builder-actions { flex-direction: column; gap: 10px; }
+            .left-actions, .right-actions { width: 100%; justify-content: space-between; }
+            th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者列 */
         }
-        .spinner {
-            width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown);
-            border-radius: 50%; animation: spin 1s linear infinite;
-        }
-
-        /* 模态框 (Lightbox) */
-        .modal {
-            display: none; position: fixed; z-index: 2000;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            justify-content: center; align-items: center;
-            flex-direction: column;
-            backdrop-filter: blur(5px);
-        }
-        .modal.active { display: flex; }
-        .modal img { 
-            max-width: 90%; max-height: 80vh; border-radius: 4px; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.5); 
-            object-fit: contain;
-        }
-        .modal-caption {
-            color: #ccc; margin-top: 20px; font-size: 16px;
-        }
-        .close-modal {
-            position: absolute; top: 30px; right: 30px; color: white;
-            font-size: 40px; cursor: pointer; transition: 0.2s;
-        }
-        .close-modal:hover { color: var(--brand-brown); }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        /* 响应式 */
-        @media (max-width: 1200px) { .gallery-container { column-count: 3; } }
-        @media (max-width: 900px) { .gallery-container { column-count: 2; } }
-        @media (max-width: 600px) { .gallery-container { column-count: 1; } }
     </style>
 </head>
 <body>
 
+    <nav class="top-nav">
+        <a href="index.html">🏠 卡片生成器</a>
+        <a href="editor.html" target="_blank" style="color: #2e7d32;">📝 在线编辑器</a>
+        <a href="promptmaster.html" class="active">💡 提示词管理器</a>
+        <a href="aiGallery.html">🖼️ AI图片展</a>
+        <a href="contact.html">📩 联系博主</a>
+    </nav>
+
     <header>
         <h1>
             <img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">
-            Kayler AI 艺术馆
+            提示词管理器
         </h1>
-        <p style="color:#888">精选 AI 生成作品展示</p>
+        <p style="color:#888">撰写、组装、管理您的 AI 提示词资产</p>
     </header>
 
-    <div class="refresh-bar">
-        <button class="btn-refresh" onclick="fetchGallery()">
-            <span>🔄 刷新画廊</span>
-        </button>
-    </div>
+    <div class="main-container">
+        
+        <div>
+            <div class="section-title">
+                <span>🎨 提示词撰写助手</span>
+            </div>
+            
+            <div class="builder-area">
+                <div class="meta-row">
+                    <span style="font-size:14px; font-weight:bold; color:#666;">文件名:</span>
+                    <input type="text" id="filenameInput" class="filename-input" placeholder="例如: 概念拆解_v3.2_新版.md (必填)">
+                </div>
 
-    <div id="loadingState">
-        <div class="spinner"></div>
-        <div>正在从 GitHub 获取最新作品...</div>
-    </div>
+                <textarea id="promptInput" placeholder="# 在此输入提示词内容...&#10;- 支持 Markdown 格式&#10;- 点击下方标签可快速插入"></textarea>
 
-    <div class="gallery-container" id="galleryContainer">
+                <div class="builder-actions">
+                    <div class="left-actions">
+                        <button class="btn btn-secondary" onclick="clearPrompt()">🗑️ 清空</button>
+                        <button class="btn btn-secondary" onclick="downloadLocal()">💾 存到本地</button>
+                        <button class="btn btn-preview" onclick="openPreview()">👁️ 预览渲染</button>
+                    </div>
+                    <div class="right-actions">
+                        <button class="btn btn-primary" onclick="copyPrompt()">📋 复制内容</button>
+                        <button id="btnPublish" class="btn btn-admin" onclick="pushToGitHub()" disabled title="需验证管理员权限">
+                            ☁️ 保存并发布
+                        </button>
+                    </div>
+                </div>
+
+                <div class="library-area">
+                    <div class="category-group">
+                        <h3>常用风格 & 参数</h3>
+                        <div class="tags-container">
+                            <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
+                            <div class="tag" onclick="addTag('Ukiyo-e style')">浮世绘</div>
+                            <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
+                            <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
+                            <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-    <div id="imageModal" class="modal" onclick="if(event.target === this) closeModal()">
-        <span class="close-modal" onclick="closeModal()">&times;</span>
-        <img id="modalImg" src="">
-        <div class="modal-caption" id="modalCaption"></div>
+        <div>
+            <div class="section-title">
+                📚 提示词知识库 (自动同步)
+                <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新列表</button>
+            </div>
+            <div class="list-container">
+                <div id="loadingState" class="loading-state">
+                    <div style="font-size:24px;">⏳</div>
+                    <div>正在从 GitHub 读取最新列表...</div>
+                </div>
+                <table id="dataTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">文件名</th>
+                            <th style="width: 10%;">版本</th>
+                            <th style="width: 50%;">智能描述</th>
+                            <th style="width: 15%;">作者</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <p style="text-align:center; color:#999; font-size:12px; margin-top:10px;">
+                列表数据来自 GitHub API，发布新文件后需等待 Cloudflare 构建 (约1-2分钟)。
+            </p>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Kaylerris 保留所有权利. 
+            <a onclick="openSettings()" class="admin-link">⚙️ 管理员配置</a>
+        </p>
+    </footer>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">预览</div>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="copy-btn" id="modalCopyBtn" onclick="copyModalContent()">📋 复制内容</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay" onclick="if(event.target===this) closeSettings()">
+        <div style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; color:#333;">⚙️ 管理员认证</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:20px;">配置 GitHub Token 以激活发布功能。</p>
+            
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">GitHub 用户名</label>
+                <input type="text" id="gh-owner" value="itskys" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">仓库名</label>
+                <input type="text" id="gh-repo" value="kayler" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">Token (需 repo 权限)</label>
+                <input type="password" id="gh-token" placeholder="github_pat_..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+
+            <div style="text-align:right; margin-top:20px;">
+                <button onclick="closeSettings()" style="padding:8px 15px; border:none; background:#eee; cursor:pointer; border-radius:4px; margin-right:10px;">取消</button>
+                <button onclick="saveSettings()" style="padding:8px 15px; border:none; background:#8b5e3c; color:white; cursor:pointer; border-radius:4px;">保存并验证</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // === 配置 ===
-        const REPO_CONFIG = {
+        // === 常量配置 ===
+        const REPO_READ_CONFIG = {
             owner: 'itskys',
             repo: 'kayler',
-            path: 'gallery',
+            path: 'prompt',
             branch: 'main'
         };
 
-        const galleryContainer = document.getElementById('galleryContainer');
+        const promptInput = document.getElementById('promptInput');
+        const filenameInput = document.getElementById('filenameInput');
+        const btnPublish = document.getElementById('btnPublish');
+        const settingsModal = document.getElementById('settings-modal');
+        const tableBody = document.getElementById('tableBody');
         const loadingState = document.getElementById('loadingState');
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImg');
-        const modalCaption = document.getElementById('modalCaption');
+        const dataTable = document.getElementById('dataTable');
+        const modal = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
 
-        // === 1. 获取图片列表 ===
-        async function fetchGallery() {
-            loadingState.style.display = 'flex';
-            galleryContainer.innerHTML = ''; // 清空旧数据
-
-            try {
-                // 强制不缓存 (t=Date.now)
-                const url = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) throw new Error("无法读取 gallery 目录 (请确保目录存在且有图片)");
-                
-                const files = await response.json();
-                
-                // 过滤图片文件
-                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-                const images = files.filter(file => {
-                    return imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-                });
-
-                if (images.length === 0) {
-                    loadingState.innerHTML = "暂无图片，请先上传到 /gallery 目录";
-                    return;
+        // === 1. 编辑器逻辑 ===
+        promptInput.addEventListener('input', () => {
+            const text = promptInput.value;
+            // 自动填充文件名 (如果为空)
+            if(!filenameInput.value) {
+                const match = text.match(/^#\s+(.*)$/m);
+                if (match) {
+                    const cleanName = match[1].trim().replace(/[\\/:*?"<>|]/g, "");
+                    filenameInput.value = cleanName + ".md";
                 }
-
-                // 排序：按文件名倒序 (模拟“最新发布”)
-                // 建议文件名格式：20251208_标题.png
-                images.sort((a, b) => b.name.localeCompare(a.name));
-
-                // 渲染
-                renderImages(images);
-                loadingState.style.display = 'none';
-
-            } catch (error) {
-                console.error(error);
-                loadingState.innerHTML = `<span style="color:red">加载失败: ${error.message}</span>`;
             }
+        });
+
+        function addTag(text) {
+            let current = promptInput.value;
+            if (current.length > 0 && !current.endsWith(' ')) current += ' ';
+            promptInput.value = current + text;
         }
 
-        // === 2. 渲染图片 ===
-        function renderImages(images) {
-            images.forEach(img => {
-                // 解析文件名作为标题 (移除扩展名)
-                const title = img.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "); // 把下划线换成空格
-                
-                // 使用 GitHub Raw 链接 (比 API download_url 快且稳定)
-                // 格式: https://raw.githubusercontent.com/user/repo/branch/path/filename
-                const rawUrl = `https://raw.githubusercontent.com/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
+        function clearPrompt() { if(confirm('确定清空？')) promptInput.value = ''; }
+        function copyPrompt() { navigator.clipboard.writeText(promptInput.value).then(() => alert('已复制!')); }
 
-                const item = document.createElement('div');
-                item.className = 'gallery-item';
-                item.onclick = () => openModal(rawUrl, title);
-                
-                item.innerHTML = `
-                    <img src="${rawUrl}" alt="${title}" loading="lazy">
-                    <div class="item-info">
-                        <div class="item-title">${title}</div>
-                        <div class="item-meta">
-                            <span>Kayler AI</span>
-                            <span>📥 查看大图</span>
-                        </div>
-                    </div>
-                `;
-                
-                galleryContainer.appendChild(item);
-            });
-        }
-
-        // === 3. Lightbox 逻辑 ===
-        function openModal(src, caption) {
-            modalImg.src = src;
-            modalCaption.innerText = caption;
+        // === 预览渲染功能 (新) ===
+        function openPreview() {
+            const text = promptInput.value;
+            if(!text.trim()) { alert("没有内容可预览"); return; }
+            
+            modalTitle.innerText = "Markdown 实时预览";
+            // 使用 marked 渲染 HTML 并放入 .markdown-body 类以便应用样式
+            modalBody.innerHTML = `<div class="markdown-body">${marked.parse(text)}</div>`;
             modal.classList.add('active');
         }
 
-        function closeModal() {
-            modal.classList.remove('active');
+        function downloadLocal() {
+            const content = promptInput.value;
+            if (!content.trim()) { alert("内容为空"); return; }
+            let filename = filenameInput.value || "prompt.md";
+            if (!filename.endsWith(".md")) filename += ".md";
+            
+            const blob = new Blob([content], { type: "text/markdown" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a);
         }
 
-        // 初始化加载
-        fetchGallery();
+        // === 2. 权限管理 & 发布逻辑 ===
+        function checkAdminStatus() {
+            const token = localStorage.getItem('gh_token');
+            if (token) {
+                btnPublish.disabled = false;
+                btnPublish.classList.add('active');
+                btnPublish.innerHTML = "☁️ 保存并发布";
+                btnPublish.title = "管理员已认证";
+            } else {
+                btnPublish.disabled = true;
+                btnPublish.classList.remove('active');
+                btnPublish.innerHTML = "🔒 需配置权限";
+                btnPublish.title = "请在页脚配置 GitHub Token";
+            }
+        }
 
+        function openSettings() {
+            if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
+            if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
+            document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+            settingsModal.style.display = 'flex';
+        }
+
+        function closeSettings() { settingsModal.style.display = 'none'; }
+
+        function saveSettings() {
+            localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
+            localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
+            localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
+            alert('配置已保存！');
+            checkAdminStatus();
+            fetchRepoData(); // 尝试用新 Token 刷新列表
+            closeSettings();
+        }
+
+        async function pushToGitHub() {
+            const owner = localStorage.getItem('gh_owner');
+            const repo = localStorage.getItem('gh_repo');
+            const token = localStorage.getItem('gh_token');
+            
+            const content = promptInput.value;
+            let filename = filenameInput.value || "untitled.md";
+            if (!filename.endsWith(".md")) filename += ".md";
+            
+            if (!content.trim()) { alert("内容为空"); return; }
+
+            const btn = btnPublish;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ 发布中...";
+            btn.disabled = true;
+
+            try {
+                const fullPath = `prompt/${filename}`;
+                const checkUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`;
+                
+                let sha = null;
+                const checkRes = await fetch(checkUrl, {
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (checkRes.ok) {
+                    const data = await checkRes.json();
+                    sha = data.sha;
+                    if(!confirm(`文件 ${filename} 已存在，覆盖吗？`)) throw new Error("取消操作");
+                }
+
+                const payload = {
+                    message: `Update ${filename} via PromptMaster`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    branch: "main"
+                };
+                if (sha) payload.sha = sha;
+
+                const putRes = await fetch(checkUrl, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (putRes.ok) {
+                    alert(`✅ 发布成功！\n文件已推送到 GitHub。\n列表将在几分钟后自动更新（Cloudflare 构建延迟）。`);
+                    setTimeout(fetchRepoData, 2000); 
+                } else {
+                    const err = await putRes.json();
+                    throw new Error(err.message);
+                }
+
+            } catch (e) {
+                if(e.message !== "取消操作") alert("发布失败: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+
+        // === 3. 列表逻辑 (自动读取 GitHub) ===
+        async function fetchRepoData() {
+            loadingState.style.display = 'flex';
+            dataTable.style.display = 'none';
+            tableBody.innerHTML = '';
+
+            const owner = localStorage.getItem('gh_owner') || REPO_READ_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || REPO_READ_CONFIG.repo;
+            const token = localStorage.getItem('gh_token'); 
+            const headers = token ? { 'Authorization': `token ${token}` } : {};
+
+            try {
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt?ref=main&t=${Date.now()}`;
+                const response = await fetch(url, { headers });
+                
+                if (!response.ok) throw new Error(`无法读取列表 (HTTP ${response.status})`);
+                
+                const files = await response.json();
+                const validFiles = files.filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
+
+                if(validFiles.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">暂无文件 (请确认 main 分支 prompt 目录下有文件)</td></tr>`;
+                } else {
+                    validFiles.sort((a, b) => b.name.localeCompare(a.name)); // 倒序排列，新文件在前
+                    validFiles.forEach(file => {
+                        const meta = parseFilename(file.name);
+                        renderRow(file, meta);
+                    });
+                }
+                
+                loadingState.style.display = 'none';
+                dataTable.style.display = 'table';
+
+            } catch (error) {
+                console.error(error);
+                loadingState.innerHTML = `<div style="color:red; text-align:center">⚠️ 读取失败<br>${error.message}<br><button class="refresh-btn" onclick="fetchRepoData()" style="margin-top:10px">重试</button></div>`;
+            }
+        }
+
+        function parseFilename(name) {
+            const clean = name.replace(/\.(md|txt)$/, '');
+            const parts = clean.split(/[_-]/);
+            
+            return {
+                name: parts[0] || clean,
+                version: parts.find(p => /^v\d/.test(p)) || 'v1.0',
+                desc: parts.slice(2).join(' ') || 'AI 提示词文件',
+                author: 'Kaylerris'
+            };
+        }
+
+        function renderRow(file, meta) {
+            let badgeClass = meta.version.includes('v3') || meta.version.includes('v2') ? 'badge v-new' : 'badge';
+            
+            const html = `
+                <tr>
+                    <td>
+                        <a class="prompt-link" onclick="viewFileContent('${file.name}', '${meta.name}', '${meta.author}')">
+                            📄 ${file.name}
+                        </a>
+                    </td>
+                    <td><span class="${badgeClass}">${meta.version}</span></td>
+                    <td>${meta.desc}</td>
+                    <td>${meta.author}</td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', html);
+        }
+
+        // === 4. 查看文件逻辑 ===
+        let currentModalContent = ''; // 存储当前内容用于复制
+
+        function viewFileContent(fileName, displayName, author) {
+            modalTitle.innerText = `${displayName} by ${author}`;
+            // 使用 pre 显示源码，保留格式
+            modalBody.innerHTML = `<pre class="raw-code" id="rawCodeContent">⏳ 读取中...</pre>`;
+            modal.classList.add('active');
+
+            const owner = localStorage.getItem('gh_owner') || REPO_READ_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || REPO_READ_CONFIG.repo;
+            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
+            
+            fetch(rawUrl).then(res => res.text()).then(text => {
+                document.getElementById('rawCodeContent').innerText = text;
+                currentModalContent = text;
+            })
+            .catch(() => {
+                fetch('prompt/' + fileName).then(res => res.text()).then(text => {
+                    document.getElementById('rawCodeContent').innerText = text;
+                    currentModalContent = text;
+                }).catch(() => document.getElementById('rawCodeContent').innerText = "❌ 无法读取文件");
+            });
+        }
+
+        function closeModal() { modal.classList.remove('active'); }
+        function copyModalContent() { 
+            // 复制逻辑：如果是在预览模式，复制的是 currentModalContent (纯文本)
+            const textToCopy = currentModalContent || document.getElementById('rawCodeContent')?.innerText || "";
+            navigator.clipboard.writeText(textToCopy).then(() => alert('已复制')); 
+        }
+
+        // 初始化
+        checkAdminStatus();
+        fetchRepoData();
     </script>
 
 </body>
