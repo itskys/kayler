@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>在线 Markdown 编辑器 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
@@ -19,6 +20,7 @@
         }
         * { box-sizing: border-box; }
         
+        /* === 布局基础 === */
         html, body {
             margin: 0; padding: 0;
             height: 100%; 
@@ -26,8 +28,10 @@
             background: var(--bg-body); color: #333;
         }
         
+        /* 平时：禁止滚动，应用 Flex 布局 */
         body { overflow: hidden; display: flex; flex-direction: column; }
 
+        /* 导出模式：允许滚动 (PDF生成用) */
         body.export-mode {
             overflow: visible !important;
             height: auto !important;
@@ -35,10 +39,12 @@
             display: block !important;
         }
 
+        /* === 主应用容器 === */
         #main-app {
             display: flex; flex-direction: column; height: 100%; width: 100%;
         }
 
+        /* 顶部导航 */
         .top-nav {
             background: white; border-bottom: 1px solid #eee; 
             height: 40px; flex-shrink: 0; 
@@ -54,6 +60,7 @@
         }
         .top-nav a:hover { color: var(--brand-brown); }
 
+        /* 头部工具栏 */
         .header-wrapper {
             flex-shrink: 0; 
             width: var(--layout-width); max-width: var(--layout-max-width); 
@@ -82,9 +89,10 @@
         .btn-primary { background: #333; color: white; }
         .btn-pdf { background: #d32f2f; color: white; }
         .btn-magic { background: var(--brand-brown); color: white; }
-        .btn-cloud { background: #2e7d32; color: white; } /* 新增云同步按钮颜色 */
+        .btn-cloud { background: #2e7d32; color: white; } /* 绿色云同步按钮 */
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
+        /* === 主工作区 === */
         .workspace-container {
             flex: 1; width: 100%; display: flex; justify-content: center;
             overflow: hidden; padding-bottom: 10px;
@@ -98,9 +106,14 @@
             overflow: hidden; border: 1px solid #e0e0e0;
         }
         
+        /* 分栏容器 */
         .pane { 
-            width: 50%; height: 100%; overflow-y: auto; padding: 0; position: relative;
+            width: 50%; height: 100%; 
+            position: relative;
         }
+
+        /* 左侧编辑器 (CSS 修复版：独立滚动) */
+        .pane-editor { overflow: hidden; padding: 0; }
         
         #editor {
             width: 100%; height: 100%; 
@@ -108,17 +121,20 @@
             resize: none; outline: none; 
             font-family: "Menlo", "Monaco", monospace;
             font-size: 15px; line-height: 1.7; 
-            padding: 30px 45px 30px 30px; 
+            padding: 30px; 
             color: #333; background: white; display: block; 
+            overflow-y: auto; /* 关键：内部滚动 */
             box-sizing: border-box;
         }
         #editor.placeholder-mode { color: #aaa; }
 
+        /* 右侧预览区 */
         #preview { 
             background: #fdfbf7; color: #333; padding: 30px 40px; 
+            overflow-y: auto; 
         }
         
-        /* Markdown 样式 */
+        /* Markdown 渲染样式 */
         .markdown-body h1 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 26px; margin-top: 0; color: #000; }
         .markdown-body h2 { border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; font-size: 20px; margin-top: 25px; color: #333; }
         .markdown-body blockquote { border-left: 4px solid var(--brand-brown); padding-left: 15px; color: #666; background: rgba(139, 94, 60, 0.05); padding: 10px; margin: 15px 0; }
@@ -136,9 +152,23 @@
             font-size: 12px; color: #999; flex-shrink: 0;
         }
 
-        /* === PDF 专用样式 === */
-        #pdf-stage { display: none; width: 100%; margin: 0; background: white !important; padding: 0; color: black; font-family: "SimSun", "Times New Roman", serif; }
+        /* === PDF 专用舞台 (平时隐藏) === */
+        #pdf-stage {
+            display: none; 
+            width: 100%; 
+            margin: 0;
+            background: white !important; 
+            padding: 0; 
+            color: black;
+            font-family: "SimSun", "Times New Roman", serif;
+        }
+        
         #pdf-stage * { color: black !important; background-color: transparent !important; }
+        
+        #pdf-stage p, #pdf-stage pre, #pdf-stage blockquote, #pdf-stage ul, #pdf-stage ol, #pdf-stage table, #pdf-stage h1, #pdf-stage h2, #pdf-stage h3 {
+            page-break-inside: avoid; break-inside: avoid;
+        }
+
         #pdf-stage h1 { font-size: 24pt; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
         #pdf-stage h2 { font-size: 18pt; border-bottom: 1px solid #ccc; margin-top: 30px; page-break-after: avoid; }
         #pdf-stage p { font-size: 12pt; line-height: 1.6; margin-bottom: 10px; text-align: justify; }
@@ -149,9 +179,23 @@
         #pdf-stage table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin: 15px 0; }
         #pdf-stage th, #pdf-stage td { border: 1px solid #000; padding: 8px; }
         
-        .pdf-header-mark { text-align: center; font-size: 16pt; font-weight: bold; color: #333 !important; border-bottom: 2px solid #8b5e3c; padding-bottom: 15px; margin-bottom: 40px; }
-        .pdf-footer-mark { margin-top: 60px; padding-top: 15px; border-top: 1px solid #000; text-align: center; font-size: 10pt; color: #666 !important; font-style: italic; white-space: nowrap; page-break-inside: avoid; }
-        .pdf-footer-mark a { color: #666 !important; text-decoration: underline !important; font-weight: bold; }
+        .pdf-header-mark {
+            text-align: center; font-size: 16pt; font-weight: bold; color: #333 !important;
+            border-bottom: 2px solid #8b5e3c; padding-bottom: 15px; margin-bottom: 40px;
+        }
+        
+        .pdf-footer-mark {
+            margin-top: 60px; padding-top: 15px; border-top: 1px solid #000;
+            text-align: center; 
+            font-size: 10pt; color: #666 !important; font-style: italic;
+            white-space: nowrap; 
+            page-break-inside: avoid;
+        }
+        .pdf-footer-mark a {
+            color: #666 !important; 
+            text-decoration: underline !important; 
+            font-weight: bold;
+        }
 
         /* 加载遮罩 */
         #loading-toast {
@@ -224,7 +268,7 @@
 
         <div class="workspace-container">
             <div class="workspace">
-                <div class="pane">
+                <div class="pane pane-editor">
                     <textarea id="editor" spellcheck="false"></textarea>
                 </div>
                 <div id="preview" class="pane markdown-body"></div>
@@ -280,7 +324,51 @@
         const toast = document.getElementById('loading-toast');
         const settingsModal = document.getElementById('settings-modal');
 
-        const markdownGuide = `# Markdown 语法速查指南... (这里省略，保持原有内容)`; // 为节省空间，此处省略，实际请保持之前的指南内容
+        const markdownGuide = `# Markdown 语法速查指南
+
+## 1. 标题语法
+# 一级标题
+## 二级标题
+### 三级标题
+
+## 2. 文本样式
+**这是加粗文字**
+*这是斜体文字*
+~~这是删除线~~
+
+## 3. 引用与列表
+> 这是一个引用块，适合放金句或备注。
+
+- 无序列表项 1
+- 无序列表项 2
+  - 缩进子列表
+
+1. 有序列表项 1
+2. 有序列表项 2
+
+## 4. 代码与分割线
+行内代码： \`print("Hello World")\`
+
+代码块：
+\`\`\`javascript
+function sayHello() {
+  console.log("Hello form Kayler Editor!");
+}
+\`\`\`
+
+---
+
+## 5. 链接与图片
+[点击跳转到 Kayler 首页](index.html)
+
+![示例图片](https://placehold.co/600x200/8b5e3c/FFF?text=Image+Example)
+
+## 6. 表格
+| 序号 | 名称 | 版本 |
+| :--- | :--- | :--- |
+| 01 | Kayler Card | v1.0 |
+| 02 | Editor | v4.2 |
+`;
 
         function checkPlaceholderMode() {
             if (editor.value === markdownGuide) editor.classList.add('placeholder-mode');
@@ -335,23 +423,40 @@
             let author = prompt("请输入您的署名（用于页脚水印）:", "Kaylerris");
             if (author === null) return; 
             if (author.trim() === "") author = "Guest";
+
             toast.innerText = "⏳ 正在渲染 PDF...";
             toast.style.display = 'block';
+
             const headerHTML = `<div class="pdf-header-mark">Kayler在线编辑器</div>`;
             const bodyHTML = marked.parse(editor.value);
-            const footerHTML = `<div class="pdf-footer-mark">Created by @${author} With <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a></div>`;
+            const footerHTML = `
+                <div class="pdf-footer-mark">
+                    Created by @${author} With <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a>
+                </div>
+            `;
             pdfStage.innerHTML = headerHTML + bodyHTML + footerHTML;
+
             mainApp.style.display = 'none';
             pdfStage.style.display = 'block';
+            
             document.body.classList.add('export-mode');
             window.scrollTo(0, 0);
+
             const filename = getSmartFilename(editor.value, ".pdf");
+            
             const opt = {
-                margin: 15, filename: filename, image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                margin:       15, 
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0 
+                }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
+
             setTimeout(() => {
                 html2pdf().set(opt).from(pdfStage).save().then(() => {
                     document.body.classList.remove('export-mode');
@@ -359,7 +464,8 @@
                     mainApp.style.display = 'flex';
                     toast.style.display = 'none';
                 }).catch(err => {
-                    console.error(err); alert("导出出错，请刷新重试");
+                    console.error(err);
+                    alert("导出出错，请刷新重试");
                     document.body.classList.remove('export-mode');
                     pdfStage.style.display = 'none';
                     mainApp.style.display = 'flex';
@@ -370,7 +476,6 @@
 
         // === GitHub 发布逻辑 ===
         function openSettings() {
-            // 加载已有配置 (如果没有，则使用 HTML 中的默认值)
             if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
             if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
             document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
@@ -392,7 +497,8 @@
             const owner = localStorage.getItem('gh_owner') || document.getElementById('gh-owner').value;
             const repo = localStorage.getItem('gh_repo') || document.getElementById('gh-repo').value;
             const token = localStorage.getItem('gh_token');
-            const pathPrefix = localStorage.getItem('gh_path') || 'prompt/';
+            let pathPrefix = localStorage.getItem('gh_path') || 'prompt/';
+            if (!pathPrefix.endsWith('/')) pathPrefix += '/';
             
             if (!token) {
                 alert('请先点击“⚙️ 设置”并输入您的 Token！');
@@ -404,7 +510,7 @@
             if (!content.trim()) { alert("内容为空，无法发布"); return; }
             
             const filename = getSmartFilename(content, ".md");
-            const fullPath = pathPrefix + filename; 
+            const fullPath = (pathPrefix + filename).replace('//', '/');
 
             const btn = event.currentTarget;
             const originalText = btn.innerHTML;
@@ -414,7 +520,7 @@
             toast.style.display = 'block';
 
             try {
-                // 1. 检查文件是否存在
+                // 1. Check file existence
                 let sha = null;
                 const checkUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`;
                 
@@ -424,22 +530,25 @@
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
+                
                 if (checkRes.ok) {
                     const data = await checkRes.json();
                     sha = data.sha;
-                    if(!confirm(`文件 ${filename} 已存在，是否覆盖？`)) {
+                    if(!confirm(`文件 ${fullPath} 已存在，是否覆盖？`)) {
                         throw new Error("用户取消上传");
                     }
+                } else if (checkRes.status !== 404) {
+                    const errText = await checkRes.text();
+                    throw new Error(`GitHub API Error (${checkRes.status}): ${errText}`);
                 }
 
-                // 2. 上传
-                // 解决中文乱码：先 encodeURIComponent 转义，再 unescape，最后 btoa
+                // 2. Upload
                 const contentEncoded = btoa(unescape(encodeURIComponent(content)));
                 
                 const payload = {
                     message: `Update ${filename} via Kayler Editor`,
                     content: contentEncoded,
-                    branch: "main" // 默认为 main 分支
+                    branch: "main" // 默认为 main
                 };
                 if (sha) payload.sha = sha;
 
@@ -453,16 +562,16 @@
                 });
 
                 if (putRes.ok) {
-                    alert(`✅ 发布成功！\n文件已推送到 GitHub 仓库。\nCloudflare Pages 将在几分钟内自动构建上线。`);
+                    alert(`✅ 发布成功！\n文件已推送到: ${fullPath}\n请等待 Cloudflare 自动构建。`);
                 } else {
                     const errData = await putRes.json();
-                    throw new Error(errData.message);
+                    throw new Error(`Upload Failed: ${errData.message}`);
                 }
 
             } catch (err) {
                 console.error(err);
                 if (err.message !== "用户取消上传") {
-                    alert(`❌ 发布失败: ${err.message}\n请检查 Token 权限或网络连接。`);
+                    alert(`❌ 发布失败:\n${err.message}`);
                 }
             } finally {
                 btn.innerHTML = originalText;
@@ -476,7 +585,7 @@
             editor.value = cached;
             editor.classList.remove('placeholder-mode');
         } else {
-            editor.value = markdownGuide; // 请确保上方定义了 markdownGuide 变量
+            editor.value = markdownGuide;
             editor.classList.add('placeholder-mode');
         }
         editor.dispatchEvent(new Event('input')); 
