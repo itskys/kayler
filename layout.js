@@ -1,23 +1,56 @@
-// === 公共布局脚本 v2.0 ===
+// === 公共布局脚本 v3.0 (支持魔法链接登录) ===
 
 document.addEventListener('DOMContentLoaded', () => {
-    injectStyles(); // 先注入样式
+    checkMagicLogin(); // 1. 先检查是否是魔法链接登录
+    injectStyles();
     injectHeader();
     injectFooter();
     highlightCurrentNav();
 });
 
-// 1. 注入全局样式 (解决字体不一致)
+// === 核心功能：检查并处理魔法链接 ===
+function checkMagicLogin() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // 如果 URL 里包含 gh_key 参数
+    if (urlParams.has('gh_key')) {
+        try {
+            // 解码 (Base64 -> JSON)
+            const rawData = atob(urlParams.get('gh_key'));
+            const config = JSON.parse(rawData);
+
+            if (config.t && config.o && config.r) {
+                // 写入本地存储
+                localStorage.setItem('gh_token', config.t);
+                localStorage.setItem('gh_owner', config.o);
+                localStorage.setItem('gh_repo', config.r);
+                
+                alert(`🎉 身份验证成功！\n\n欢迎回来，管理员 ${config.o}。\n您现在可以在此设备上发布内容了。`);
+                
+                // 清理 URL (移除敏感参数，防止被别人看到)
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({path:newUrl}, '', newUrl);
+                
+                // 刷新页面以应用状态
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error('Magic link invalid', e);
+            alert('❌ 魔法链接无效或已损坏');
+        }
+    }
+}
+
+// 1. 注入全局样式
 function injectStyles() {
     const style = document.createElement('style');
     style.innerHTML = `
-        /* 全局字体变量 */
         :root {
             --font-stack: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
             --brand-brown: #8b5e3c;
         }
         
-        /* 导航栏样式 (高权重) */
+        /* 导航栏样式 */
         .global-top-nav {
             background: white !important;
             border-bottom: 1px solid #eee !important;
@@ -69,6 +102,7 @@ function injectStyles() {
             font-family: var(--font-stack) !important;
             background: white !important;
             flex-shrink: 0 !important;
+            padding-bottom: 40px !important;
         }
     `;
     document.head.appendChild(style);
@@ -76,7 +110,6 @@ function injectStyles() {
 
 // 2. 注入导航栏
 function injectHeader() {
-    // 移除旧导航 (如果有)
     const oldNav = document.querySelector('nav.top-nav');
     if (oldNav) oldNav.remove();
 
@@ -91,7 +124,6 @@ function injectHeader() {
             <a href="contact.html" class="global-nav-link">📩 联系博主</a>
         </div>
     `;
-    // 插入到 body 最前面
     document.body.insertAdjacentElement('afterbegin', header);
 }
 
@@ -103,12 +135,10 @@ function injectFooter() {
     const footer = document.createElement('footer');
     footer.className = 'global-footer';
     footer.innerHTML = `<p>&copy; 2025 Kaylerris 保留所有权利.</p>`;
-    
-    // 插入到 body 最后面
     document.body.appendChild(footer);
 }
 
-// 4. 高亮
+// 4. 高亮当前
 function highlightCurrentNav() {
     const path = window.location.pathname;
     const links = document.querySelectorAll('.global-nav-link');
