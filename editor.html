@@ -22,7 +22,7 @@
         }
         * { box-sizing: border-box; }
         
-        /* === 布局基础 === */
+        /* === 核心布局修正 === */
         html, body {
             margin: 0; padding: 0;
             height: 100%; 
@@ -30,25 +30,35 @@
             background: var(--bg-body); color: #333;
         }
         
-        /* 平时：禁止滚动，应用 Flex 布局 */
-        body { overflow: hidden; display: flex; flex-direction: column; }
+        body { 
+            /* body 作为最外层 Flex 容器 */
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; /* 禁止全屏滚动 */
+        }
 
-        /* 导出模式：允许滚动 (PDF生成用) */
+        /* 顶部导航栏 (由 layout.js 注入，它会自动占据第一行) */
+        
+        /* 主应用容器：占据剩余所有空间 */
+        #main-app {
+            flex: 1; /* 关键：自动填满导航栏下方的空间 */
+            display: flex; 
+            flex-direction: column; 
+            width: 100%;
+            overflow: hidden; /* 防止内部溢出撑开 body */
+        }
+
+        /* 导出模式：允许滚动 */
         body.export-mode {
             overflow: visible !important;
             height: auto !important;
-            background: white !important;
             display: block !important;
+            background: white !important;
         }
 
-        /* === 主应用容器 === */
-        #main-app {
-            display: flex; flex-direction: column; height: 100%; width: 100%;
-        }
-
-        /* 头部工具栏 */
+        /* === 编辑器工具栏 === */
         .header-wrapper {
-            flex-shrink: 0; 
+            flex-shrink: 0; /* 固定高度，不许压缩 */
             width: var(--layout-width); max-width: var(--layout-max-width); 
             margin: 15px auto; 
             background: white; padding: 12px 20px; border-radius: 10px;
@@ -80,15 +90,19 @@
         .btn-cloud.active:hover { background: #1b5e20; }
         .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
 
-        /* === 主工作区 === */
+        /* === 双栏工作区 === */
         .workspace-container {
-            flex: 1; width: 100%; display: flex; justify-content: center;
-            overflow: hidden; padding-bottom: 10px;
+            flex: 1; /* 占据 header 和 footer 之间的所有空间 */
+            width: 100%; 
+            display: flex; justify-content: center;
+            overflow: hidden; 
+            padding-bottom: 10px; /* 底部留一点空隙 */
         }
 
         .workspace { 
             width: var(--layout-width); max-width: var(--layout-max-width);
-            height: 100%; display: flex; 
+            height: 100%; /* 撑满 container */
+            display: flex; 
             background: white; border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.05); 
             overflow: hidden; border: 1px solid #e0e0e0;
@@ -98,9 +112,8 @@
             width: 50%; height: 100%; position: relative;
         }
 
-        /* 左侧编辑器 */
+        /* 左侧输入框 */
         .pane-editor { overflow: hidden; padding: 0; }
-        
         #editor {
             width: 100%; height: 100%; 
             border: none; border-right: 1px solid #eee;
@@ -109,41 +122,38 @@
             font-size: 15px; line-height: 1.7; 
             padding: 30px; 
             color: #333; background: white; display: block; 
-            overflow-y: auto; /* 关键：内部滚动 */
+            overflow-y: auto; 
             box-sizing: border-box;
         }
-        /* 默认占位符颜色 */
-        #editor.placeholder-mode { color: #aaa; }
+        #editor.placeholder-mode { color: #aaa; } /* 灰色提示文字 */
 
         /* 右侧预览区 */
         #preview { 
             background: #fdfbf7; color: #333; padding: 30px 40px; 
             overflow-y: auto; 
-            line-height: 1.8; /* 优化行距 */
+            line-height: 1.8; /* 优化阅读行距 */
         }
         
-        /* Markdown 渲染样式优化 */
+        /* Markdown 样式 */
         .markdown-body h1 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 26px; margin-top: 0; color: #000; }
         .markdown-body h2 { border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; font-size: 20px; margin-top: 25px; color: #333; }
-        .markdown-body p { margin-bottom: 16px; }
-        .markdown-body ul, .markdown-body ol { margin-bottom: 16px; padding-left: 25px; }
-        .markdown-body li { margin-bottom: 6px; }
         .markdown-body blockquote { border-left: 4px solid var(--brand-brown); padding-left: 15px; color: #666; background: rgba(139, 94, 60, 0.05); padding: 10px; margin: 15px 0; }
         .markdown-body code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; color: #c7254e; font-size: 0.9em; }
         .markdown-body pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; overflow-x: auto; margin-bottom: 20px; }
         .markdown-body pre code { color: inherit; background: transparent; padding: 0; }
-        .markdown-body img { max-width: 100%; border-radius: 6px; margin: 10px 0; }
-        .markdown-body table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .markdown-body img { max-width: 100%; border-radius: 6px; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin: 15px 0; }
         .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         .markdown-body th { background: #f0f0f0; font-weight: bold; }
 
+        /* 页脚 (由 layout.js 填充) */
         footer {
             height: 40px; background: white; border-top: 1px solid #ddd;
             display: flex; justify-content: center; align-items: center;
             font-size: 12px; color: #999; flex-shrink: 0;
         }
 
-        /* === PDF 专用舞台 (平时隐藏) === */
+        /* === PDF 专用舞台 === */
         #pdf-stage { display: none; width: 100%; margin: 0; background: white !important; padding: 0; color: black; font-family: "SimSun", serif; }
         #pdf-stage * { color: black !important; background-color: transparent !important; }
         #pdf-stage p, #pdf-stage pre, #pdf-stage blockquote, #pdf-stage ul, #pdf-stage ol, #pdf-stage table, #pdf-stage h1, #pdf-stage h2, #pdf-stage h3 { page-break-inside: avoid; break-inside: avoid; }
@@ -329,10 +339,9 @@ function sayHello() {
 | 序号 | 名称 | 版本 |
 | :--- | :--- | :--- |
 | 01 | Kayler Card | v1.0 |
-| 02 | Editor | v4.6 |
+| 02 | Editor | v5.0 |
 `;
 
-        // === 1. 基础逻辑 (占位符 & 颜色) ===
         function checkPlaceholderMode() {
             if (editor.value === markdownGuide) editor.classList.add('placeholder-mode');
             else editor.classList.remove('placeholder-mode');
@@ -345,7 +354,7 @@ function sayHello() {
             }
         });
 
-        // 失去焦点时：如果是默认内容，加回灰色类
+        // 失去焦点时：如果还是默认内容，加回灰色类
         editor.addEventListener('blur', () => {
             if(editor.value === markdownGuide) {
                 editor.classList.add('placeholder-mode');
@@ -373,7 +382,6 @@ function sayHello() {
             filenameDisplay.innerText = getSmartFilename(content, ".md");
         }
 
-        // === 2. 导出 MD ===
         function downloadFile() {
             const content = editor.value;
             if (!content.trim()) { alert("内容为空，无法导出"); return; }
@@ -386,7 +394,6 @@ function sayHello() {
             document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
-        // === 3. 生成长图 ===
         function transferToCard() {
             const cleanText = preview.innerText;
             if(!cleanText.trim()) { alert('预览区为空'); return; }
@@ -394,35 +401,23 @@ function sayHello() {
             window.location.href = 'index.html';
         }
 
-        // === 4. PDF 导出 (v3.4 逻辑) ===
         function exportToPDF() {
             let author = prompt("请输入您的署名（用于页脚水印）:", "Kaylerris");
             if (author === null) return; 
             if (author.trim() === "") author = "Guest";
-
             toast.style.display = 'block';
-
             const headerHTML = `<div class="pdf-header-mark">Kayler在线编辑器</div>`;
             const bodyHTML = marked.parse(editor.value);
-            const footerHTML = `
-                <div class="pdf-footer-mark">
-                    Created by @${author} With <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a>
-                </div>
-            `;
+            const footerHTML = `<div class="pdf-footer-mark">Created by @${author} With <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a></div>`;
             pdfStage.innerHTML = headerHTML + bodyHTML + footerHTML;
-
-            mainApp.style.display = 'none';
-            pdfStage.style.display = 'block';
-            
-            document.body.classList.add('export-mode');
-            window.scrollTo(0, 0);
-
+            mainApp.style.display = 'none'; pdfStage.style.display = 'block';
+            document.body.classList.add('export-mode'); window.scrollTo(0, 0);
             const filename = getSmartFilename(editor.value, ".pdf");
             const opt = { margin: 15, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } };
             setTimeout(() => { html2pdf().set(opt).from(pdfStage).save().then(() => { document.body.classList.remove('export-mode'); pdfStage.style.display = 'none'; mainApp.style.display = 'flex'; toast.style.display = 'none'; }).catch(err => { console.error(err); alert("导出出错，请刷新重试"); document.body.classList.remove('export-mode'); pdfStage.style.display = 'none'; mainApp.style.display = 'flex'; toast.style.display = 'none'; }); }, 800);
         }
 
-        // === 5. GitHub 权限与发布 (v4.4 逻辑) ===
+        // === 权限检查 ===
         function checkAdminStatus() {
             const token = localStorage.getItem('gh_token');
             if (token) {
@@ -433,6 +428,7 @@ function sayHello() {
         }
         window.addEventListener('auth-updated', checkAdminStatus);
 
+        // === GitHub 发布逻辑 ===
         function openSettings() {
             if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
             if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
@@ -483,6 +479,20 @@ function sayHello() {
         }
 
         // === 初始化 ===
+        // 先检查是否有魔法链接参数，有则处理（依赖 layout.js，但也做个兜底）
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('gh_key')) {
+                // 如果检测到 key，给 500ms 让 layout.js 去处理，然后刷新 UI
+                setTimeout(() => {
+                    checkAdminStatus();
+                    // 移除 URL 参数
+                    const newUrl = window.location.href.split('?')[0];
+                    window.history.replaceState({}, '', newUrl);
+                }, 500);
+            }
+        })();
+
         const cached = localStorage.getItem('kayler_editor_cache');
         if (cached && cached.length > 5) {
             editor.value = cached;
