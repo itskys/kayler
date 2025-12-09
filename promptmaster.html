@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="layout.js"></script>
     <title>提示词管理器 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
@@ -58,6 +57,13 @@
             font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown);
             padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
         }
+        
+        /* 隐藏的刷新按钮 (仅管理员可见) */
+        .refresh-btn {
+            font-size: 14px; color: var(--brand-brown); cursor: pointer; text-decoration: none; border: 1px solid var(--brand-brown);
+            padding: 4px 10px; border-radius: 4px; transition: all 0.2s; background: transparent;
+        }
+        .refresh-btn:hover { background: var(--brand-brown); color: white; }
 
         /* === 区域 1: 专注编辑器 (Builder) === */
         .builder-area {
@@ -203,7 +209,13 @@
 </head>
 <body>
 
-
+    <nav class="top-nav">
+        <a href="index.html">🏠 卡片生成器</a>
+        <a href="editor.html" target="_blank" style="color: #2e7d32;">📝 在线编辑器</a>
+        <a href="promptmaster.html" class="active">💡 提示词管理器</a>
+        <a href="aiGallery.html">🖼️ AI图片展</a>
+        <a href="contact.html">📩 联系博主</a>
+    </nav>
 
     <header>
         <h1>
@@ -218,6 +230,7 @@
         <div>
             <div class="section-title">
                 <span>🎨 提示词撰写助手</span>
+                <button class="refresh-btn" onclick="openSettings()">⚙️ 管理员配置</button>
             </div>
             
             <div class="builder-area">
@@ -286,7 +299,11 @@
 
     </div>
 
-
+    <footer>
+        <p>&copy; 2025 Kaylerris 保留所有权利. 
+            <a onclick="openSettings()" class="admin-link">⚙️ 管理员配置</a>
+        </p>
+    </footer>
 
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
         <div class="modal-content">
@@ -328,6 +345,7 @@
 
     <script>
         // === 常量配置 ===
+        // 公共只读配置 (必须是公开仓库才能免 Token 读取)
         const REPO_READ_CONFIG = {
             owner: 'itskys',
             repo: 'kayler',
@@ -448,6 +466,7 @@
                 const fullPath = `prompt/${filename}`;
                 const checkUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`;
                 
+                // 1. Check
                 let sha = null;
                 const checkRes = await fetch(checkUrl, {
                     headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
@@ -458,6 +477,7 @@
                     if(!confirm(`文件 ${filename} 已存在，覆盖吗？`)) throw new Error("取消操作");
                 }
 
+                // 2. Upload
                 const payload = {
                     message: `Update ${filename} via PromptMaster`,
                     content: btoa(unescape(encodeURIComponent(content))),
@@ -488,7 +508,7 @@
         }
 
 
-        // === 3. 列表逻辑 (优化版) ===
+        // === 3. 列表逻辑 (修正版 v3.4：兼容匿名访问) ===
         async function fetchRepoData() {
             loadingState.style.display = 'flex';
             dataTable.style.display = 'none';
@@ -496,14 +516,20 @@
 
             const owner = localStorage.getItem('gh_owner') || REPO_READ_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_READ_CONFIG.repo;
+            // 如果有 Token 就用，没有就用空 headers (匿名请求)
             const token = localStorage.getItem('gh_token'); 
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
+                // 强制读取 main 分支，加时间戳防缓存
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt?ref=main&t=${Date.now()}`;
+                
                 const response = await fetch(url, { headers });
                 
-                if (!response.ok) throw new Error(`无法读取列表`);
+                if (!response.ok) {
+                    // 如果 API 失败 (403限流/404不存在)，抛出错误
+                    throw new Error(`GitHub API ${response.status}`);
+                }
                 
                 const files = await response.json();
                 const validFiles = files.filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
@@ -511,7 +537,7 @@
                 if(validFiles.length === 0) {
                     tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">暂无文件</td></tr>`;
                 } else {
-                    validFiles.sort((a, b) => b.name.localeCompare(a.name)); // 倒序排列，新文件在前
+                    validFiles.sort((a, b) => b.name.localeCompare(a.name)); 
                     validFiles.forEach(file => {
                         const meta = parseFilename(file.name);
                         renderRow(file, meta);
@@ -523,7 +549,11 @@
 
             } catch (error) {
                 console.error(error);
-                loadingState.innerHTML = `<div style="color:red; text-align:center">⚠️ 读取失败<br>${error.message}<br><button class="refresh-btn" onclick="fetchRepoData()" style="margin-top:10px">重试</button></div>`;
+                let msg = error.message;
+                if(msg.includes('403')) msg = "访问频率超限 (请配置 Token)";
+                if(msg.includes('404')) msg = "未找到 prompt 目录";
+                
+                loadingState.innerHTML = `<div style="color:red; text-align:center">⚠️ 读取失败: ${msg}<br><button class="refresh-btn" onclick="fetchRepoData()" style="margin-top:10px">重试</button></div>`;
             }
         }
 
@@ -557,11 +587,10 @@
         }
 
         // === 4. 查看文件逻辑 ===
-        let currentModalContent = ''; // 存储当前内容用于复制
+        let currentModalContent = ''; 
 
         function viewFileContent(fileName, displayName, author) {
             modalTitle.innerText = `${displayName} by ${author}`;
-            // 使用 pre 显示源码，保留格式
             modalBody.innerHTML = `<pre class="raw-code" id="rawCodeContent">⏳ 读取中...</pre>`;
             modal.classList.add('active');
 
@@ -583,7 +612,6 @@
 
         function closeModal() { modal.classList.remove('active'); }
         function copyModalContent() { 
-            // 复制逻辑：如果是在预览模式，复制的是 currentModalContent (纯文本)
             const textToCopy = currentModalContent || document.getElementById('rawCodeContent')?.innerText || "";
             navigator.clipboard.writeText(textToCopy).then(() => alert('已复制')); 
         }

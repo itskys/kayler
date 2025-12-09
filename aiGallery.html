@@ -196,23 +196,25 @@
         const modalImg = document.getElementById('modalImg');
         const modalCaption = document.getElementById('modalCaption');
 
-        // === 1. 初始化与获取数据 (Token 增强版) ===
+        // === 1. 初始化与获取数据 (Token 优先策略) ===
         async function initGallery() {
             loadingState.style.display = 'flex';
             galleryContainer.innerHTML = ''; 
             pagination.innerHTML = '';
 
-            // 尝试从本地存储获取管理员配置的 Token
-            const token = localStorage.getItem('gh_token');
-            const headers = token ? { 'Authorization': `token ${token}` } : {};
-
-            // 如果有 Token，优先使用本地配置的 owner/repo，否则用默认
+            // 优先读取本地管理员配置
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
+            const token = localStorage.getItem('gh_token');
+            
+            // 如果有 Token，带上 Header；否则匿名访问
+            const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // 请求 GitHub API
+                // 请求 GitHub API (列出文件)
+                // 加 t=Date.now() 防止缓存
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
+                
                 const response = await fetch(url, { headers });
                 
                 if (!response.ok) {
@@ -222,7 +224,7 @@
                 
                 const files = await response.json();
                 
-                // 过滤图片
+                // 过滤图片文件
                 const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
                 allImages = files.filter(file => {
                     return imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
@@ -242,10 +244,10 @@
             } catch (error) {
                 console.error(error);
                 let msg = error.message;
-                if (msg.includes("403")) msg = "API 访问频率超限，请在编辑器页配置 Token 或稍后再试。";
-                if (msg.includes("404")) msg = "无法读取目录，请检查 gallery 文件夹是否存在。";
+                if (msg.includes("403")) msg = "API 访问频率超限。请稍后再试，或在编辑器页配置 Token 以解除限制。";
+                if (msg.includes("404")) msg = "无法读取 gallery 目录，请检查 GitHub 仓库是否存在该文件夹。";
                 
-                loadingState.innerHTML = `<span style="color:red">⚠️ 加载失败<br>${msg}</span><br><br><button class="btn-refresh" onclick="initGallery()">重试</button>`;
+                loadingState.innerHTML = `<span style="color:red; max-width:600px; display:inline-block; line-height:1.6;">⚠️ 加载失败<br>${msg}</span><br><br><button class="btn-refresh" onclick="initGallery()">重试</button>`;
             }
         }
 
@@ -267,13 +269,13 @@
         function renderImages(images) {
             galleryContainer.innerHTML = '';
             
+            // 无论是否有 Token，图片内容都通过 Raw 链接加载 (CDN加速且不限流)
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             
             images.forEach(img => {
                 const title = img.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "); 
-                
-                // 使用 Raw 链接加载图片 (速度快)
+                // 构造 Raw URL
                 const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
 
                 const item = document.createElement('div');
@@ -297,7 +299,6 @@
         function renderPagination() {
             pagination.innerHTML = '';
             const totalPages = Math.ceil(allImages.length / ITEMS_PER_PAGE);
-            
             if (totalPages <= 1) return;
 
             const prevBtn = createPageBtn('←', () => renderPage(currentPage - 1));
@@ -345,7 +346,6 @@
         }
 
         initGallery();
-
     </script>
 
 </body>
