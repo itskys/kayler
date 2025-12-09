@@ -53,6 +53,23 @@
     <script src="markdown-data.js"></script>
     <script src="layout.js"></script>
     <script src="editor.js?v=6.1"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ... (读取缓存等逻辑) ...
+
+            // 核心：调用 editor.js 暴露的初始化函数
+            if (typeof window.initEditor === 'function') {
+                window.initEditor();
+            }
+            
+            // 手动触发一次渲染
+            if (typeof window.updatePreview === 'function') {
+                window.updatePreview();
+            }
+            
+            console.log("Kayler Editor 初始化完成");
+        });
+    </script>
 
 </body>
 </html>

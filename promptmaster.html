@@ -12,13 +12,15 @@
     <script src="layout.js"></script>
     
     <style>
-        /* === 页面特有样式 === */
         :root {
             --bg-body: #f2f4f7; --text-color: #2c2c2c;
-            --brand-brown: #8b5e3c; --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
             --layout-width: 94%; --layout-max-width: 1400px;
         }
+
         * { box-sizing: border-box; }
+
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-body); margin: 0; padding: 20px;
@@ -26,62 +28,133 @@
             min-height: 100vh; color: var(--text-color);
         }
 
-        /* 布局 */
+        /* 顶部导航由 layout.js 注入 */
+
         header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
-        h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        h1 { 
+            font-size: 32px; font-weight: 800; color: #222; margin-bottom: 10px; 
+            display: flex; align-items: center; justify-content: center;
+        }
         
-        .main-container { width: var(--layout-width); max-width: var(--layout-max-width); display: flex; flex-direction: column; gap: 40px; flex: 1; }
-        .section-title { font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown); padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .refresh-btn { font-size: 14px; color: var(--brand-brown); cursor: pointer; border: 1px solid var(--brand-brown); padding: 4px 10px; border-radius: 4px; background: transparent; }
-        
-        /* 编辑器区域 */
-        .builder-area { background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 20px; }
-        .meta-row { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .filename-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; outline: none; }
-        #promptInput { width: 100%; height: 300px; border: 1px solid #eee; border-radius: 8px; resize: vertical; outline: none; padding: 20px; font-family: "Menlo", monospace; font-size: 15px; line-height: 1.7; background: #fafafa; color: #333; }
-        
-        .builder-actions { display: flex; justify-content: space-between; }
-        .left-actions, .right-actions { display: flex; gap: 10px; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .main-container {
+            width: var(--layout-width); max-width: var(--layout-max-width);
+            display: flex; flex-direction: column; gap: 40px; flex: 1; 
+        }
+
+        .section-title {
+            font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown);
+            padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .refresh-btn {
+            font-size: 14px; color: var(--brand-brown); cursor: pointer; text-decoration: none; border: 1px solid var(--brand-brown);
+            padding: 4px 10px; border-radius: 4px; transition: all 0.2s; background: transparent;
+        }
+        .refresh-btn:hover { background: var(--brand-brown); color: white; }
+
+        /* === 区域 1: 撰写助手 (精简版) === */
+        .builder-area {
+            background: white; padding: 30px; border-radius: 16px;
+            box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 15px;
+        }
+
+        #promptInput {
+            width: 100%; height: 150px; border: 1px solid #eee; border-radius: 8px;
+            resize: vertical; outline: none; padding: 15px; 
+            font-family: "Menlo", monospace; font-size: 14px;
+            background: #fafafa; color: #333;
+        }
+        #promptInput:focus { background: #fff; border-color: var(--brand-brown); }
+
+        .builder-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .btn {
+            padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+            font-size: 13px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+        }
         .btn-primary { background: var(--brand-brown); color: white; }
         .btn-secondary { background: #f0f0f0; color: #666; }
-        .btn-preview { background: #e3f2fd; color: #1565c0; }
+        .btn-preview { background: #e3f2fd; color: #1565c0; } 
         
-        /* 权限按钮 */
-        .btn-admin { background: #eee; color: #999; cursor: not-allowed; }
-        .btn-admin.active { background: #2e7d32; color: white; cursor: pointer; }
-
-        /* 标签 */
-        .library-area { margin-top: 10px; padding-top: 20px; border-top: 1px dashed #eee; }
         .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .tag { background: white; padding: 6px 12px; border-radius: 50px; border: 1px solid #eee; cursor: pointer; font-size: 12px; }
+        .tag {
+            background: white; padding: 5px 12px; border-radius: 50px;
+            border: 1px solid #eee; color: #555; cursor: pointer; font-size: 12px;
+        }
         .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
-        /* 列表 */
-        .list-container { background: white; border-radius: 16px; box-shadow: var(--card-shadow); overflow: hidden; padding: 0; min-height: 200px; }
+        /* === 区域 2: 知识库列表 (优化版) === */
+        .list-container {
+            background: white; border-radius: 16px;
+            box-shadow: var(--card-shadow); overflow: hidden;
+            padding: 0; min-height: 200px;
+        }
+
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { padding: 18px 20px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        th { font-weight: bold; color: #8b5e3c; background: #f9f7f1; }
-        .prompt-link { color: #2c2c2c; font-weight: 600; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555; }
+        thead { background: #f9f7f1; }
+        th, td { 
+            padding: 18px 20px; text-align: left; 
+            border-bottom: 1px solid #eee; font-size: 14px; 
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+        }
+        th { font-weight: bold; color: #8b5e3c; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #fafafa; }
+
+        /* 提示词名称链接样式 */
+        .prompt-link {
+            color: #2c2c2c; font-weight: 600; text-decoration: none;
+            cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 5px;
+            border-bottom: 1px dashed #ccc; /* 下划线 */
+        }
+        .prompt-link:hover { color: var(--brand-brown); border-bottom-color: var(--brand-brown); }
+        
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555;
+        }
         .badge.v-new { background: #e8f5e9; color: #2e7d32; }
 
-        /* 弹窗 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .loading-state {
+            display: flex; justify-content: center; align-items: center; height: 200px; color: #999; flex-direction: column; gap: 10px;
+        }
+
+        /* === 弹窗 === */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
+        }
         .modal-overlay.active { display: flex; }
-        .modal-content { background: white; width: 90%; max-width: 900px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
+        .modal-content {
+            background: white; width: 90%; max-width: 900px; height: 85vh;
+            border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fdfbf7; }
+        .modal-title { font-size: 18px; font-weight: bold; color: #333; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        
         .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
         
-        .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
-        .markdown-body pre { background: #f5f5f5; padding: 15px; overflow-x: auto; font-family: monospace; }
-        pre.raw-code { font-family: monospace; white-space: pre-wrap; margin: 0; }
+        /* 纯文本代码模式 */
+        pre.raw-code { 
+            white-space: pre-wrap; word-wrap: break-word; 
+            font-family: "Menlo", "Monaco", monospace; font-size: 14px; 
+            color: #333; margin: 0;
+        }
+        
+        .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; display: flex; justify-content: flex-end; gap: 10px; }
+        
+        /* 编辑按钮 (默认隐藏) */
+        .btn-edit { background: #2e7d32; color: white; display: none; }
+        .btn-edit:hover { background: #1b5e20; }
 
         @media (max-width: 768px) {
-            .builder-actions { flex-direction: column; gap: 10px; }
             .left-actions, .right-actions { width: 100%; justify-content: space-between; }
-            th:nth-child(4), td:nth-child(4) { display: none; }
+            th:nth-child(3), td:nth-child(3) { display: none; } /* 手机隐藏描述列 */
+            th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者列 */
         }
     </style>
 </head>
@@ -98,59 +171,43 @@
     <div class="main-container">
         
         <div>
-            <div class="section-title">
-                <span>🎨 提示词撰写助手</span>
-            </div>
-            
+            <div class="section-title">🎨 提示词撰写助手</div>
             <div class="builder-area">
-                <div class="meta-row">
-                    <span style="font-size:14px; font-weight:bold; color:#666;">文件名:</span>
-                    <input type="text" id="filenameInput" class="filename-input" placeholder="例如: 概念拆解_v3.2.md">
+                <textarea id="promptInput" placeholder="点击下方标签添加，或直接在此输入..."></textarea>
+                
+                <div class="tags-container">
+                    <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
+                    <div class="tag" onclick="addTag('Ukiyo-e style')">浮世绘</div>
+                    <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
+                    <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
+                    <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
+                    <div class="tag" onclick="addTag('--niji 6')">Niji 6</div>
                 </div>
-
-                <textarea id="promptInput" placeholder="# 在此输入提示词内容...&#10;- 支持 Markdown 格式&#10;- 点击下方标签可快速插入"></textarea>
 
                 <div class="builder-actions">
-                    <div class="left-actions">
-                        <button class="btn btn-secondary" onclick="document.getElementById('promptInput').value=''">🗑️ 清空</button>
-                        <button class="btn btn-secondary" onclick="downloadLocal()">💾 存到本地</button>
-                        <button class="btn btn-preview" onclick="openPreview()">👁️ 预览</button>
-                    </div>
-                    <div class="right-actions">
-                        <button class="btn btn-primary" onclick="copyPrompt()">📋 复制</button>
-                        <button id="btnPublish" class="btn btn-admin" onclick="pushToGitHub()" disabled title="需管理员权限">
-                            🔒 需权限
-                        </button>
-                    </div>
-                </div>
-
-                <div class="library-area">
-                    <div class="category-group">
-                        <h3>常用标签</h3>
-                        <div class="tags-container">
-                            <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
-                            <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
-                            <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
-                            <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
-                        </div>
-                    </div>
+                    <button class="btn btn-secondary" onclick="clearPrompt()">🗑️ 清空</button>
+                    <button class="btn btn-preview" onclick="openPreview()">👁️ 预览渲染</button>
+                    <button class="btn btn-primary" onclick="copyPrompt()">📋 一键复制</button>
                 </div>
             </div>
         </div>
 
         <div>
             <div class="section-title">
-                📚 提示词知识库 (自动同步)
+                📚 提示词库 (按更新时间排序)
                 <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新</button>
             </div>
             <div class="list-container">
-                <div id="loadingState" style="padding:40px; text-align:center; color:#999;">正在加载...</div>
+                <div id="loadingState" class="loading-state">
+                    <div style="font-size:24px;">⏳</div>
+                    <div>正在读取 GitHub 列表...</div>
+                </div>
                 <table id="dataTable" style="display:none;">
                     <thead>
                         <tr>
-                            <th style="width: 25%;">文件名</th>
-                            <th style="width: 10%;">版本</th>
-                            <th style="width: 50%;">智能描述</th>
+                            <th style="width: 30%;">提示词名称</th>
+                            <th style="width: 15%;">更新时间</th>
+                            <th style="width: 40%;">智能描述</th>
                             <th style="width: 15%;">作者</th>
                         </tr>
                     </thead>
@@ -164,201 +221,167 @@
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" id="modalTitle">预览</div>
+                <div class="modal-title" id="modalTitle">文件预览</div>
                 <button class="close-btn" onclick="closeModal()">×</button>
             </div>
-            <div class="modal-body" id="modalBody"></div>
-            <div class="modal-footer" style="padding:15px; border-top:1px solid #eee; text-align:right;">
-                <button class="btn btn-primary" id="modalCopyBtn" onclick="copyModalContent()">📋 复制</button>
+            <div class="modal-body">
+                <pre class="raw-code" id="fileContent">正在加载...</pre>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-edit" id="btnEdit" onclick="editInEditor()">✏️ 导入Kayler编辑器</button>
+                <button class="btn btn-primary" onclick="copyContent()">📋 复制内容</button>
             </div>
         </div>
     </div>
 
     <script>
-        // === 逻辑部分 ===
+        // === 1. 基础逻辑 ===
+        const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
         const promptInput = document.getElementById('promptInput');
-        const filenameInput = document.getElementById('filenameInput');
-        const btnPublish = document.getElementById('btnPublish');
-        const tableBody = document.getElementById('tableBody');
-        const loadingState = document.getElementById('loadingState');
-        const dataTable = document.getElementById('dataTable');
-
-        // 监听 layout.js 发出的认证事件，自动刷新按钮状态
-        window.addEventListener('auth-updated', checkAdminStatus);
 
         function addTag(text) {
             let current = promptInput.value;
             if (current.length > 0 && !current.endsWith(' ')) current += ' ';
             promptInput.value = current + text;
         }
-        
+        function clearPrompt() { if(confirm('确定清空？')) promptInput.value = ''; }
         function copyPrompt() { navigator.clipboard.writeText(promptInput.value).then(() => alert('已复制!')); }
-
         function openPreview() {
-            const text = promptInput.value;
-            if(!text.trim()) return;
-            document.getElementById('modalTitle').innerText = "预览";
-            document.getElementById('modalBody').innerHTML = `<div class="markdown-body">${marked.parse(text)}</div>`;
-            document.getElementById('modalOverlay').classList.add('active');
+            if(!promptInput.value.trim()) return;
+            showModal("预览", promptInput.value);
         }
 
-        function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+        // === 2. 列表逻辑 (自动排序) ===
+        const tableBody = document.getElementById('tableBody');
+        const loadingState = document.getElementById('loadingState');
+        const dataTable = document.getElementById('dataTable');
 
-        function downloadLocal() {
-            const content = promptInput.value;
-            let filename = filenameInput.value || "prompt.md";
-            const blob = new Blob([content], { type: "text/markdown" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = filename;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
-
-        // === 权限检查 ===
-        function checkAdminStatus() {
-            const token = localStorage.getItem('gh_token');
-            if (token) {
-                btnPublish.disabled = false;
-                btnPublish.classList.add('active');
-                btnPublish.innerHTML = "☁️ 保存并发布";
-                btnPublish.title = "点击发布到 GitHub";
-            } else {
-                btnPublish.disabled = true;
-                btnPublish.classList.remove('active');
-                btnPublish.innerHTML = "🔒 需权限";
-                btnPublish.title = "请在页脚配置 GitHub Token";
-            }
-        }
-
-        // === 发布到 GitHub ===
-        async function pushToGitHub() {
-            const owner = localStorage.getItem('gh_owner');
-            const repo = localStorage.getItem('gh_repo');
-            const token = localStorage.getItem('gh_token');
-            const content = promptInput.value;
-            let filename = filenameInput.value || "untitled.md";
-            
-            if(!content.trim()) { alert("内容为空"); return; }
-            
-            btnPublish.innerHTML = "⏳ 发布中..."; btnPublish.disabled = true;
-            
-            try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt/${filename}`;
-                
-                // 1. 检查是否存在
-                let sha = null;
-                const checkRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
-                if(checkRes.ok) {
-                    const data = await checkRes.json();
-                    sha = data.sha;
-                    if(!confirm("文件已存在，是否覆盖？")) throw new Error("取消");
-                }
-
-                // 2. 上传
-                const payload = {
-                    message: `Update ${filename}`,
-                    content: btoa(unescape(encodeURIComponent(content))),
-                    branch: "main",
-                    sha: sha
-                };
-                
-                const putRes = await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if(putRes.ok) {
-                    alert("✅ 发布成功！");
-                    fetchRepoData(); // 刷新列表
-                } else {
-                    throw new Error((await putRes.json()).message);
-                }
-            } catch(e) {
-                if(e.message !== "取消") alert("发布失败: " + e.message);
-            } finally {
-                checkAdminStatus(); // 恢复按钮
-            }
-        }
-
-        // === 列表读取 ===
         async function fetchRepoData() {
-            loadingState.style.display = 'block'; dataTable.style.display = 'none'; tableBody.innerHTML = '';
-            
-            const owner = localStorage.getItem('gh_owner') || 'itskys';
-            const repo = localStorage.getItem('gh_repo') || 'kayler';
+            loadingState.style.display = 'flex';
+            dataTable.style.display = 'none';
+            tableBody.innerHTML = '';
+
+            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             const token = localStorage.getItem('gh_token');
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt?ref=main&t=${Date.now()}`;
-                const res = await fetch(url, { headers });
-                if(!res.ok) throw new Error(res.status);
+                // 强制不缓存
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
+                const response = await fetch(url, { headers });
                 
-                const files = await res.json();
-                const validFiles = files.filter(f => f.name.endsWith('.md'));
+                if (!response.ok) throw new Error("无法读取列表 (API Error)");
                 
-                validFiles.sort((a, b) => b.name.localeCompare(a.name));
-                validFiles.forEach(f => renderRow(f, parseFilename(f.name)));
+                const files = await response.json();
+                const validFiles = files.filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
+
+                if(validFiles.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">暂无文件</td></tr>`;
+                } else {
+                    // 按文件名倒序排列 (模拟时间排序：v3.1 > v3.0)
+                    validFiles.sort((a, b) => b.name.localeCompare(a.name)); 
+                    validFiles.forEach(f => renderRow(f, parseFilename(f.name)));
+                }
                 
-                loadingState.style.display = 'none'; dataTable.style.display = 'table';
-            } catch(e) {
-                loadingState.innerHTML = `⚠️ 加载失败 (${e.message})`;
+                loadingState.style.display = 'none';
+                dataTable.style.display = 'table';
+
+            } catch (error) {
+                loadingState.innerHTML = `<span style="color:red">⚠️ 加载失败: ${error.message}</span>`;
             }
         }
 
         function parseFilename(name) {
-            const clean = name.replace('.md', '');
-            const parts = clean.split('_');
+            const clean = name.replace(/\.(md|txt)$/, '');
+            const parts = clean.split(/[_-]/);
+            
+            // 尝试提取版本号作为"更新时间"的替代显示
+            const ver = parts.find(p => /^v\d/.test(p)) || '-';
+            
             return {
                 name: parts[0] || clean,
-                version: parts[1] || 'v1.0',
-                desc: parts[2] || 'AI 提示词文件',
+                version: ver,
+                desc: parts.slice(2).join(' ') || 'AI 提示词文件',
                 author: 'Kaylerris'
             };
         }
 
         function renderRow(file, meta) {
-            let badgeClass = meta.version.includes('v3') ? 'badge v-new' : 'badge';
             const html = `
                 <tr>
-                    <td><a class="prompt-link" onclick="viewFile('${file.name}', '${meta.name}')">📄 ${file.name}</a></td>
-                    <td><span class="${badgeClass}">${meta.version}</span></td>
+                    <td>
+                        <a class="prompt-link" onclick="viewFile('${file.name}', '${meta.name}', '${meta.author}')">
+                            📄 ${meta.name}
+                        </a>
+                    </td>
+                    <td style="color:#666; font-size:12px;">${meta.version}</td>
                     <td>${meta.desc}</td>
                     <td>${meta.author}</td>
-                </tr>`;
+                </tr>
+            `;
             tableBody.insertAdjacentHTML('beforeend', html);
         }
 
-        // === 查看逻辑 (混合模式) ===
-        let currentRawContent = '';
-        function viewFile(fileName, title) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalBody').innerHTML = `<pre class="raw-code" id="rawCode">⏳ 读取中...</pre>`;
-            document.getElementById('modalOverlay').classList.add('active');
-
-            // 优先读 Raw (快)
-            const owner = localStorage.getItem('gh_owner') || 'itskys';
-            const repo = localStorage.getItem('gh_repo') || 'kayler';
-            const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
-            
-            fetch(url).then(r=>r.text()).then(t => {
-                document.getElementById('rawCode').innerText = t;
-                currentRawContent = t;
-            }).catch(() => {
-                // 降级读本地
-                fetch('prompt/'+fileName).then(r=>r.text()).then(t=>{
-                    document.getElementById('rawCode').innerText = t;
-                    currentRawContent = t;
-                });
-            });
-        }
+        // === 3. 弹窗与导入编辑器 ===
+        const modal = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const fileContent = document.getElementById('fileContent');
+        const btnEdit = document.getElementById('btnEdit');
         
-        function copyModalContent() { navigator.clipboard.writeText(currentRawContent).then(()=>alert('已复制')); }
+        // 临时存储当前打开的文件信息
+        let currentFileData = { name: '', content: '' };
 
-        // 启动
-        checkAdminStatus();
+        function viewFile(fileName, displayName, author) {
+            modalTitle.innerText = `${displayName} by ${author}`;
+            fileContent.innerText = "⏳ 读取中...";
+            modal.classList.add('active');
+            
+            // 检查管理员权限，决定是否显示“编辑”按钮
+            if (localStorage.getItem('gh_token')) {
+                btnEdit.style.display = 'inline-flex';
+            } else {
+                btnEdit.style.display = 'none';
+            }
+
+            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
+            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${encodeURIComponent(fileName)}`;
+            
+            fetch(rawUrl).then(r=>r.text()).then(text => {
+                fileContent.innerText = text;
+                // 存起来，供“导入编辑器”使用
+                currentFileData = { name: fileName, content: text };
+            })
+            .catch(() => fileContent.innerText = "❌ 读取失败");
+        }
+
+        function showModal(title, content) {
+            modalTitle.innerText = title;
+            fileContent.innerText = content;
+            btnEdit.style.display = 'none'; // 预览模式不显示编辑
+            modal.classList.add('active');
+        }
+
+        function closeModal() { modal.classList.remove('active'); }
+        function copyContent() { navigator.clipboard.writeText(fileContent.innerText).then(() => alert('已复制')); }
+
+        // === 核心功能：导入到编辑器 ===
+        function editInEditor() {
+            if (!currentFileData.content) return;
+            
+            // 1. 将内容存入 LocalStorage (作为编辑器草稿)
+            localStorage.setItem('kayler_editor_cache', currentFileData.content);
+            // 2. 将文件名存入 (编辑器会自动读取这个作为默认文件名，实现覆盖更新)
+            // *注意：我们需要在 editor.html 里加一小段逻辑来读取这个 key*
+            localStorage.setItem('kayler_editor_filename', currentFileData.name);
+            
+            // 3. 跳转
+            window.location.href = 'editor.html';
+        }
+
+        // 初始化
         fetchRepoData();
-
     </script>
 
 </body>
