@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <script src="layout.js?v=5.0"></script>
+    <script src="layout.js"></script>
     
     <style>
         :root { 
@@ -107,22 +107,29 @@
             overflow-y: auto; 
             box-sizing: border-box;
         }
+        /* 默认灰色占位样式 */
         #editor.placeholder-mode { color: #aaa; }
 
         #preview { 
             background: #fdfbf7; color: #333; padding: 30px 40px; 
             overflow-y: auto; 
+            /* 优化：增加行距 */
+            line-height: 1.8; 
         }
         
-        .markdown-body h1 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 26px; margin-top: 0; color: #000; }
-        .markdown-body h2 { border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; font-size: 20px; margin-top: 25px; color: #333; }
-        .markdown-body blockquote { border-left: 4px solid var(--brand-brown); padding-left: 15px; color: #666; background: rgba(139, 94, 60, 0.05); padding: 10px; margin: 15px 0; }
+        /* Markdown 渲染样式优化 (更宽松) */
+        .markdown-body h1 { border-bottom: 2px solid #e0e0e0; padding-bottom: 12px; font-size: 28px; margin-top: 10px; margin-bottom: 20px; color: #000; }
+        .markdown-body h2 { border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; font-size: 22px; margin-top: 35px; margin-bottom: 15px; color: #333; }
+        .markdown-body p { margin-bottom: 16px; } /* 段落间距加大 */
+        .markdown-body ul, .markdown-body ol { margin-bottom: 16px; padding-left: 25px; }
+        .markdown-body li { margin-bottom: 6px; } /* 列表项间距 */
+        .markdown-body blockquote { border-left: 4px solid var(--brand-brown); padding-left: 18px; color: #666; background: rgba(139, 94, 60, 0.05); padding: 12px 18px; margin: 25px 0; border-radius: 4px; }
         .markdown-body code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; color: #c7254e; font-size: 0.9em; }
-        .markdown-body pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .markdown-body pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; overflow-x: auto; margin-bottom: 20px; }
         .markdown-body pre code { color: inherit; background: transparent; padding: 0; }
-        .markdown-body img { max-width: 100%; border-radius: 6px; }
-        .markdown-body table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .markdown-body img { max-width: 100%; border-radius: 6px; margin: 10px 0; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         .markdown-body th { background: #f0f0f0; font-weight: bold; }
 
         footer {
@@ -131,6 +138,7 @@
             font-size: 12px; color: #999; flex-shrink: 0;
         }
 
+        /* === PDF 专用舞台 === */
         #pdf-stage { display: none; width: 100%; margin: 0; background: white !important; padding: 0; color: black; font-family: "SimSun", serif; }
         #pdf-stage * { color: black !important; background-color: transparent !important; }
         #pdf-stage p, #pdf-stage pre, #pdf-stage blockquote, #pdf-stage ul, #pdf-stage ol, #pdf-stage table, #pdf-stage h1, #pdf-stage h2, #pdf-stage h3 { page-break-inside: avoid; break-inside: avoid; }
@@ -262,28 +270,6 @@
     </div>
 
     <script>
-        // === 核心修复：优先处理魔法链接 (放在最前面) ===
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('gh_key')) {
-                try {
-                    const rawData = atob(urlParams.get('gh_key'));
-                    const config = JSON.parse(rawData);
-                    if (config.t) {
-                        localStorage.setItem('gh_token', config.t);
-                        localStorage.setItem('gh_owner', config.o || '');
-                        localStorage.setItem('gh_repo', config.r || '');
-                        alert(`🎉 身份验证成功！\n\n欢迎回来，管理员 ${config.o}。`);
-                        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                        window.history.replaceState({path:newUrl}, '', newUrl);
-                    }
-                } catch (e) {
-                    console.error(e);
-                    alert('❌ 魔法链接无效');
-                }
-            }
-        })();
-
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const filenameDisplay = document.getElementById('filenamePreview');
@@ -294,14 +280,63 @@
         const toast = document.getElementById('loading-toast');
         const settingsModal = document.getElementById('settings-modal');
 
-        const markdownGuide = `# Markdown 语法速查指南... (此处省略)`;
+        // === 恢复：默认指南 ===
+        const markdownGuide = `# Markdown 语法速查指南
 
-        // ... (checkPlaceholderMode, focus, input, getSmartFilename, updateFilenamePreview 逻辑保持不变) ...
+## 1. 标题语法
+# 一级标题
+## 二级标题
+### 三级标题
+
+## 2. 文本样式
+**这是加粗文字**
+*这是斜体文字*
+~~这是删除线~~
+
+## 3. 引用与列表
+> 这是一个引用块，适合放金句或备注。
+
+- 无序列表项 1
+- 无序列表项 2
+  - 缩进子列表
+
+1. 有序列表项 1
+2. 有序列表项 2
+
+## 4. 代码与分割线
+行内代码： \`print("Hello World")\`
+
+代码块：
+\`\`\`javascript
+function sayHello() {
+  console.log("Hello form Kayler Editor!");
+}
+\`\`\`
+
+---
+
+## 5. 链接与图片
+[点击跳转到 Kayler 首页](index.html)
+
+![示例图片](https://placehold.co/600x200/8b5e3c/FFF?text=Image+Example)
+
+## 6. 表格
+| 序号 | 名称 | 版本 |
+| :--- | :--- | :--- |
+| 01 | Kayler Card | v1.0 |
+| 02 | Editor | v4.5 |
+`;
+
+        // === 基础逻辑 ===
         function checkPlaceholderMode() {
             if (editor.value === markdownGuide) editor.classList.add('placeholder-mode');
             else editor.classList.remove('placeholder-mode');
         }
-        editor.addEventListener('focus', () => { if(editor.value === markdownGuide) editor.classList.remove('placeholder-mode'); });
+
+        editor.addEventListener('focus', () => {
+            if(editor.value === markdownGuide) editor.classList.remove('placeholder-mode');
+        });
+
         editor.addEventListener('input', () => {
             const markdownText = editor.value;
             preview.innerHTML = marked.parse(markdownText);
@@ -309,6 +344,7 @@
             localStorage.setItem('kayler_editor_cache', markdownText);
             updateFilenamePreview(markdownText);
         });
+
         function getSmartFilename(content, extension = ".md") {
             const match = content.match(/^#\s+(.*)$/m);
             if (match && match[1].trim() !== "") {
@@ -317,17 +353,38 @@
             }
             return "KaylerEditor" + extension;
         }
-        function updateFilenamePreview(content) { filenameDisplay.innerText = getSmartFilename(content, ".md"); }
-        function downloadFile() { /* ... */ }
-        function transferToCard() { /* ... */ }
-        function exportToPDF() { /* ... (保持 v3.4 逻辑) ... */ 
+
+        function updateFilenamePreview(content) {
+            filenameDisplay.innerText = getSmartFilename(content, ".md");
+        }
+
+        function downloadFile() {
+            const content = editor.value;
+            if (!content.trim()) { alert("内容为空，无法导出"); return; }
+            const filename = getSmartFilename(content, ".md");
+            const blob = new Blob([content], { type: "text/markdown" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+        }
+
+        function transferToCard() {
+            const cleanText = preview.innerText;
+            if(!cleanText.trim()) { alert('预览区为空'); return; }
+            localStorage.setItem('kayler_draft', cleanText);
+            window.location.href = 'index.html';
+        }
+
+        // === PDF 导出 ===
+        function exportToPDF() {
             let author = prompt("请输入您的署名（用于页脚水印）:", "Kaylerris");
             if (author === null) return; 
             if (author.trim() === "") author = "Guest";
             toast.style.display = 'block';
             const headerHTML = `<div class="pdf-header-mark">Kayler在线编辑器</div>`;
             const bodyHTML = marked.parse(editor.value);
-            // 修复：With 无下划线，x.aisai.cc 有下划线和链接
             const footerHTML = `<div class="pdf-footer-mark">Created by @${author} With <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a></div>`;
             pdfStage.innerHTML = headerHTML + bodyHTML + footerHTML;
             mainApp.style.display = 'none'; pdfStage.style.display = 'block';
@@ -337,85 +394,47 @@
             setTimeout(() => { html2pdf().set(opt).from(pdfStage).save().then(() => { document.body.classList.remove('export-mode'); pdfStage.style.display = 'none'; mainApp.style.display = 'flex'; toast.style.display = 'none'; }).catch(err => { console.error(err); alert("导出出错，请刷新重试"); document.body.classList.remove('export-mode'); pdfStage.style.display = 'none'; mainApp.style.display = 'flex'; toast.style.display = 'none'; }); }, 800);
         }
 
-        // === 权限检查 (v5.0) ===
+        // === 权限检查 ===
         function checkAdminStatus() {
             const token = localStorage.getItem('gh_token');
             if (token) {
-                btnPublish.disabled = false;
-                btnPublish.classList.add('active');
-                btnPublish.innerHTML = "☁️ 保存并发布";
-                btnPublish.title = "管理员已认证";
+                btnPublish.disabled = false; btnPublish.classList.add('active'); btnPublish.innerHTML = "☁️ 保存并发布"; btnPublish.title = "管理员已认证";
             } else {
-                btnPublish.disabled = true;
-                btnPublish.classList.remove('active');
-                btnPublish.innerHTML = "🔒 需配置权限";
-                btnPublish.title = "请点击“设置”配置 GitHub Token";
+                btnPublish.disabled = true; btnPublish.classList.remove('active'); btnPublish.innerHTML = "🔒 需配置权限"; btnPublish.title = "请点击“设置”配置 GitHub Token";
             }
         }
         
-        // 监听 layout.js 触发的事件 (如果 layout.js 也在检查)
         window.addEventListener('auth-updated', checkAdminStatus);
 
-        // === GitHub 发布配置逻辑 ===
+        // === GitHub 发布逻辑 ===
         function openSettings() {
             if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
             if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
-            
-            // 智能占位符 (安全版 v4.4)
             const token = localStorage.getItem('gh_token');
             const tokenInput = document.getElementById('gh-token');
-            if (token) {
-                tokenInput.placeholder = "******** (已配置，留空则不修改)";
-                tokenInput.value = ""; 
-            } else {
-                tokenInput.placeholder = "github_pat_...";
-                tokenInput.value = "";
-            }
-            
+            if (token) { tokenInput.placeholder = "******** (已配置，留空则不修改)"; tokenInput.value = ""; } else { tokenInput.placeholder = "github_pat_..."; tokenInput.value = ""; }
             settingsModal.style.display = 'flex';
         }
-
         function closeSettings() { settingsModal.style.display = 'none'; }
-
         function saveSettings() {
             localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
             localStorage.setItem('gh_path', document.getElementById('gh-path').value.trim());
-            
-            // 安全保存：仅当有输入时才更新
             const newToken = document.getElementById('gh-token').value.trim();
-            if (newToken) {
-                localStorage.setItem('gh_token', newToken);
-            }
-            
-            alert('配置已保存！');
-            checkAdminStatus(); 
-            closeSettings();
+            if (newToken) localStorage.setItem('gh_token', newToken);
+            alert('配置已保存！'); checkAdminStatus(); closeSettings();
         }
-
         function generateMagicLink() {
-            const owner = document.getElementById('gh-owner').value.trim() || localStorage.getItem('gh_owner');
-            const repo = document.getElementById('gh-repo').value.trim() || localStorage.getItem('gh_repo');
-            // 生成链接时必须显式获取 Token (哪怕是 masked 的)
-            // 这里我们优先取 input 里的，如果空则取 localStorage
-            const token = document.getElementById('gh-token').value.trim() || localStorage.getItem('gh_token');
-
-            if (!owner || !repo || !token) {
-                alert("请先确保配置已保存，并且 Token 存在！");
-                return;
-            }
-
+            const owner = document.getElementById('gh-owner').value.trim();
+            const repo = document.getElementById('gh-repo').value.trim();
+            const token = document.getElementById('gh-token').value.trim();
+            if (!owner || !repo || !token) { alert("请先填写并保存完整的配置信息（Token不能为空）！"); return; }
             const config = { o: owner, r: repo, t: token };
-            // 修复 v4.3: 使用 encodeURIComponent 防止 URL 乱码
             const encoded = encodeURIComponent(btoa(JSON.stringify(config)));
             const magicUrl = `${window.location.origin}/editor.html?gh_key=${encoded}`;
-            
-            navigator.clipboard.writeText(magicUrl).then(() => {
-                alert("🔗 魔法链接已复制！\n\n发送到其他设备打开，即可自动登录管理员。");
-            });
+            navigator.clipboard.writeText(magicUrl).then(() => { alert("🔗 魔法链接已复制！"); });
         }
-
-        async function pushToGitHub() { /* ... (保持不变) ... */ 
+        async function pushToGitHub() { /* ... */ 
             const owner = localStorage.getItem('gh_owner');
             const repo = localStorage.getItem('gh_repo');
             const token = localStorage.getItem('gh_token');
