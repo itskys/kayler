@@ -1,4 +1,4 @@
-/* editor.css */
+/* editor.css - v5.1 Clean Version */
 
 :root {
     --primary-color: #1890ff;
@@ -16,24 +16,21 @@ body, html {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
     background-color: var(--bg-color); 
     height: 100%; 
-    overflow: hidden; /* 防止整个页面滚动，只让编辑器内部滚动 */
+    overflow: hidden; 
 }
 
-/* --- 核心编辑器容器 --- */
+/* --- Main Wrapper --- */
 .main-wrapper {
     max-width: 1600px;
-    /* 上边距 60px (避开 layout.js 的 50px 导航栏) */
-    /* 下边距 0，高度自动计算剩余空间 */
     margin: 60px auto 0; 
     padding: 0 20px;
-    /* 计算高度：总高 - 顶部导航预留(60px) - 底部页脚预留(40px) - 底部间隙(20px) */
     height: calc(100vh - 120px); 
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-/* --- 顶部工具栏 (仿截图) --- */
+/* --- Toolbar Header --- */
 .editor-toolbar-header {
     background: #fff; 
     padding: 8px 20px; 
@@ -42,7 +39,7 @@ body, html {
     justify-content: space-between; 
     align-items: center; 
     border: 1px solid var(--border-color);
-    flex-shrink: 0; /* 防止被压缩 */
+    flex-shrink: 0; 
 }
 
 .page-title { 
@@ -50,7 +47,7 @@ body, html {
     display: flex; align-items: center; gap: 10px; 
 }
 
-/* 输入框样式 */
+/* Title Input */
 .title-input {
     background: #f6f8fa; border: 1px solid var(--border-color); 
     padding: 6px 12px; border-radius: 6px; color: #57606a; 
@@ -58,7 +55,7 @@ body, html {
     text-align: center;
 }
 
-/* 按钮组 */
+/* Action Buttons */
 .action-group { display: flex; gap: 8px; align-items: center; }
 
 .btn { 
@@ -77,10 +74,10 @@ body, html {
 .btn-md { background: var(--dark-color); }
 .btn-long { background: var(--brown-color); }
 
-/* --- 编辑区域分栏 --- */
+/* --- Editor Split Layout --- */
 .editor-container {
     display: flex; gap: 15px; 
-    flex: 1; min-height: 0; /* 关键：允许子元素高度溢出滚动 */
+    flex: 1; min-height: 0; 
 }
 
 .panel {
@@ -111,22 +108,18 @@ body, html {
 }
 #editor { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; color: #24292f; }
 
-/* Markdown 预览优化 */
+/* Markdown Preview Styling */
 #preview h1, #preview h2 { border-bottom: 1px solid #eee; padding-bottom: .3em; }
 #preview blockquote { border-left: 4px solid #dfe2e5; color: #6a737d; padding-left: 1em; }
 #preview img { max-width: 100%; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 #preview pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
 #preview code { background: #afb8c133; padding: .2em .4em; border-radius: 6px; font-size: 85%; font-family: monospace; }
 
-/* --- 🖨️ PDF A4 完美打印 --- */
+/* --- PDF Print Fix --- */
 @media print {
-    /* 1. 隐藏 layout.js 注入的导航和页脚 */
     .global-top-nav, .global-footer, #global-settings-modal { display: none !important; }
-    
-    /* 2. 隐藏编辑器工具栏、左侧输入框 */
     .editor-toolbar-header, .panel:first-child, .panel-header { display: none !important; }
 
-    /* 3. 重置容器，让预览区占满 A4 纸 */
     body, html, .main-wrapper, .editor-container {
         height: auto !important; margin: 0 !important; padding: 0 !important; 
         overflow: visible !important; background: #fff !important;
@@ -141,16 +134,15 @@ body, html {
         padding: 0 !important; overflow: visible !important;
     }
 
-    /* 4. 打印排版优化 */
     #preview { font-size: 12pt; line-height: 1.5; }
     a { text-decoration: none; color: #000; }
     @page { margin: 2cm; size: A4; }
 }
 
-/* 响应式 */
+/* Responsive */
 @media (max-width: 768px) {
     .editor-container { flex-direction: column; height: auto; }
     .main-wrapper { height: auto; margin-bottom: 60px; }
     .panel { min-height: 50vh; }
-    .action-group { display: none; } /* 移动端暂时隐藏按钮 */
+    .action-group { display: none; }
 }
