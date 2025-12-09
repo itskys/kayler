@@ -1,71 +1,156 @@
 /* editor.css */
+
+:root {
+    --primary-color: #1890ff;
+    --success-color: #1a7f37; /* GitHub Green */
+    --danger-color: #d1242f;  
+    --dark-color: #24292f;    
+    --brown-color: #9a6700;   
+    --bg-color: #f6f8fa;
+    --border-color: #d0d7de;
+}
+
 * { box-sizing: border-box; }
-body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; }
-
-/* 顶部导航 */
-header {
-    background-color: #fff; padding: 0 20px; height: 60px;
-    display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; z-index: 10;
-}
-h1 { margin: 0; font-size: 18px; color: #333; }
-
-/* 顶部按钮 */
-.header-actions button {
-    padding: 8px 16px; margin-left: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.3s;
-}
-.btn-back { background-color: #f5f5f5; color: #666; }
-.btn-back:hover { background-color: #e0e0e0; }
-.btn-primary { background-color: #1890ff; color: white; font-weight: 500; }
-.btn-primary:hover { background-color: #40a9ff; transform: translateY(-1px); }
-/* 新增：语法帮助按钮 */
-.btn-help { background-color: #fff; border: 1px solid #ddd; color: #666; }
-.btn-help:hover { border-color: #1890ff; color: #1890ff; }
-
-/* 主布局 */
-.container {
-    display: flex; height: calc(100% - 60px); margin-top: 60px; padding: 20px; gap: 20px;
-}
-.column {
-    flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;
+body, html { 
+    margin: 0; padding: 0; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
+    background-color: var(--bg-color); 
+    height: 100%; 
+    overflow: hidden; /* 防止整个页面滚动，只让编辑器内部滚动 */
 }
 
-/* 工具栏 */
-.toolbar {
-    display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background-color: #fafafa; border-bottom: 1px solid #eee;
+/* --- 核心编辑器容器 --- */
+.main-wrapper {
+    max-width: 1600px;
+    /* 上边距 60px (避开 layout.js 的 50px 导航栏) */
+    /* 下边距 0，高度自动计算剩余空间 */
+    margin: 60px auto 0; 
+    padding: 0 20px;
+    /* 计算高度：总高 - 顶部导航预留(60px) - 底部页脚预留(40px) - 底部间隙(20px) */
+    height: calc(100vh - 120px); 
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
-.toolbar-title { font-size: 14px; font-weight: bold; color: #555; }
-.copy-btn {
-    background-color: #fff; border: 1px solid #d9d9d9; color: #666; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s;
-}
-.copy-btn:hover { color: #1890ff; border-color: #1890ff; background-color: #e6f7ff; }
 
-/* 编辑与预览区域 */
+/* --- 顶部工具栏 (仿截图) --- */
+.editor-toolbar-header {
+    background: #fff; 
+    padding: 8px 20px; 
+    border-radius: 6px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border: 1px solid var(--border-color);
+    flex-shrink: 0; /* 防止被压缩 */
+}
+
+.page-title { 
+    font-size: 18px; font-weight: 600; color: #333; 
+    display: flex; align-items: center; gap: 10px; 
+}
+
+/* 输入框样式 */
+.title-input {
+    background: #f6f8fa; border: 1px solid var(--border-color); 
+    padding: 6px 12px; border-radius: 6px; color: #57606a; 
+    font-size: 14px; width: 400px; outline: none; 
+    text-align: center;
+}
+
+/* 按钮组 */
+.action-group { display: flex; gap: 8px; align-items: center; }
+
+.btn { 
+    border: none; padding: 6px 12px; border-radius: 6px; 
+    color: #fff; font-size: 13px; font-weight: 600; 
+    cursor: pointer; transition: 0.2s; 
+    display: flex; align-items: center; gap: 6px;
+    box-shadow: 0 1px 0 rgba(27,31,36,0.1);
+}
+.btn:hover { opacity: 0.9; }
+.btn:active { transform: translateY(1px); }
+
+.btn-setting { background: #f6f8fa; color: #24292f; border: 1px solid var(--border-color); }
+.btn-save { background: var(--success-color); }
+.btn-pdf { background: var(--danger-color); }
+.btn-md { background: var(--dark-color); }
+.btn-long { background: var(--brown-color); }
+
+/* --- 编辑区域分栏 --- */
+.editor-container {
+    display: flex; gap: 15px; 
+    flex: 1; min-height: 0; /* 关键：允许子元素高度溢出滚动 */
+}
+
+.panel {
+    flex: 1; background: #fff; 
+    border-radius: 6px; 
+    border: 1px solid var(--border-color);
+    display: flex; flex-direction: column; 
+    overflow: hidden;
+}
+
+.panel-header {
+    padding: 8px 15px; border-bottom: 1px solid var(--border-color); 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: #f6f8fa; font-size: 13px; color: #57606a; font-weight: 600;
+}
+
+.copy-btn { 
+    border: 1px solid var(--border-color); background: #fff; 
+    padding: 3px 8px; border-radius: 4px; cursor: pointer; 
+    font-size: 12px; color: #57606a; transition: 0.2s;
+}
+.copy-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
 .editor-area, .preview-area {
-    flex: 1; padding: 20px; overflow-y: auto; font-size: 16px; line-height: 1.6; border: none; outline: none; resize: none;
+    flex: 1; padding: 20px; overflow-y: auto; 
+    font-size: 16px; line-height: 1.6; 
+    border: none; resize: none; outline: none;
 }
-#editor { font-family: 'Consolas', monospace; color: #333; }
-#preview img { max-width: 100%; }
-#preview blockquote { border-left: 4px solid #dfe2e5; color: #6a737d; padding-left: 1em; margin: 1em 0; }
-#preview code { background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
-#preview pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
+#editor { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; color: #24292f; }
 
-/* 语法帮助侧边栏（新增） */
-.guide-panel {
-    position: fixed; right: -300px; top: 60px; width: 280px; height: calc(100% - 60px);
-    background: #fff; box-shadow: -2px 0 5px rgba(0,0,0,0.05); transition: right 0.3s ease;
-    overflow-y: auto; padding: 20px; z-index: 20;
+/* Markdown 预览优化 */
+#preview h1, #preview h2 { border-bottom: 1px solid #eee; padding-bottom: .3em; }
+#preview blockquote { border-left: 4px solid #dfe2e5; color: #6a737d; padding-left: 1em; }
+#preview img { max-width: 100%; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+#preview pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
+#preview code { background: #afb8c133; padding: .2em .4em; border-radius: 6px; font-size: 85%; font-family: monospace; }
+
+/* --- 🖨️ PDF A4 完美打印 --- */
+@media print {
+    /* 1. 隐藏 layout.js 注入的导航和页脚 */
+    .global-top-nav, .global-footer, #global-settings-modal { display: none !important; }
+    
+    /* 2. 隐藏编辑器工具栏、左侧输入框 */
+    .editor-toolbar-header, .panel:first-child, .panel-header { display: none !important; }
+
+    /* 3. 重置容器，让预览区占满 A4 纸 */
+    body, html, .main-wrapper, .editor-container {
+        height: auto !important; margin: 0 !important; padding: 0 !important; 
+        overflow: visible !important; background: #fff !important;
+        display: block !important;
+    }
+
+    .panel:last-child {
+        border: none !important; width: 100% !important; display: block !important;
+    }
+    
+    .preview-area {
+        padding: 0 !important; overflow: visible !important;
+    }
+
+    /* 4. 打印排版优化 */
+    #preview { font-size: 12pt; line-height: 1.5; }
+    a { text-decoration: none; color: #000; }
+    @page { margin: 2cm; size: A4; }
 }
-.guide-panel.active { right: 0; }
-.guide-item { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.guide-title { font-weight: bold; color: #1890ff; margin-bottom: 5px; }
-.guide-code { background: #f5f5f5; padding: 5px; font-family: monospace; font-size: 12px; color: #333; border-radius: 4px; white-space: pre-wrap;}
-.guide-desc { font-size: 12px; color: #888; margin-top: 4px; }
 
 /* 响应式 */
 @media (max-width: 768px) {
-    .container { flex-direction: column; height: auto; }
-    .column { height: 50vh; }
-    .guide-panel { width: 100%; top: auto; bottom: 0; height: 40vh; right: 0; transform: translateY(100%); transition: transform 0.3s; }
-    .guide-panel.active { transform: translateY(0); }
+    .editor-container { flex-direction: column; height: auto; }
+    .main-wrapper { height: auto; margin-bottom: 60px; }
+    .panel { min-height: 50vh; }
+    .action-group { display: none; } /* 移动端暂时隐藏按钮 */
 }

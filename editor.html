@@ -3,46 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown 编辑器</title>
+    <title>Kayler 在线编辑器</title>
     <link rel="stylesheet" href="editor.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <header>
-        <h1>✏️ 文章编辑器</h1>
-        <div class="header-actions">
-            <button class="btn-help" id="btn-help">❓ 语法帮助</button>
-            <button class="btn-back" onclick="window.location.href='index.html'">返回首页</button>
-            <button class="btn-primary" id="btn-generate-img">✨ 生成长图</button>
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="column">
-            <div class="toolbar">
-                <div class="toolbar-title">📝 Markdown 源码</div>
-                <button id="btn-copy-code" class="copy-btn">📋 复制代码</button>
+    <div class="main-wrapper">
+        
+        <div class="editor-toolbar-header">
+            <div class="page-title">
+                <i class="fa-solid fa-pen-nib" style="color: #1890ff;"></i>
+                <span>在线编辑器</span>
             </div>
-            <textarea id="editor" class="editor-area" placeholder="在此输入 Markdown..."></textarea>
+
+            <input type="text" class="title-input" value="Role 资深法医级人体分析师 & 顶级ACG概念艺术家.md" readonly>
+
+            <div class="action-group">
+                <button class="btn btn-setting"><i class="fa-solid fa-gear"></i> 设置</button>
+                <button class="btn btn-save" id="btn-save"><i class="fa-solid fa-cloud-arrow-up"></i> 保存并发布</button>
+                <button class="btn btn-pdf" id="btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF (A4)</button>
+                <button class="btn btn-md" id="btn-md"><i class="fa-solid fa-file-arrow-down"></i> .md</button>
+                <button class="btn btn-long" id="btn-long-img"><i class="fa-solid fa-image"></i> 长图</button>
+            </div>
         </div>
 
-        <div class="column">
-            <div class="toolbar">
-                <div class="toolbar-title">👁️ 实时预览</div>
-                <button id="btn-copy-text" class="copy-btn">📑 复制文本</button>
+        <div class="editor-container">
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <span><i class="fa-brands fa-markdown"></i> Markdown 源码</span>
+                    <button id="btn-copy-code" class="copy-btn">复制代码</button>
+                </div>
+                <textarea id="editor" class="editor-area" placeholder="在此输入 Markdown 内容..."></textarea>
             </div>
-            <div id="preview" class="preview-area"></div>
-        </div>
-    </div>
 
-    <div id="guide-panel" class="guide-panel">
-        <div style="font-size:16px; font-weight:bold; margin-bottom:15px;">Markdown 语法速查</div>
-        <div id="guide-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <span><i class="fa-solid fa-eye"></i> 实时预览</span>
+                    <button id="btn-copy-text" class="copy-btn">复制文本</button>
+                </div>
+                <div id="preview" class="preview-area"></div>
             </div>
+
+        </div>
     </div>
 
     <script src="markdown-data.js"></script>
-    <script src="editor.js"></script>
+    <script src="layout.js"></script> <script src="editor.js"></script>
+
 </body>
 </html>

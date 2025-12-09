@@ -1,31 +1,21 @@
 // editor.js
 
-// 1. DOM 元素获取
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
-const btnCopyCode = document.getElementById('btn-copy-code');
-const btnCopyText = document.getElementById('btn-copy-text');
-const btnGenerate = document.getElementById('btn-generate-img');
-const btnHelp = document.getElementById('btn-help'); // 新增
-const guidePanel = document.getElementById('guide-panel'); // 新增
-const guideContent = document.getElementById('guide-content'); // 新增
 
-// 2. 初始化与渲染
+// 初始化
 window.addEventListener('load', () => {
-    // 尝试读取本地缓存
+    // 恢复草稿
     const savedContent = localStorage.getItem('editor_draft');
-    
-    // 如果有缓存，用缓存；如果没有，读取 markdown-data.js 中的默认内容
     if (savedContent) {
         editor.value = savedContent;
     } else if (typeof DEFAULT_EDITOR_CONTENT !== 'undefined') {
         editor.value = DEFAULT_EDITOR_CONTENT;
     }
-    
     renderMarkdown();
-    loadSyntaxGuide(); // 加载语法指南
 });
 
+// 实时渲染
 editor.addEventListener('input', () => {
     renderMarkdown();
     localStorage.setItem('editor_draft', editor.value);
@@ -37,86 +27,88 @@ function renderMarkdown() {
     }
 }
 
-// 3. 动态加载语法指南 (读取 markdown-data.js)
-function loadSyntaxGuide() {
-    if (typeof MARKDOWN_GUIDE === 'undefined') return;
+// --- 按钮逻辑 ---
 
-    let html = '';
-    MARKDOWN_GUIDE.forEach(item => {
-        html += `
-            <div class="guide-item">
-                <div class="guide-title">${item.title}</div>
-                <div class="guide-code">${item.syntax}</div>
-                <div class="guide-desc">${item.desc}</div>
-            </div>
-        `;
-    });
-    guideContent.innerHTML = html;
-}
-
-// 4. 按钮事件监听
-
-// 切换语法帮助面板
-btnHelp.addEventListener('click', () => {
-    guidePanel.classList.toggle('active');
-    btnHelp.style.color = guidePanel.classList.contains('active') ? '#1890ff' : '#666';
-});
-
-// 复制源码
-btnCopyCode.addEventListener('click', async () => {
-    await copyToClipboard(editor.value, btnCopyCode);
-});
-
-// 复制纯文本
-btnCopyText.addEventListener('click', async () => {
-    await copyToClipboard(preview.innerText, btnCopyText);
-});
-
-// 通用复制函数
-async function copyToClipboard(text, btnElement) {
-    try {
-        await navigator.clipboard.writeText(text);
-        showFeedback(btnElement, '✅ 已复制');
-    } catch (err) {
-        console.error(err);
-        showFeedback(btnElement, '❌ 失败');
+// 1. 设置
+document.querySelector('.btn-setting').addEventListener('click', () => {
+    // 调用 layout.js 提供的全局设置弹窗
+    if (window.openGlobalSettings) {
+        window.openGlobalSettings();
+    } else {
+        alert("Layout.js 未加载，无法打开设置");
     }
-}
+});
 
-function showFeedback(btn, msg) {
-    const originalText = btn.innerText;
-    btn.innerText = msg;
-    btn.style.borderColor = '#52c41a';
-    btn.style.color = '#52c41a';
-    setTimeout(() => {
-        btn.innerText = originalText;
-        btn.style.borderColor = '';
-        btn.style.color = '';
-    }, 1500);
-}
+// 2. 保存并发布
+document.getElementById('btn-save').addEventListener('click', () => {
+    // 检查 layout.js 管理的 Token
+    const token = localStorage.getItem('gh_token');
+    if (!token) {
+        if(confirm("⚠️ 未检测到 GitHub Token，无法发布。\n是否立即打开设置进行配置？")) {
+            window.openGlobalSettings();
+        }
+        return;
+    }
+    alert("✅ 模拟发布成功！\n(实际发布逻辑可对接 GitHub API)");
+});
 
-// 5. 生成长图逻辑 (关键修改：复制纯文本到 index.html)
-btnGenerate.addEventListener('click', () => {
-    // 获取渲染后的纯文本 (innerText)
-    const contentForImage = preview.innerText;
+// 3. PDF 打印
+document.getElementById('btn-pdf').addEventListener('click', () => {
+    window.print();
+});
 
-    if (!contentForImage.trim()) {
+// 4. 导出 .md
+document.getElementById('btn-md').addEventListener('click', () => {
+    const blob = new Blob([editor.value], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kayler-article.md';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// 5. 生成长图 (修正版)
+document.getElementById('btn-long-img').addEventListener('click', () => {
+    // 获取纯文本
+    const content = preview.innerText; 
+    
+    if (!content.trim()) {
         alert("内容为空，无法生成！");
         return;
     }
-
-    // 存入 localStorage 供 index.html 使用
-    // 注意：这里使用的是 'image_gen_content'，请确保 index.html 读取的是这个 key
-    localStorage.setItem('image_gen_content', contentForImage);
-
+    
+    // 存入缓存，供 index.html 读取
+    localStorage.setItem('image_gen_content', content);
+    
     // 跳转
     window.location.href = 'index.html';
 });
 
-// 6. 同步滚动
+// 6. 复制源码
+document.getElementById('btn-copy-code').addEventListener('click', async function() {
+    await copyToClipboard(editor.value, this);
+});
+
+// 7. 复制文本
+document.getElementById('btn-copy-text').addEventListener('click', async function() {
+    await copyToClipboard(preview.innerText, this);
+});
+
+// 辅助函数
+async function copyToClipboard(text, btn) {
+    try {
+        await navigator.clipboard.writeText(text);
+        const originalText = btn.innerText;
+        btn.innerText = "已复制";
+        setTimeout(() => btn.innerText = originalText, 1500);
+    } catch (e) { console.error(e); }
+}
+
+// 同步滚动
 let isScrolling = false;
 editor.addEventListener('scroll', () => {
-    if (!isScrolling) {
+    if(!isScrolling) {
         isScrolling = true;
         const percent = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
         preview.scrollTop = percent * (preview.scrollHeight - preview.clientHeight);
@@ -124,7 +116,7 @@ editor.addEventListener('scroll', () => {
     }
 });
 preview.addEventListener('scroll', () => {
-    if (!isScrolling) {
+    if(!isScrolling) {
         isScrolling = true;
         const percent = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
         editor.scrollTop = percent * (editor.scrollHeight - editor.clientHeight);
