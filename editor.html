@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <script src="layout.js"></script>
+    <script src="layout.js?v=5.0"></script>
     
     <style>
         :root { 
@@ -22,7 +22,6 @@
         }
         * { box-sizing: border-box; }
         
-        /* === 布局基础 === */
         html, body {
             margin: 0; padding: 0;
             height: 100%; 
@@ -30,10 +29,8 @@
             background: var(--bg-body); color: #333;
         }
         
-        /* 平时：禁止滚动，应用 Flex 布局 */
         body { overflow: hidden; display: flex; flex-direction: column; }
 
-        /* 导出模式：允许滚动 (PDF生成用) */
         body.export-mode {
             overflow: visible !important;
             height: auto !important;
@@ -41,13 +38,12 @@
             display: block !important;
         }
 
-        /* === 主应用容器 === */
         #main-app {
             display: flex; flex-direction: column; height: 100%; width: 100%;
-            /* 顶部导航和页脚的高度由 layout.js 自动处理，这里利用 flex 自动填充 */
         }
 
-        /* 头部工具栏 */
+        /* 顶部导航由 layout.js 注入 */
+
         .header-wrapper {
             flex-shrink: 0; 
             width: var(--layout-width); max-width: var(--layout-max-width); 
@@ -76,12 +72,11 @@
         .btn-primary { background: #333; color: white; }
         .btn-pdf { background: #d32f2f; color: white; }
         .btn-magic { background: var(--brand-brown); color: white; }
-        .btn-cloud { background: #ccc; color: white; cursor: not-allowed; } /* 默认禁用 */
+        .btn-cloud { background: #ccc; color: white; cursor: not-allowed; } 
         .btn-cloud.active { background: #2e7d32; cursor: pointer; } 
         .btn-cloud.active:hover { background: #1b5e20; }
         .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
 
-        /* === 主工作区 === */
         .workspace-container {
             flex: 1; width: 100%; display: flex; justify-content: center;
             overflow: hidden; padding-bottom: 10px;
@@ -99,7 +94,6 @@
             width: 50%; height: 100%; position: relative;
         }
 
-        /* 左侧编辑器 */
         .pane-editor { overflow: hidden; padding: 0; }
         
         #editor {
@@ -110,19 +104,16 @@
             font-size: 15px; line-height: 1.7; 
             padding: 30px; 
             color: #333; background: white; display: block; 
-            overflow-y: auto; /* 关键：内部滚动 */
+            overflow-y: auto; 
             box-sizing: border-box;
         }
-        /* 占位符模式（灰色字体） */
         #editor.placeholder-mode { color: #aaa; }
 
-        /* 右侧预览区 */
         #preview { 
             background: #fdfbf7; color: #333; padding: 30px 40px; 
             overflow-y: auto; 
         }
         
-        /* Markdown 渲染样式 */
         .markdown-body h1 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 26px; margin-top: 0; color: #000; }
         .markdown-body h2 { border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; font-size: 20px; margin-top: 25px; color: #333; }
         .markdown-body blockquote { border-left: 4px solid var(--brand-brown); padding-left: 15px; color: #666; background: rgba(139, 94, 60, 0.05); padding: 10px; margin: 15px 0; }
@@ -134,7 +125,12 @@
         .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         .markdown-body th { background: #f0f0f0; font-weight: bold; }
 
-        /* === PDF 专用舞台 (平时隐藏) === */
+        footer {
+            height: 40px; background: white; border-top: 1px solid #ddd;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 12px; color: #999; flex-shrink: 0;
+        }
+
         #pdf-stage { display: none; width: 100%; margin: 0; background: white !important; padding: 0; color: black; font-family: "SimSun", serif; }
         #pdf-stage * { color: black !important; background-color: transparent !important; }
         #pdf-stage p, #pdf-stage pre, #pdf-stage blockquote, #pdf-stage ul, #pdf-stage ol, #pdf-stage table, #pdf-stage h1, #pdf-stage h2, #pdf-stage h3 { page-break-inside: avoid; break-inside: avoid; }
@@ -152,10 +148,8 @@
         .pdf-footer-mark { margin-top: 60px; padding-top: 15px; border-top: 1px solid #000; text-align: center; font-size: 10pt; color: #666 !important; font-style: italic; white-space: nowrap; page-break-inside: avoid; }
         .pdf-footer-mark a { color: #666 !important; text-decoration: underline !important; font-weight: bold; }
 
-        /* 加载遮罩 */
         #loading-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 30px; border-radius: 8px; font-size: 16px; z-index: 99999; display: none; }
 
-        /* GitHub 配置弹窗 */
         #settings-modal {
             display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.5); z-index:20000; justify-content:center; align-items:center;
@@ -268,6 +262,28 @@
     </div>
 
     <script>
+        // === 核心修复：优先处理魔法链接 (放在最前面) ===
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('gh_key')) {
+                try {
+                    const rawData = atob(urlParams.get('gh_key'));
+                    const config = JSON.parse(rawData);
+                    if (config.t) {
+                        localStorage.setItem('gh_token', config.t);
+                        localStorage.setItem('gh_owner', config.o || '');
+                        localStorage.setItem('gh_repo', config.r || '');
+                        alert(`🎉 身份验证成功！\n\n欢迎回来，管理员 ${config.o}。`);
+                        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                        window.history.replaceState({path:newUrl}, '', newUrl);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('❌ 魔法链接无效');
+                }
+            }
+        })();
+
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const filenameDisplay = document.getElementById('filenamePreview');
@@ -278,9 +294,9 @@
         const toast = document.getElementById('loading-toast');
         const settingsModal = document.getElementById('settings-modal');
 
-        const markdownGuide = `# Markdown 语法速查指南... (这里省略，保持原有内容)`;
+        const markdownGuide = `# Markdown 语法速查指南... (此处省略)`;
 
-        // === 1. 编辑器核心逻辑 ===
+        // ... (checkPlaceholderMode, focus, input, getSmartFilename, updateFilenamePreview 逻辑保持不变) ...
         function checkPlaceholderMode() {
             if (editor.value === markdownGuide) editor.classList.add('placeholder-mode');
             else editor.classList.remove('placeholder-mode');
@@ -304,9 +320,7 @@
         function updateFilenamePreview(content) { filenameDisplay.innerText = getSmartFilename(content, ".md"); }
         function downloadFile() { /* ... */ }
         function transferToCard() { /* ... */ }
-        
-        // === 2. PDF 导出逻辑 ===
-        function exportToPDF() {
+        function exportToPDF() { /* ... (保持 v3.4 逻辑) ... */ 
             let author = prompt("请输入您的署名（用于页脚水印）:", "Kaylerris");
             if (author === null) return; 
             if (author.trim() === "") author = "Guest";
@@ -323,47 +337,85 @@
             setTimeout(() => { html2pdf().set(opt).from(pdfStage).save().then(() => { document.body.classList.remove('export-mode'); pdfStage.style.display = 'none'; mainApp.style.display = 'flex'; toast.style.display = 'none'; }).catch(err => { console.error(err); alert("导出出错，请刷新重试"); document.body.classList.remove('export-mode'); pdfStage.style.display = 'none'; mainApp.style.display = 'flex'; toast.style.display = 'none'; }); }, 800);
         }
 
-        // === 3. 权限与发布逻辑 ===
+        // === 权限检查 (v5.0) ===
         function checkAdminStatus() {
             const token = localStorage.getItem('gh_token');
             if (token) {
-                btnPublish.disabled = false; btnPublish.classList.add('active'); btnPublish.innerHTML = "☁️ 保存并发布"; btnPublish.title = "管理员已认证";
+                btnPublish.disabled = false;
+                btnPublish.classList.add('active');
+                btnPublish.innerHTML = "☁️ 保存并发布";
+                btnPublish.title = "管理员已认证";
             } else {
-                btnPublish.disabled = true; btnPublish.classList.remove('active'); btnPublish.innerHTML = "🔒 需配置权限"; btnPublish.title = "请点击“设置”配置 GitHub Token";
+                btnPublish.disabled = true;
+                btnPublish.classList.remove('active');
+                btnPublish.innerHTML = "🔒 需配置权限";
+                btnPublish.title = "请点击“设置”配置 GitHub Token";
             }
         }
         
+        // 监听 layout.js 触发的事件 (如果 layout.js 也在检查)
         window.addEventListener('auth-updated', checkAdminStatus);
 
+        // === GitHub 发布配置逻辑 ===
         function openSettings() {
             if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
             if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
-            // Token 不显示，仅显示占位符
+            
+            // 智能占位符 (安全版 v4.4)
             const token = localStorage.getItem('gh_token');
             const tokenInput = document.getElementById('gh-token');
-            if (token) { tokenInput.placeholder = "******** (已配置，留空则不修改)"; tokenInput.value = ""; } else { tokenInput.placeholder = "github_pat_..."; tokenInput.value = ""; }
+            if (token) {
+                tokenInput.placeholder = "******** (已配置，留空则不修改)";
+                tokenInput.value = ""; 
+            } else {
+                tokenInput.placeholder = "github_pat_...";
+                tokenInput.value = "";
+            }
+            
             settingsModal.style.display = 'flex';
         }
+
         function closeSettings() { settingsModal.style.display = 'none'; }
+
         function saveSettings() {
             localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
             localStorage.setItem('gh_path', document.getElementById('gh-path').value.trim());
+            
+            // 安全保存：仅当有输入时才更新
             const newToken = document.getElementById('gh-token').value.trim();
-            if (newToken) localStorage.setItem('gh_token', newToken);
-            alert('配置已保存！'); checkAdminStatus(); closeSettings();
+            if (newToken) {
+                localStorage.setItem('gh_token', newToken);
+            }
+            
+            alert('配置已保存！');
+            checkAdminStatus(); 
+            closeSettings();
         }
+
         function generateMagicLink() {
-            const owner = document.getElementById('gh-owner').value.trim();
-            const repo = document.getElementById('gh-repo').value.trim();
-            const token = document.getElementById('gh-token').value.trim(); // 生成链接必须用明文token
-            if (!owner || !repo || !token) { alert("请先填写并保存完整的配置信息（Token不能为空）！"); return; }
+            const owner = document.getElementById('gh-owner').value.trim() || localStorage.getItem('gh_owner');
+            const repo = document.getElementById('gh-repo').value.trim() || localStorage.getItem('gh_repo');
+            // 生成链接时必须显式获取 Token (哪怕是 masked 的)
+            // 这里我们优先取 input 里的，如果空则取 localStorage
+            const token = document.getElementById('gh-token').value.trim() || localStorage.getItem('gh_token');
+
+            if (!owner || !repo || !token) {
+                alert("请先确保配置已保存，并且 Token 存在！");
+                return;
+            }
+
             const config = { o: owner, r: repo, t: token };
+            // 修复 v4.3: 使用 encodeURIComponent 防止 URL 乱码
             const encoded = encodeURIComponent(btoa(JSON.stringify(config)));
             const magicUrl = `${window.location.origin}/editor.html?gh_key=${encoded}`;
-            navigator.clipboard.writeText(magicUrl).then(() => { alert("🔗 魔法链接已复制！"); });
+            
+            navigator.clipboard.writeText(magicUrl).then(() => {
+                alert("🔗 魔法链接已复制！\n\n发送到其他设备打开，即可自动登录管理员。");
+            });
         }
-        async function pushToGitHub() { /* ... 保持 v4.1 发布逻辑 ... */ 
+
+        async function pushToGitHub() { /* ... (保持不变) ... */ 
             const owner = localStorage.getItem('gh_owner');
             const repo = localStorage.getItem('gh_repo');
             const token = localStorage.getItem('gh_token');
@@ -389,7 +441,6 @@
             } catch (e) { if(e.message !== "取消操作") alert("发布失败: " + e.message); } finally { btn.innerHTML = originalText; btn.disabled = false; toast.style.display = 'none'; }
         }
 
-        // 初始化
         const cached = localStorage.getItem('kayler_editor_cache');
         if (cached && cached.length > 5) {
             editor.value = cached;
