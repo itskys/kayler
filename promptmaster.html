@@ -7,176 +7,81 @@
     <title>提示词管理器 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
-    <script src="layout.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
+    <script src="layout.js"></script>
+    
     <style>
+        /* === 页面特有样式 === */
         :root {
-            --bg-body: #f2f4f7; 
-            --brand-brown: #8b5e3c;
-            --brand-brown-hover: #6d4c41;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --layout-width: 94%;
-            --layout-max-width: 1400px;
+            --bg-body: #f2f4f7; --text-color: #2c2c2c;
+            --brand-brown: #8b5e3c; --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            --layout-width: 94%; --layout-max-width: 1400px;
         }
-
         * { box-sizing: border-box; }
-
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-body); margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: #333;
+            min-height: 100vh; color: var(--text-color);
         }
 
-        /* 顶部导航由 layout.js 注入 */
-
+        /* 布局 */
         header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
-        h1 { 
-            font-size: 32px; font-weight: 800; margin-bottom: 10px; 
-            display: flex; align-items: center; justify-content: center;
-        }
+        h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
         
-        .main-container {
-            width: var(--layout-width); max-width: var(--layout-max-width);
-            display: flex; flex-direction: column; gap: 40px; flex: 1; 
-        }
-
-        .section-title {
-            font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown);
-            padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
-        }
+        .main-container { width: var(--layout-width); max-width: var(--layout-max-width); display: flex; flex-direction: column; gap: 40px; flex: 1; }
+        .section-title { font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown); padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .refresh-btn { font-size: 14px; color: var(--brand-brown); cursor: pointer; border: 1px solid var(--brand-brown); padding: 4px 10px; border-radius: 4px; background: transparent; }
         
-        .refresh-btn {
-            font-size: 14px; color: var(--brand-brown); cursor: pointer; text-decoration: none; border: 1px solid var(--brand-brown);
-            padding: 4px 10px; border-radius: 4px; transition: all 0.2s; background: transparent;
-        }
-        .refresh-btn:hover { background: var(--brand-brown); color: white; }
-
-        /* === 区域 1: 提示词撰写助手 === */
-        .builder-area {
-            background: white; padding: 30px; border-radius: 16px;
-            box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 20px;
-        }
-
+        /* 编辑器区域 */
+        .builder-area { background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 20px; }
         .meta-row { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .filename-input {
-            flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; outline: none; transition: border 0.2s;
-        }
-        .filename-input:focus { border-color: var(--brand-brown); }
-
-        #promptInput {
-            width: 100%; height: 300px; border: 1px solid #eee; border-radius: 8px;
-            resize: vertical; outline: none; padding: 20px; 
-            font-family: "Menlo", monospace; font-size: 15px; line-height: 1.7;
-            background: #fafafa; color: #333;
-        }
-        #promptInput:focus { background: #fff; border-color: #ddd; }
-
-        .builder-actions { display: flex; justify-content: space-between; align-items: center; }
+        .filename-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; outline: none; }
+        #promptInput { width: 100%; height: 300px; border: 1px solid #eee; border-radius: 8px; resize: vertical; outline: none; padding: 20px; font-family: "Menlo", monospace; font-size: 15px; line-height: 1.7; background: #fafafa; color: #333; }
+        
+        .builder-actions { display: flex; justify-content: space-between; }
         .left-actions, .right-actions { display: flex; gap: 10px; }
-
-        .btn {
-            padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
-            font-size: 14px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
-        }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: bold; }
         .btn-primary { background: var(--brand-brown); color: white; }
         .btn-secondary { background: #f0f0f0; color: #666; }
-        .btn-preview { background: #e3f2fd; color: #1565c0; } 
-        .btn-preview:hover { background: #bbdefb; }
+        .btn-preview { background: #e3f2fd; color: #1565c0; }
         
-        .btn-admin { background: #ccc; color: white; cursor: not-allowed; }
-        .btn-admin.active { background: #2e7d32; cursor: pointer; } 
-        .btn-admin.active:hover { background: #1b5e20; }
+        /* 权限按钮 */
+        .btn-admin { background: #eee; color: #999; cursor: not-allowed; }
+        .btn-admin.active { background: #2e7d32; color: white; cursor: pointer; }
 
+        /* 标签 */
         .library-area { margin-top: 10px; padding-top: 20px; border-top: 1px dashed #eee; }
-        .category-group h3 { font-size: 14px; color: #888; margin: 0 0 10px 0; }
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        .tag {
-            background: white; padding: 6px 12px; border-radius: 50px;
-            border: 1px solid #eee; color: #555; cursor: pointer;
-            font-size: 12px; transition: all 0.2s; user-select: none;
-        }
-        .tag:hover {
-            border-color: var(--brand-brown); color: var(--brand-brown); transform: translateY(-2px);
-        }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .tag { background: white; padding: 6px 12px; border-radius: 50px; border: 1px solid #eee; cursor: pointer; font-size: 12px; }
+        .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
-        /* === 区域 2: 知识库列表 === */
-        .list-container {
-            background: white; border-radius: 16px;
-            box-shadow: var(--card-shadow); overflow: hidden;
-            padding: 0; min-height: 200px;
-        }
-
+        /* 列表 */
+        .list-container { background: white; border-radius: 16px; box-shadow: var(--card-shadow); overflow: hidden; padding: 0; min-height: 200px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        thead { background: #f9f7f1; }
-        th, td { 
-            padding: 18px 20px; text-align: left; 
-            border-bottom: 1px solid #eee; font-size: 14px; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-        }
-        th { font-weight: bold; color: #8b5e3c; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background-color: #fafafa; }
-
-        .prompt-link {
-            color: #2c2c2c; font-weight: 600; text-decoration: none;
-            cursor: pointer; transition: color 0.2s; display: flex; align-items: center; gap: 5px;
-        }
-        .prompt-link:hover { color: var(--brand-brown); text-decoration: underline; }
-        
-        .badge {
-            display: inline-block; padding: 2px 8px; border-radius: 4px;
-            font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555;
-        }
+        th, td { padding: 18px 20px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        th { font-weight: bold; color: #8b5e3c; background: #f9f7f1; }
+        .prompt-link { color: #2c2c2c; font-weight: 600; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555; }
         .badge.v-new { background: #e8f5e9; color: #2e7d32; }
 
-        .loading-state {
-            display: flex; justify-content: center; align-items: center; height: 200px; color: #999; flex-direction: column; gap: 10px;
-        }
-
-        /* === 弹窗 === */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 2000;
-            justify-content: center; align-items: center;
-            backdrop-filter: blur(2px);
-        }
+        /* 弹窗 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: white; width: 90%; max-width: 900px; height: 85vh;
-            border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; overflow: hidden;
-            animation: slideUp 0.3s ease;
-        }
+        .modal-content { background: white; width: 90%; max-width: 900px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fdfbf7; }
-        .modal-title { font-size: 18px; font-weight: bold; color: #333; }
-        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
-        
+        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
         .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
         
         .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
-        .markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 20px; margin-top: 20px; }
-        .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: "Menlo", monospace; font-size: 13px; line-height: 1.5; color: #333; }
-        .markdown-body code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; color: #c7254e; }
-        pre.raw-code { white-space: pre-wrap; word-wrap: break-word; font-family: "Menlo", monospace; margin: 0; color: #333; }
-        
-        .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; }
-        .copy-btn { padding: 8px 16px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; }
-
-        /* GitHub 配置弹窗 */
-        #settings-modal { z-index: 20000; }
-        
-        /* 底部配置链接 */
-        .admin-link { color: #ddd; text-decoration: none; font-size: 12px; margin-left: 10px; cursor: pointer; }
-        .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
+        .markdown-body pre { background: #f5f5f5; padding: 15px; overflow-x: auto; font-family: monospace; }
+        pre.raw-code { font-family: monospace; white-space: pre-wrap; margin: 0; }
 
         @media (max-width: 768px) {
             .builder-actions { flex-direction: column; gap: 10px; }
             .left-actions, .right-actions { width: 100%; justify-content: space-between; }
-            th:nth-child(4), td:nth-child(4) { display: none; } 
+            th:nth-child(4), td:nth-child(4) { display: none; }
         }
     </style>
 </head>
@@ -200,31 +105,30 @@
             <div class="builder-area">
                 <div class="meta-row">
                     <span style="font-size:14px; font-weight:bold; color:#666;">文件名:</span>
-                    <input type="text" id="filenameInput" class="filename-input" placeholder="例如: 概念拆解_v3.2_新版.md (必填)">
+                    <input type="text" id="filenameInput" class="filename-input" placeholder="例如: 概念拆解_v3.2.md">
                 </div>
 
                 <textarea id="promptInput" placeholder="# 在此输入提示词内容...&#10;- 支持 Markdown 格式&#10;- 点击下方标签可快速插入"></textarea>
 
                 <div class="builder-actions">
                     <div class="left-actions">
-                        <button class="btn btn-secondary" onclick="clearPrompt()">🗑️ 清空</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('promptInput').value=''">🗑️ 清空</button>
                         <button class="btn btn-secondary" onclick="downloadLocal()">💾 存到本地</button>
-                        <button class="btn btn-preview" onclick="openPreview()">👁️ 预览渲染</button>
+                        <button class="btn btn-preview" onclick="openPreview()">👁️ 预览</button>
                     </div>
                     <div class="right-actions">
-                        <button class="btn btn-primary" onclick="copyPrompt()">📋 复制内容</button>
-                        <button id="btnPublish" class="btn btn-admin" onclick="pushToGitHub()" disabled title="需验证管理员权限">
-                            ☁️ 保存并发布
+                        <button class="btn btn-primary" onclick="copyPrompt()">📋 复制</button>
+                        <button id="btnPublish" class="btn btn-admin" onclick="pushToGitHub()" disabled title="需管理员权限">
+                            🔒 需权限
                         </button>
                     </div>
                 </div>
 
                 <div class="library-area">
                     <div class="category-group">
-                        <h3>常用风格 & 参数</h3>
+                        <h3>常用标签</h3>
                         <div class="tags-container">
                             <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
-                            <div class="tag" onclick="addTag('Ukiyo-e style')">浮世绘</div>
                             <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
                             <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
                             <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
@@ -237,13 +141,10 @@
         <div>
             <div class="section-title">
                 📚 提示词知识库 (自动同步)
-                <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新列表</button>
+                <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新</button>
             </div>
             <div class="list-container">
-                <div id="loadingState" class="loading-state">
-                    <div style="font-size:24px;">⏳</div>
-                    <div>正在从 GitHub 读取最新列表...</div>
-                </div>
+                <div id="loadingState" style="padding:40px; text-align:center; color:#999;">正在加载...</div>
                 <table id="dataTable" style="display:none;">
                     <thead>
                         <tr>
@@ -256,15 +157,8 @@
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
-            <p style="text-align:center; color:#999; font-size:12px; margin-top:10px;">
-                列表数据来自 GitHub API，发布新文件后需等待 Cloudflare 构建 (约1-2分钟)。
-            </p>
         </div>
 
-    </div>
-
-    <div style="text-align: center; margin-top: -20px; margin-bottom: 20px;">
-        <a onclick="openSettings()" class="admin-link">⚙️ 管理员配置</a>
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
@@ -274,238 +168,198 @@
                 <button class="close-btn" onclick="closeModal()">×</button>
             </div>
             <div class="modal-body" id="modalBody"></div>
-            <div class="modal-footer">
-                <button class="copy-btn" id="modalCopyBtn" onclick="copyModalContent()">📋 复制内容</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="settings-modal" class="modal-overlay" onclick="if(event.target===this) closeSettings()">
-        <div style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-            <h3 style="margin-top:0; color:#333;">⚙️ 管理员认证</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:20px;">配置 GitHub Token 以激活发布功能。</p>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; font-weight:bold; color:#555;">GitHub 用户名</label>
-                <input type="text" id="gh-owner" value="itskys" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; font-weight:bold; color:#555;">仓库名</label>
-                <input type="text" id="gh-repo" value="kayler" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; font-weight:bold; color:#555;">Token (需 repo 权限)</label>
-                <input type="password" id="gh-token" placeholder="github_pat_..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-            </div>
-            <div style="text-align:right; margin-top:20px;">
-                <button onclick="closeSettings()" style="padding:8px 15px; border:none; background:#eee; cursor:pointer; border-radius:4px; margin-right:10px;">取消</button>
-                <button onclick="saveSettings()" style="padding:8px 15px; border:none; background:#8b5e3c; color:white; cursor:pointer; border-radius:4px;">保存并验证</button>
+            <div class="modal-footer" style="padding:15px; border-top:1px solid #eee; text-align:right;">
+                <button class="btn btn-primary" id="modalCopyBtn" onclick="copyModalContent()">📋 复制</button>
             </div>
         </div>
     </div>
 
     <script>
-        const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-
+        // === 逻辑部分 ===
         const promptInput = document.getElementById('promptInput');
         const filenameInput = document.getElementById('filenameInput');
         const btnPublish = document.getElementById('btnPublish');
-        const settingsModal = document.getElementById('settings-modal');
         const tableBody = document.getElementById('tableBody');
         const loadingState = document.getElementById('loadingState');
         const dataTable = document.getElementById('dataTable');
-        const modal = document.getElementById('modalOverlay');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
 
-        // === 1. 编辑器 ===
-        promptInput.addEventListener('input', () => {
-            if(!filenameInput.value) {
-                const match = promptInput.value.match(/^#\s+(.*)$/m);
-                if (match) filenameInput.value = match[1].trim() + ".md";
-            }
-        });
+        // 监听 layout.js 发出的认证事件，自动刷新按钮状态
+        window.addEventListener('auth-updated', checkAdminStatus);
+
         function addTag(text) {
             let current = promptInput.value;
             if (current.length > 0 && !current.endsWith(' ')) current += ' ';
             promptInput.value = current + text;
         }
-        function clearPrompt() { if(confirm('确定清空？')) promptInput.value = ''; }
+        
         function copyPrompt() { navigator.clipboard.writeText(promptInput.value).then(() => alert('已复制!')); }
+
         function openPreview() {
-            if(!promptInput.value.trim()) { alert("内容为空"); return; }
-            modalTitle.innerText = "Markdown 实时预览";
-            modalBody.innerHTML = `<div class="markdown-body">${marked.parse(promptInput.value)}</div>`;
-            modal.classList.add('active');
+            const text = promptInput.value;
+            if(!text.trim()) return;
+            document.getElementById('modalTitle').innerText = "预览";
+            document.getElementById('modalBody').innerHTML = `<div class="markdown-body">${marked.parse(text)}</div>`;
+            document.getElementById('modalOverlay').classList.add('active');
         }
+
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
         function downloadLocal() {
             const content = promptInput.value;
-            if (!content.trim()) { alert("内容为空"); return; }
             let filename = filenameInput.value || "prompt.md";
-            if (!filename.endsWith(".md")) filename += ".md";
             const blob = new Blob([content], { type: "text/markdown" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = filename;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        // === 2. 发布 & 列表逻辑 ===
+        // === 权限检查 ===
         function checkAdminStatus() {
             const token = localStorage.getItem('gh_token');
             if (token) {
                 btnPublish.disabled = false;
                 btnPublish.classList.add('active');
                 btnPublish.innerHTML = "☁️ 保存并发布";
-                btnPublish.title = "管理员已认证";
+                btnPublish.title = "点击发布到 GitHub";
             } else {
                 btnPublish.disabled = true;
                 btnPublish.classList.remove('active');
-                btnPublish.innerHTML = "🔒 需配置权限";
+                btnPublish.innerHTML = "🔒 需权限";
                 btnPublish.title = "请在页脚配置 GitHub Token";
             }
         }
-        function openSettings() {
-            if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
-            if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
-            document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
-            settingsModal.style.display = 'flex';
-        }
-        function closeSettings() { settingsModal.style.display = 'none'; }
-        function saveSettings() {
-            localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
-            localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
-            localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
-            alert('配置已保存！');
-            checkAdminStatus(); fetchRepoData(); closeSettings();
-        }
+
+        // === 发布到 GitHub ===
         async function pushToGitHub() {
-            // ... (同 editor.html 的发布逻辑，此处复用) ...
             const owner = localStorage.getItem('gh_owner');
             const repo = localStorage.getItem('gh_repo');
             const token = localStorage.getItem('gh_token');
             const content = promptInput.value;
             let filename = filenameInput.value || "untitled.md";
-            if (!filename.endsWith(".md")) filename += ".md";
-            if (!content.trim()) { alert("内容为空"); return; }
-            const btn = btnPublish; const originalText = btn.innerHTML;
-            btn.innerHTML = "⏳ 发布中..."; btn.disabled = true;
+            
+            if(!content.trim()) { alert("内容为空"); return; }
+            
+            btnPublish.innerHTML = "⏳ 发布中..."; btnPublish.disabled = true;
+            
             try {
-                const fullPath = `prompt/${filename}`;
-                const checkUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`;
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt/${filename}`;
+                
+                // 1. 检查是否存在
                 let sha = null;
-                const checkRes = await fetch(checkUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
-                if (checkRes.ok) {
-                    const data = await checkRes.json(); sha = data.sha;
-                    if(!confirm(`文件 ${filename} 已存在，覆盖吗？`)) throw new Error("取消操作");
+                const checkRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                if(checkRes.ok) {
+                    const data = await checkRes.json();
+                    sha = data.sha;
+                    if(!confirm("文件已存在，是否覆盖？")) throw new Error("取消");
                 }
-                const payload = { message: `Update ${filename} via PromptMaster`, content: btoa(unescape(encodeURIComponent(content))), branch: "main" };
-                if (sha) payload.sha = sha;
-                const putRes = await fetch(checkUrl, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (putRes.ok) {
-                    alert(`✅ 发布成功！列表将在几分钟后更新。`);
-                    setTimeout(fetchRepoData, 2000); 
-                } else { const err = await putRes.json(); throw new Error(err.message); }
-            } catch (e) { if(e.message !== "取消操作") alert("发布失败: " + e.message); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+
+                // 2. 上传
+                const payload = {
+                    message: `Update ${filename}`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    branch: "main",
+                    sha: sha
+                };
+                
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if(putRes.ok) {
+                    alert("✅ 发布成功！");
+                    fetchRepoData(); // 刷新列表
+                } else {
+                    throw new Error((await putRes.json()).message);
+                }
+            } catch(e) {
+                if(e.message !== "取消") alert("发布失败: " + e.message);
+            } finally {
+                checkAdminStatus(); // 恢复按钮
+            }
         }
 
-        // === 3. 混合读取逻辑 (核心优化) ===
+        // === 列表读取 ===
         async function fetchRepoData() {
-            loadingState.style.display = 'flex'; dataTable.style.display = 'none'; tableBody.innerHTML = '';
+            loadingState.style.display = 'block'; dataTable.style.display = 'none'; tableBody.innerHTML = '';
             
-            // 优先用 Token，没有则匿名
+            const owner = localStorage.getItem('gh_owner') || 'itskys';
+            const repo = localStorage.getItem('gh_repo') || 'kayler';
             const token = localStorage.getItem('gh_token');
-            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
-                const response = await fetch(url, { headers });
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt?ref=main&t=${Date.now()}`;
+                const res = await fetch(url, { headers });
+                if(!res.ok) throw new Error(res.status);
                 
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`API Error (${response.status}): ${errText}`);
-                }
+                const files = await res.json();
+                const validFiles = files.filter(f => f.name.endsWith('.md'));
                 
-                const files = await response.json();
-                const validFiles = files.filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
-
-                if(validFiles.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">暂无文件</td></tr>`;
-                } else {
-                    validFiles.sort((a, b) => b.name.localeCompare(a.name)); 
-                    validFiles.forEach(file => {
-                        const meta = parseFilename(file.name);
-                        renderRow(file, meta, owner, repo);
-                    });
-                }
+                validFiles.sort((a, b) => b.name.localeCompare(a.name));
+                validFiles.forEach(f => renderRow(f, parseFilename(f.name)));
+                
                 loadingState.style.display = 'none'; dataTable.style.display = 'table';
-            } catch (error) {
-                console.error(error);
-                let msg = error.message;
-                if(msg.includes('403')) msg = "API 频率超限 (请配置 Token)";
-                if(msg.includes('404')) msg = "未找到 prompt 目录";
-                loadingState.innerHTML = `<div style="color:red; text-align:center">⚠️ 读取失败: ${msg}<br><button class="refresh-btn" onclick="fetchRepoData()" style="margin-top:10px">重试</button></div>`;
+            } catch(e) {
+                loadingState.innerHTML = `⚠️ 加载失败 (${e.message})`;
             }
         }
 
         function parseFilename(name) {
-            const clean = name.replace(/\.(md|txt)$/, '');
-            const parts = clean.split(/[_-]/);
+            const clean = name.replace('.md', '');
+            const parts = clean.split('_');
             return {
                 name: parts[0] || clean,
-                version: parts.find(p => /^v\d/.test(p)) || 'v1.0',
-                desc: parts.slice(2).join(' ') || 'AI 提示词文件',
+                version: parts[1] || 'v1.0',
+                desc: parts[2] || 'AI 提示词文件',
                 author: 'Kaylerris'
             };
         }
 
-        function renderRow(file, meta, owner, repo) {
-            let badgeClass = meta.version.includes('v3') || meta.version.includes('v2') ? 'badge v-new' : 'badge';
+        function renderRow(file, meta) {
+            let badgeClass = meta.version.includes('v3') ? 'badge v-new' : 'badge';
             const html = `
                 <tr>
-                    <td><a class="prompt-link" onclick="viewFileContent('${file.name}', '${meta.name}', '${meta.author}', '${owner}', '${repo}')">📄 ${file.name}</a></td>
+                    <td><a class="prompt-link" onclick="viewFile('${file.name}', '${meta.name}')">📄 ${file.name}</a></td>
                     <td><span class="${badgeClass}">${meta.version}</span></td>
                     <td>${meta.desc}</td>
                     <td>${meta.author}</td>
-                </tr>
-            `;
+                </tr>`;
             tableBody.insertAdjacentHTML('beforeend', html);
         }
 
-        let currentModalContent = '';
-        function viewFileContent(fileName, displayName, author, owner, repo) {
-            modalTitle.innerText = `${displayName} by ${author}`;
-            modalBody.innerHTML = `<pre class="raw-code" id="rawCodeContent">⏳ 读取中...</pre>`;
-            modal.classList.add('active');
+        // === 查看逻辑 (混合模式) ===
+        let currentRawContent = '';
+        function viewFile(fileName, title) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = `<pre class="raw-code" id="rawCode">⏳ 读取中...</pre>`;
+            document.getElementById('modalOverlay').classList.add('active');
 
-            // 优先尝试 Cloudflare 本地读取 (最快，不限流)
-            fetch('prompt/' + fileName + '?t=' + new Date().getTime())
-                .then(res => {
-                    if(!res.ok) throw new Error("Local fail");
-                    return res.text();
-                })
-                .then(text => {
-                    document.getElementById('rawCodeContent').innerText = text;
-                    currentModalContent = text;
-                })
-                .catch(() => {
-                    // 降级尝试 GitHub Raw
-                    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
-                    fetch(rawUrl).then(r=>r.text()).then(t=>{
-                        document.getElementById('rawCodeContent').innerText = t;
-                        currentModalContent = t;
-                    }).catch(() => document.getElementById('rawCodeContent').innerText = "❌ 无法读取文件，请检查网络或稍后再试。");
+            // 优先读 Raw (快)
+            const owner = localStorage.getItem('gh_owner') || 'itskys';
+            const repo = localStorage.getItem('gh_repo') || 'kayler';
+            const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
+            
+            fetch(url).then(r=>r.text()).then(t => {
+                document.getElementById('rawCode').innerText = t;
+                currentRawContent = t;
+            }).catch(() => {
+                // 降级读本地
+                fetch('prompt/'+fileName).then(r=>r.text()).then(t=>{
+                    document.getElementById('rawCode').innerText = t;
+                    currentRawContent = t;
                 });
+            });
         }
+        
+        function copyModalContent() { navigator.clipboard.writeText(currentRawContent).then(()=>alert('已复制')); }
 
-        function closeModal() { modal.classList.remove('active'); }
-        function copyModalContent() { 
-            const textToCopy = currentModalContent || document.getElementById('rawCodeContent')?.innerText || "";
-            navigator.clipboard.writeText(textToCopy).then(() => alert('已复制')); 
-        }
-
+        // 启动
         checkAdminStatus();
         fetchRepoData();
+
     </script>
+
 </body>
 </html>
