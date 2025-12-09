@@ -9,7 +9,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
-    <script src="layout.js"></script>
+    <script src="layout.js?v=5.0"></script>
     
     <style>
         :root {
@@ -51,7 +51,7 @@
         }
         .refresh-btn:hover { background: var(--brand-brown); color: white; }
 
-        /* === 区域 1: 撰写助手 (精简版) === */
+        /* === 区域 1: 撰写助手 === */
         .builder-area {
             background: white; padding: 30px; border-radius: 16px;
             box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 15px;
@@ -81,7 +81,7 @@
         }
         .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
-        /* === 区域 2: 知识库列表 (优化版) === */
+        /* === 区域 2: 知识库列表 (可排序版) === */
         .list-container {
             background: white; border-radius: 16px;
             box-shadow: var(--card-shadow); overflow: hidden;
@@ -95,15 +95,21 @@
             border-bottom: 1px solid #eee; font-size: 14px; 
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
         }
+        /* 可排序列头样式 */
+        th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
+        th.sortable:hover { background: #f0ebe4; }
+        th.sortable::after { content: ' ↕'; font-size: 10px; color: #999; }
+        th.sortable.asc::after { content: ' ↑'; color: var(--brand-brown); }
+        th.sortable.desc::after { content: ' ↓'; color: var(--brand-brown); }
+        
         th { font-weight: bold; color: #8b5e3c; }
         tr:last-child td { border-bottom: none; }
         tr:hover { background-color: #fafafa; }
 
-        /* 提示词名称链接样式 */
         .prompt-link {
             color: #2c2c2c; font-weight: 600; text-decoration: none;
             cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 5px;
-            border-bottom: 1px dashed #ccc; /* 下划线 */
+            border-bottom: 1px dashed #ccc;
         }
         .prompt-link:hover { color: var(--brand-brown); border-bottom-color: var(--brand-brown); }
         
@@ -138,7 +144,6 @@
         
         .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
         
-        /* 纯文本代码模式 */
         pre.raw-code { 
             white-space: pre-wrap; word-wrap: break-word; 
             font-family: "Menlo", "Monaco", monospace; font-size: 14px; 
@@ -147,14 +152,18 @@
         
         .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; display: flex; justify-content: flex-end; gap: 10px; }
         
-        /* 编辑按钮 (默认隐藏) */
-        .btn-edit { background: #2e7d32; color: white; display: none; }
+        /* 导入编辑器按钮 */
+        .btn-edit { background: #2e7d32; color: white; display: none; /* 默认隐藏，JS鉴权后显示 */ }
         .btn-edit:hover { background: #1b5e20; }
+
+        /* 页脚留白 */
+        footer { margin-top: 60px; height: 60px; }
 
         @media (max-width: 768px) {
             .left-actions, .right-actions { width: 100%; justify-content: space-between; }
-            th:nth-child(3), td:nth-child(3) { display: none; } /* 手机隐藏描述列 */
-            th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者列 */
+            /* 手机端只显示名称和版本 */
+            th:nth-child(3), td:nth-child(3) { display: none; } 
+            th:nth-child(4), td:nth-child(4) { display: none; } 
         }
     </style>
 </head>
@@ -170,32 +179,29 @@
 
     <div class="main-container">
         
-        <div>
-            <div class="section-title">🎨 提示词撰写助手</div>
-            <div class="builder-area">
-                <textarea id="promptInput" placeholder="点击下方标签添加，或直接在此输入..."></textarea>
-                
-                <div class="tags-container">
-                    <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
-                    <div class="tag" onclick="addTag('Ukiyo-e style')">浮世绘</div>
-                    <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
-                    <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
-                    <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
-                    <div class="tag" onclick="addTag('--niji 6')">Niji 6</div>
-                </div>
+        <div class="builder-area">
+            <textarea id="promptInput" placeholder="点击下方标签添加，或直接在此输入..."></textarea>
+            
+            <div class="tags-container">
+                <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
+                <div class="tag" onclick="addTag('Ukiyo-e style')">浮世绘</div>
+                <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
+                <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
+                <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
+                <div class="tag" onclick="addTag('--niji 6')">Niji 6</div>
+            </div>
 
-                <div class="builder-actions">
-                    <button class="btn btn-secondary" onclick="clearPrompt()">🗑️ 清空</button>
-                    <button class="btn btn-preview" onclick="openPreview()">👁️ 预览渲染</button>
-                    <button class="btn btn-primary" onclick="copyPrompt()">📋 一键复制</button>
-                </div>
+            <div class="builder-actions">
+                <button class="btn btn-secondary" onclick="clearPrompt()">🗑️ 清空</button>
+                <button class="btn btn-preview" onclick="openPreview()">👁️ 预览渲染</button>
+                <button class="btn btn-primary" onclick="copyPrompt()">📋 一键复制</button>
             </div>
         </div>
 
         <div>
             <div class="section-title">
-                📚 提示词库 (按更新时间排序)
-                <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新</button>
+                📚 提示词库
+                <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新列表</button>
             </div>
             <div class="list-container">
                 <div id="loadingState" class="loading-state">
@@ -205,15 +211,18 @@
                 <table id="dataTable" style="display:none;">
                     <thead>
                         <tr>
-                            <th style="width: 30%;">提示词名称</th>
-                            <th style="width: 15%;">更新时间</th>
-                            <th style="width: 40%;">智能描述</th>
-                            <th style="width: 15%;">作者</th>
+                            <th style="width: 40%;" class="sortable" onclick="sortTable('name')" data-key="name">提示词名称</th>
+                            <th style="width: 15%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
+                            <th style="width: 30%;">功能描述</th>
+                            <th style="width: 15%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
+            <p style="text-align:center; color:#999; font-size:12px; margin-top:10px;">
+                列表数据实时读取自 GitHub。点击表头可排序。
+            </p>
         </div>
 
     </div>
@@ -228,17 +237,45 @@
                 <pre class="raw-code" id="fileContent">正在加载...</pre>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-edit" id="btnEdit" onclick="editInEditor()">✏️ 导入Kayler编辑器</button>
+                <button class="btn btn-edit" id="btnEdit" onclick="importToEditor()">✏️ 导入编辑器</button>
                 <button class="btn btn-primary" onclick="copyContent()">📋 复制内容</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // === 1. 基础逻辑 ===
-        const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-        const promptInput = document.getElementById('promptInput');
+    <div class="modal-overlay" id="previewModal" onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')">
+        <div class="modal-content">
+             <div class="modal-header">
+                <div class="modal-title">Markdown 渲染预览</div>
+                <button class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')">×</button>
+            </div>
+            <div class="modal-body markdown-body" id="previewBody"></div>
+        </div>
+    </div>
 
+    <script>
+        // === 配置 ===
+        const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
+        
+        // === 全局数据状态 (用于排序) ===
+        let globalFilesData = [];
+        let currentSort = { key: 'name', order: 'desc' }; // 默认按名称倒序
+
+        const promptInput = document.getElementById('promptInput');
+        const tableBody = document.getElementById('tableBody');
+        const loadingState = document.getElementById('loadingState');
+        const dataTable = document.getElementById('dataTable');
+        
+        // 弹窗元素
+        const modal = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const fileContent = document.getElementById('fileContent');
+        const btnEdit = document.getElementById('btnEdit');
+        
+        // 临时存储当前打开的文件 (用于导入)
+        let currentFileData = { name: '', content: '' };
+
+        // === 1. 撰写助手逻辑 ===
         function addTag(text) {
             let current = promptInput.value;
             if (current.length > 0 && !current.endsWith(' ')) current += ' ';
@@ -247,15 +284,13 @@
         function clearPrompt() { if(confirm('确定清空？')) promptInput.value = ''; }
         function copyPrompt() { navigator.clipboard.writeText(promptInput.value).then(() => alert('已复制!')); }
         function openPreview() {
-            if(!promptInput.value.trim()) return;
-            showModal("预览", promptInput.value);
+            const text = promptInput.value;
+            if(!text.trim()) return;
+            document.getElementById('previewBody').innerHTML = marked.parse(text);
+            document.getElementById('previewModal').classList.add('active');
         }
 
-        // === 2. 列表逻辑 (自动排序) ===
-        const tableBody = document.getElementById('tableBody');
-        const loadingState = document.getElementById('loadingState');
-        const dataTable = document.getElementById('dataTable');
-
+        // === 2. 列表获取与解析 ===
         async function fetchRepoData() {
             loadingState.style.display = 'flex';
             dataTable.style.display = 'none';
@@ -267,22 +302,30 @@
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // 强制不缓存
+                // 加时间戳防止缓存
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
                 const response = await fetch(url, { headers });
                 
-                if (!response.ok) throw new Error("无法读取列表 (API Error)");
+                if (!response.ok) throw new Error("API Limit or Network Error");
                 
                 const files = await response.json();
-                const validFiles = files.filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
+                
+                // 过滤并处理数据
+                globalFilesData = files
+                    .filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'))
+                    .map(file => {
+                        const meta = parseFilename(file.name);
+                        return {
+                            rawName: file.name,
+                            name: meta.name,      // 纯名称
+                            version: meta.version,
+                            desc: meta.desc,
+                            author: meta.author
+                        };
+                    });
 
-                if(validFiles.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">暂无文件</td></tr>`;
-                } else {
-                    // 按文件名倒序排列 (模拟时间排序：v3.1 > v3.0)
-                    validFiles.sort((a, b) => b.name.localeCompare(a.name)); 
-                    validFiles.forEach(f => renderRow(f, parseFilename(f.name)));
-                }
+                // 初始渲染 (应用默认排序)
+                applySort();
                 
                 loadingState.style.display = 'none';
                 dataTable.style.display = 'table';
@@ -292,52 +335,88 @@
             }
         }
 
-        function parseFilename(name) {
-            const clean = name.replace(/\.(md|txt)$/, '');
-            const parts = clean.split(/[_-]/);
+        // 文件名解析：概念拆解_v2.0_污版.md -> Name:概念拆解_v2.0_污版
+        function parseFilename(filename) {
+            // 需求变更：直接显示完整文件名 (去后缀)
+            const cleanName = filename.replace(/\.(md|txt)$/, '');
             
-            // 尝试提取版本号作为"更新时间"的替代显示
-            const ver = parts.find(p => /^v\d/.test(p)) || '-';
+            // 尝试提取版本号 (用于列表列显示)
+            const parts = cleanName.split(/[_-]/);
+            const ver = parts.find(p => /^v\d/.test(p.toLowerCase())) || '-';
             
+            // 尝试提取简单描述 (如果名字很长，可以截取一部分，或者直接留空)
+            // 这里为了简洁，如果文件名里已经包含了版本和修饰词，描述列可以简单显示文件类型
+            let desc = "AI 提示词";
+            // 简单的逻辑：如果文件名包含 "_"，取最后一部分作为描述
+            if (filename.includes('_')) {
+                 const lastPart = cleanName.split('_').pop();
+                 if (lastPart !== ver && lastPart !== parts[0]) desc = lastPart;
+            }
+
             return {
-                name: parts[0] || clean,
+                name: cleanName, // 完整名称
                 version: ver,
-                desc: parts.slice(2).join(' ') || 'AI 提示词文件',
+                desc: desc,
                 author: 'Kaylerris'
             };
         }
 
-        function renderRow(file, meta) {
-            const html = `
-                <tr>
-                    <td>
-                        <a class="prompt-link" onclick="viewFile('${file.name}', '${meta.name}', '${meta.author}')">
-                            📄 ${meta.name}
-                        </a>
-                    </td>
-                    <td style="color:#666; font-size:12px;">${meta.version}</td>
-                    <td>${meta.desc}</td>
-                    <td>${meta.author}</td>
-                </tr>
-            `;
-            tableBody.insertAdjacentHTML('beforeend', html);
+        // === 3. 排序与渲染 ===
+        function sortTable(key) {
+            // 切换排序方向
+            if (currentSort.key === key) {
+                currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = key;
+                currentSort.order = 'asc'; // 新列默认升序
+            }
+            applySort();
         }
 
-        // === 3. 弹窗与导入编辑器 ===
-        const modal = document.getElementById('modalOverlay');
-        const modalTitle = document.getElementById('modalTitle');
-        const fileContent = document.getElementById('fileContent');
-        const btnEdit = document.getElementById('btnEdit');
-        
-        // 临时存储当前打开的文件信息
-        let currentFileData = { name: '', content: '' };
+        function applySort() {
+            // 更新表头箭头样式
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('asc', 'desc');
+                if (th.dataset.key === currentSort.key) {
+                    th.classList.add(currentSort.order);
+                }
+            });
 
+            // 排序数据
+            globalFilesData.sort((a, b) => {
+                let valA = a[currentSort.key].toLowerCase();
+                let valB = b[currentSort.key].toLowerCase();
+                if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // 重新渲染表格
+            tableBody.innerHTML = '';
+            globalFilesData.forEach(item => {
+                const html = `
+                    <tr>
+                        <td>
+                            <a class="prompt-link" onclick="viewFile('${item.rawName}', '${item.name}', '${item.author}')">
+                                ${item.name}
+                            </a>
+                        </td>
+                        <td><span class="badge ${item.version.includes('v') ? 'v-new' : ''}">${item.version}</span></td>
+                        <td>${item.desc}</td>
+                        <td>${item.author}</td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // === 4. 查看与导入逻辑 (核心修复) ===
         function viewFile(fileName, displayName, author) {
-            modalTitle.innerText = `${displayName} by ${author}`;
+            document.getElementById('modalTitle').innerText = `${displayName}`;
             fileContent.innerText = "⏳ 读取中...";
             modal.classList.add('active');
             
-            // 检查管理员权限，决定是否显示“编辑”按钮
+            // 检查管理员权限，显示导入按钮
             if (localStorage.getItem('gh_token')) {
                 btnEdit.style.display = 'inline-flex';
             } else {
@@ -346,39 +425,34 @@
 
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
-            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${encodeURIComponent(fileName)}`;
+            // 优先用 Raw 链接
+            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(fileName)}`;
             
-            fetch(rawUrl).then(r=>r.text()).then(text => {
+            fetch(rawUrl).then(r => {
+                if(!r.ok) throw new Error("Read Error");
+                return r.text();
+            }).then(text => {
                 fileContent.innerText = text;
-                // 存起来，供“导入编辑器”使用
+                // 保存当前数据，供导入使用
                 currentFileData = { name: fileName, content: text };
-            })
-            .catch(() => fileContent.innerText = "❌ 读取失败");
+            }).catch(() => fileContent.innerText = "❌ 读取失败，请检查网络或 Token");
         }
 
-        function showModal(title, content) {
-            modalTitle.innerText = title;
-            fileContent.innerText = content;
-            btnEdit.style.display = 'none'; // 预览模式不显示编辑
-            modal.classList.add('active');
-        }
-
-        function closeModal() { modal.classList.remove('active'); }
-        function copyContent() { navigator.clipboard.writeText(fileContent.innerText).then(() => alert('已复制')); }
-
-        // === 核心功能：导入到编辑器 ===
-        function editInEditor() {
+        // 导入到 Editor
+        function importToEditor() {
             if (!currentFileData.content) return;
             
-            // 1. 将内容存入 LocalStorage (作为编辑器草稿)
+            // 1. 写入内容缓存
             localStorage.setItem('kayler_editor_cache', currentFileData.content);
-            // 2. 将文件名存入 (编辑器会自动读取这个作为默认文件名，实现覆盖更新)
-            // *注意：我们需要在 editor.html 里加一小段逻辑来读取这个 key*
+            // 2. 写入文件名缓存 (editor.js 初始化时会读取这个)
             localStorage.setItem('kayler_editor_filename', currentFileData.name);
             
             // 3. 跳转
             window.location.href = 'editor.html';
         }
+
+        function closeModal() { modal.classList.remove('active'); }
+        function copyContent() { navigator.clipboard.writeText(fileContent.innerText).then(() => alert('已复制')); }
 
         // 初始化
         fetchRepoData();
