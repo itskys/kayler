@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kayler 在线编辑器</title>
-    <link rel="stylesheet" href="editor.css?v=6.0">
-    <link rel="icon" href="Logo.png" type="image/png">
+    <link rel="stylesheet" href="editor.css?v=6.1">
+    <link rel="icon" href="logo.png" type="image/png">
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -16,11 +16,11 @@
         
         <div class="editor-toolbar-header">
             <div class="page-title">
-                <img src="Logo.png" alt="Kayler Logo" style="height: 32px; width: auto; margin-right: 8px;">
-                <span>在线编辑器</span>
+                <img src="logo.png" alt="Kayler Logo" style="height: 32px; width: auto; margin-right: 10px;">
+                <span>Kayler在线编辑器</span>
             </div>
 
-            <input type="text" class="title-input" value="Role 资深法医级人体分析师 & 顶级ACG概念艺术家.md" readonly>
+            <input type="text" class="title-input" id="file-name-input" value="Role 资深法医级人体分析师 & 顶级ACG概念艺术家.md">
 
             <div class="action-group">
                 <button class="btn btn-setting" id="btn-setting"><i class="fa-solid fa-gear"></i> 设置</button>
@@ -52,7 +52,7 @@
 
     <script src="markdown-data.js"></script>
     <script src="layout.js"></script>
-    <script src="editor.js?v=6.0"></script>
+    <script src="editor.js?v=6.1"></script>
 
 </body>
 </html>
