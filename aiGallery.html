@@ -133,6 +133,13 @@
             font-size: 40px; cursor: pointer; transition: 0.2s;
         }
         .close-modal:hover { color: var(--brand-brown); }
+        
+        /* 底部配置链接 */
+        .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
+        .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
+        
+        /* 配置弹窗 (复用) */
+        #settings-modal { z-index: 20000; display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { to { opacity: 1; } }
@@ -168,11 +175,38 @@
     <div class="gallery-container" id="galleryContainer"></div>
 
     <div class="pagination" id="pagination"></div>
+    
+    <div style="margin-top: 40px; text-align: center;">
+        <a onclick="openSettings()" class="admin-link">⚙️ 画廊配置</a>
+    </div>
 
     <div id="imageModal" class="modal" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
         <img id="modalImg" src="">
         <div class="modal-caption" id="modalCaption"></div>
+    </div>
+
+    <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
+        <div style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; color:#333;">⚙️ API 配置</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:20px;">配置 GitHub Token 以解除 API 频率限制 (403错误)。</p>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">GitHub 用户名</label>
+                <input type="text" id="gh-owner" value="itskys" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">仓库名</label>
+                <input type="text" id="gh-repo" value="kayler" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">Token</label>
+                <input type="password" id="gh-token" placeholder="github_pat_..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div style="text-align:right; margin-top:20px;">
+                <button onclick="closeSettings()" style="padding:8px 15px; border:none; background:#eee; cursor:pointer; border-radius:4px; margin-right:10px;">取消</button>
+                <button onclick="saveSettings()" style="padding:8px 15px; border:none; background:#8b5e3c; color:white; cursor:pointer; border-radius:4px;">保存并刷新</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -195,6 +229,7 @@
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImg');
         const modalCaption = document.getElementById('modalCaption');
+        const settingsModal = document.getElementById('settings-modal');
 
         // === 1. 初始化与获取数据 (Token 优先策略) ===
         async function initGallery() {
@@ -212,7 +247,6 @@
 
             try {
                 // 请求 GitHub API (列出文件)
-                // 加 t=Date.now() 防止缓存
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
                 
                 const response = await fetch(url, { headers });
@@ -244,10 +278,15 @@
             } catch (error) {
                 console.error(error);
                 let msg = error.message;
-                if (msg.includes("403")) msg = "API 访问频率超限。请稍后再试，或在编辑器页配置 Token 以解除限制。";
+                let btnHtml = '<button class="btn-refresh" onclick="initGallery()">重试</button>';
+                
+                if (msg.includes("403")) {
+                    msg = "访问频率超限。请配置 Token 以解除限制。";
+                    btnHtml = `<button class="btn-refresh" onclick="openSettings()">⚙️ 配置 Token</button>`;
+                }
                 if (msg.includes("404")) msg = "无法读取 gallery 目录，请检查 GitHub 仓库是否存在该文件夹。";
                 
-                loadingState.innerHTML = `<span style="color:red; max-width:600px; display:inline-block; line-height:1.6;">⚠️ 加载失败<br>${msg}</span><br><br><button class="btn-refresh" onclick="initGallery()">重试</button>`;
+                loadingState.innerHTML = `<span style="color:red; max-width:600px; display:inline-block; line-height:1.6;">⚠️ 加载失败<br>${msg}</span><br><br>${btnHtml}`;
             }
         }
 
@@ -269,13 +308,12 @@
         function renderImages(images) {
             galleryContainer.innerHTML = '';
             
-            // 无论是否有 Token，图片内容都通过 Raw 链接加载 (CDN加速且不限流)
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             
             images.forEach(img => {
                 const title = img.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "); 
-                // 构造 Raw URL
+                // 构造 Raw URL (使用 Main 分支)
                 const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
 
                 const item = document.createElement('div');
@@ -334,7 +372,7 @@
             return btn;
         }
 
-        // === 3. Lightbox ===
+        // === 3. 模态框 ===
         function openModal(src, caption) {
             modalImg.src = src;
             modalCaption.innerText = caption;
@@ -345,7 +383,25 @@
             modal.classList.remove('active');
         }
 
+        // === 4. 配置逻辑 ===
+        function openSettings() {
+            if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
+            if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
+            document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+            settingsModal.style.display = 'flex';
+        }
+        function closeSettings() { settingsModal.style.display = 'none'; }
+        function saveSettings() {
+            localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
+            localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
+            localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
+            alert('配置已保存！');
+            closeSettings();
+            initGallery(); // 重新加载
+        }
+
         initGallery();
+
     </script>
 
 </body>

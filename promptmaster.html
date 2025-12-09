@@ -7,15 +7,16 @@
     <title>提示词管理器 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
+    <script src="layout.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
-        /* === 全局变量 === */
         :root {
-            --bg-body: #f2f4f7; --text-color: #2c2c2c;
-            --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
+            --bg-body: #f2f4f7; 
+            --brand-brown: #8b5e3c;
+            --brand-brown-hover: #6d4c41;
             --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            /* 宽屏变量 */
             --layout-width: 94%;
             --layout-max-width: 1400px;
         }
@@ -26,31 +27,20 @@
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-body); margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: var(--text-color);
+            min-height: 100vh; color: #333;
         }
 
-        /* 顶部导航 */
-        .top-nav {
-            width: 100%; max-width: var(--layout-max-width); display: flex; justify-content: flex-end;
-            gap: 25px; margin-bottom: 40px; padding: 0 10px;
-        }
-        .top-nav a {
-            text-decoration: none; color: #555; font-size: 18px; font-weight: 600;
-            transition: color 0.2s; display: flex; align-items: center; gap: 5px;
-        }
-        .top-nav a:hover, .top-nav a.active { color: var(--brand-brown); }
+        /* 顶部导航由 layout.js 注入 */
 
-        header { text-align: center; margin-bottom: 40px; }
+        header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
         h1 { 
-            font-size: 32px; font-weight: 800; color: #222; margin-bottom: 10px; 
+            font-size: 32px; font-weight: 800; margin-bottom: 10px; 
             display: flex; align-items: center; justify-content: center;
         }
         
-        /* === 主布局容器 (加宽) === */
         .main-container {
             width: var(--layout-width); max-width: var(--layout-max-width);
-            display: flex; flex-direction: column; gap: 40px;
-            flex: 1; 
+            display: flex; flex-direction: column; gap: 40px; flex: 1; 
         }
 
         .section-title {
@@ -58,43 +48,34 @@
             padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
         }
         
-        /* 隐藏的刷新按钮 (仅管理员可见) */
         .refresh-btn {
             font-size: 14px; color: var(--brand-brown); cursor: pointer; text-decoration: none; border: 1px solid var(--brand-brown);
             padding: 4px 10px; border-radius: 4px; transition: all 0.2s; background: transparent;
         }
         .refresh-btn:hover { background: var(--brand-brown); color: white; }
 
-        /* === 区域 1: 专注编辑器 (Builder) === */
+        /* === 区域 1: 提示词撰写助手 === */
         .builder-area {
             background: white; padding: 30px; border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            display: flex; flex-direction: column; gap: 20px;
+            box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 20px;
         }
 
-        /* 文件名输入行 */
         .meta-row { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 20px; }
         .filename-input {
             flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; outline: none; transition: border 0.2s;
         }
         .filename-input:focus { border-color: var(--brand-brown); }
 
-        /* 单一输入框 (替代原来的分栏) */
         #promptInput {
-            width: 100%; height: 300px; /* 增加高度 */
-            border: 1px solid #eee; border-radius: 8px;
+            width: 100%; height: 300px; border: 1px solid #eee; border-radius: 8px;
             resize: vertical; outline: none; padding: 20px; 
             font-family: "Menlo", monospace; font-size: 15px; line-height: 1.7;
             background: #fafafa; color: #333;
         }
-        #promptInput:focus { background: #fff; border-color: #ddd; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
+        #promptInput:focus { background: #fff; border-color: #ddd; }
 
-        /* 按钮组 */
-        .builder-actions {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .left-actions { display: flex; gap: 10px; }
-        .right-actions { display: flex; gap: 10px; }
+        .builder-actions { display: flex; justify-content: space-between; align-items: center; }
+        .left-actions, .right-actions { display: flex; gap: 10px; }
 
         .btn {
             padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
@@ -102,15 +83,13 @@
         }
         .btn-primary { background: var(--brand-brown); color: white; }
         .btn-secondary { background: #f0f0f0; color: #666; }
-        .btn-preview { background: #e3f2fd; color: #1565c0; } /* 预览按钮 */
+        .btn-preview { background: #e3f2fd; color: #1565c0; } 
         .btn-preview:hover { background: #bbdefb; }
         
-        /* 管理员按钮样式 */
         .btn-admin { background: #ccc; color: white; cursor: not-allowed; }
         .btn-admin.active { background: #2e7d32; cursor: pointer; } 
         .btn-admin.active:hover { background: #1b5e20; }
 
-        /* 标签库 */
         .library-area { margin-top: 10px; padding-top: 20px; border-top: 1px dashed #eee; }
         .category-group h3 { font-size: 14px; color: #888; margin: 0 0 10px 0; }
         .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
@@ -120,23 +99,22 @@
             font-size: 12px; transition: all 0.2s; user-select: none;
         }
         .tag:hover {
-            border-color: var(--brand-brown); color: var(--brand-brown);
-            transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-color: var(--brand-brown); color: var(--brand-brown); transform: translateY(-2px);
         }
 
-        /* === 区域 2: 知识库列表 (优化版) === */
+        /* === 区域 2: 知识库列表 === */
         .list-container {
             background: white; border-radius: 16px;
             box-shadow: var(--card-shadow); overflow: hidden;
             padding: 0; min-height: 200px;
         }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; /* 固定布局，方便控制列宽 */ }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         thead { background: #f9f7f1; }
         th, td { 
             padding: 18px 20px; text-align: left; 
             border-bottom: 1px solid #eee; font-size: 14px; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; /* 防止换行撑破 */
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
         }
         th { font-weight: bold; color: #8b5e3c; }
         tr:last-child td { border-bottom: none; }
@@ -158,10 +136,10 @@
             display: flex; justify-content: center; align-items: center; height: 200px; color: #999; flex-direction: column; gap: 10px;
         }
 
-        /* === 弹窗 (通用) === */
+        /* === 弹窗 === */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 1000;
+            background: rgba(0,0,0,0.6); z-index: 2000;
             justify-content: center; align-items: center;
             backdrop-filter: blur(2px);
         }
@@ -179,43 +157,30 @@
         
         .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
         
-        /* Markdown 渲染样式 */
         .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
         .markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 20px; margin-top: 20px; }
         .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: "Menlo", monospace; font-size: 13px; line-height: 1.5; color: #333; }
         .markdown-body code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; color: #c7254e; }
-        
-        /* 纯文本代码模式 (用于查看源码) */
         pre.raw-code { white-space: pre-wrap; word-wrap: break-word; font-family: "Menlo", monospace; margin: 0; color: #333; }
         
         .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; }
         .copy-btn { padding: 8px 16px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; }
 
-        footer { 
-            margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; width: 100%; max-width: 1000px; text-align: center; color: #999; font-size: 13px; 
-            padding-bottom: 40px;
-        }
+        /* GitHub 配置弹窗 */
+        #settings-modal { z-index: 20000; }
         
-        /* 管理员入口链接 */
+        /* 底部配置链接 */
         .admin-link { color: #ddd; text-decoration: none; font-size: 12px; margin-left: 10px; cursor: pointer; }
         .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
 
         @media (max-width: 768px) {
             .builder-actions { flex-direction: column; gap: 10px; }
             .left-actions, .right-actions { width: 100%; justify-content: space-between; }
-            th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者列 */
+            th:nth-child(4), td:nth-child(4) { display: none; } 
         }
     </style>
 </head>
 <body>
-
-    <nav class="top-nav">
-        <a href="index.html">🏠 卡片生成器</a>
-        <a href="editor.html" target="_blank" style="color: #2e7d32;">📝 在线编辑器</a>
-        <a href="promptmaster.html" class="active">💡 提示词管理器</a>
-        <a href="aiGallery.html">🖼️ AI图片展</a>
-        <a href="contact.html">📩 联系博主</a>
-    </nav>
 
     <header>
         <h1>
@@ -230,7 +195,6 @@
         <div>
             <div class="section-title">
                 <span>🎨 提示词撰写助手</span>
-                <button class="refresh-btn" onclick="openSettings()">⚙️ 管理员配置</button>
             </div>
             
             <div class="builder-area">
@@ -299,11 +263,9 @@
 
     </div>
 
-    <footer>
-        <p>&copy; 2025 Kaylerris 保留所有权利. 
-            <a onclick="openSettings()" class="admin-link">⚙️ 管理员配置</a>
-        </p>
-    </footer>
+    <div style="text-align: center; margin-top: -20px; margin-bottom: 20px;">
+        <a onclick="openSettings()" class="admin-link">⚙️ 管理员配置</a>
+    </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
         <div class="modal-content">
@@ -322,20 +284,18 @@
         <div style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
             <h3 style="margin-top:0; color:#333;">⚙️ 管理员认证</h3>
             <p style="font-size:12px; color:#666; margin-bottom:20px;">配置 GitHub Token 以激活发布功能。</p>
-            
             <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">GitHub 用户名</label>
+                <label style="display:block; font-size:12px; font-weight:bold; color:#555;">GitHub 用户名</label>
                 <input type="text" id="gh-owner" value="itskys" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
             </div>
             <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">仓库名</label>
+                <label style="display:block; font-size:12px; font-weight:bold; color:#555;">仓库名</label>
                 <input type="text" id="gh-repo" value="kayler" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
             </div>
             <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; color:#555;">Token (需 repo 权限)</label>
+                <label style="display:block; font-size:12px; font-weight:bold; color:#555;">Token (需 repo 权限)</label>
                 <input type="password" id="gh-token" placeholder="github_pat_..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
             </div>
-
             <div style="text-align:right; margin-top:20px;">
                 <button onclick="closeSettings()" style="padding:8px 15px; border:none; background:#eee; cursor:pointer; border-radius:4px; margin-right:10px;">取消</button>
                 <button onclick="saveSettings()" style="padding:8px 15px; border:none; background:#8b5e3c; color:white; cursor:pointer; border-radius:4px;">保存并验证</button>
@@ -344,14 +304,7 @@
     </div>
 
     <script>
-        // === 常量配置 ===
-        // 公共只读配置 (必须是公开仓库才能免 Token 读取)
-        const REPO_READ_CONFIG = {
-            owner: 'itskys',
-            repo: 'kayler',
-            path: 'prompt',
-            branch: 'main'
-        };
+        const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
 
         const promptInput = document.getElementById('promptInput');
         const filenameInput = document.getElementById('filenameInput');
@@ -364,54 +317,38 @@
         const modalTitle = document.getElementById('modalTitle');
         const modalBody = document.getElementById('modalBody');
 
-        // === 1. 编辑器逻辑 ===
+        // === 1. 编辑器 ===
         promptInput.addEventListener('input', () => {
-            const text = promptInput.value;
-            // 自动填充文件名 (如果为空)
             if(!filenameInput.value) {
-                const match = text.match(/^#\s+(.*)$/m);
-                if (match) {
-                    const cleanName = match[1].trim().replace(/[\\/:*?"<>|]/g, "");
-                    filenameInput.value = cleanName + ".md";
-                }
+                const match = promptInput.value.match(/^#\s+(.*)$/m);
+                if (match) filenameInput.value = match[1].trim() + ".md";
             }
         });
-
         function addTag(text) {
             let current = promptInput.value;
             if (current.length > 0 && !current.endsWith(' ')) current += ' ';
             promptInput.value = current + text;
         }
-
         function clearPrompt() { if(confirm('确定清空？')) promptInput.value = ''; }
         function copyPrompt() { navigator.clipboard.writeText(promptInput.value).then(() => alert('已复制!')); }
-
-        // === 预览渲染功能 (新) ===
         function openPreview() {
-            const text = promptInput.value;
-            if(!text.trim()) { alert("没有内容可预览"); return; }
-            
+            if(!promptInput.value.trim()) { alert("内容为空"); return; }
             modalTitle.innerText = "Markdown 实时预览";
-            // 使用 marked 渲染 HTML 并放入 .markdown-body 类以便应用样式
-            modalBody.innerHTML = `<div class="markdown-body">${marked.parse(text)}</div>`;
+            modalBody.innerHTML = `<div class="markdown-body">${marked.parse(promptInput.value)}</div>`;
             modal.classList.add('active');
         }
-
         function downloadLocal() {
             const content = promptInput.value;
             if (!content.trim()) { alert("内容为空"); return; }
             let filename = filenameInput.value || "prompt.md";
             if (!filename.endsWith(".md")) filename += ".md";
-            
             const blob = new Blob([content], { type: "text/markdown" });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = filename;
-            document.body.appendChild(a); a.click();
-            document.body.removeChild(a);
+            const a = document.createElement('a'); a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        // === 2. 权限管理 & 发布逻辑 ===
+        // === 2. 发布 & 列表逻辑 ===
         function checkAdminStatus() {
             const token = localStorage.getItem('gh_token');
             if (token) {
@@ -426,109 +363,67 @@
                 btnPublish.title = "请在页脚配置 GitHub Token";
             }
         }
-
         function openSettings() {
             if(localStorage.getItem('gh_owner')) document.getElementById('gh-owner').value = localStorage.getItem('gh_owner');
             if(localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
             document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
             settingsModal.style.display = 'flex';
         }
-
         function closeSettings() { settingsModal.style.display = 'none'; }
-
         function saveSettings() {
             localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
             localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
             alert('配置已保存！');
-            checkAdminStatus();
-            fetchRepoData(); // 尝试用新 Token 刷新列表
-            closeSettings();
+            checkAdminStatus(); fetchRepoData(); closeSettings();
         }
-
         async function pushToGitHub() {
+            // ... (同 editor.html 的发布逻辑，此处复用) ...
             const owner = localStorage.getItem('gh_owner');
             const repo = localStorage.getItem('gh_repo');
             const token = localStorage.getItem('gh_token');
-            
             const content = promptInput.value;
             let filename = filenameInput.value || "untitled.md";
             if (!filename.endsWith(".md")) filename += ".md";
-            
             if (!content.trim()) { alert("内容为空"); return; }
-
-            const btn = btnPublish;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "⏳ 发布中...";
-            btn.disabled = true;
-
+            const btn = btnPublish; const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ 发布中..."; btn.disabled = true;
             try {
                 const fullPath = `prompt/${filename}`;
                 const checkUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`;
-                
-                // 1. Check
                 let sha = null;
-                const checkRes = await fetch(checkUrl, {
-                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-                });
+                const checkRes = await fetch(checkUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
                 if (checkRes.ok) {
-                    const data = await checkRes.json();
-                    sha = data.sha;
+                    const data = await checkRes.json(); sha = data.sha;
                     if(!confirm(`文件 ${filename} 已存在，覆盖吗？`)) throw new Error("取消操作");
                 }
-
-                // 2. Upload
-                const payload = {
-                    message: `Update ${filename} via PromptMaster`,
-                    content: btoa(unescape(encodeURIComponent(content))),
-                    branch: "main"
-                };
+                const payload = { message: `Update ${filename} via PromptMaster`, content: btoa(unescape(encodeURIComponent(content))), branch: "main" };
                 if (sha) payload.sha = sha;
-
-                const putRes = await fetch(checkUrl, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
+                const putRes = await fetch(checkUrl, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (putRes.ok) {
-                    alert(`✅ 发布成功！\n文件已推送到 GitHub。\n列表将在几分钟后自动更新（Cloudflare 构建延迟）。`);
+                    alert(`✅ 发布成功！列表将在几分钟后更新。`);
                     setTimeout(fetchRepoData, 2000); 
-                } else {
-                    const err = await putRes.json();
-                    throw new Error(err.message);
-                }
-
-            } catch (e) {
-                if(e.message !== "取消操作") alert("发布失败: " + e.message);
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+                } else { const err = await putRes.json(); throw new Error(err.message); }
+            } catch (e) { if(e.message !== "取消操作") alert("发布失败: " + e.message); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
-
-        // === 3. 列表逻辑 (修正版 v3.4：兼容匿名访问) ===
+        // === 3. 混合读取逻辑 (核心优化) ===
         async function fetchRepoData() {
-            loadingState.style.display = 'flex';
-            dataTable.style.display = 'none';
-            tableBody.innerHTML = '';
-
-            const owner = localStorage.getItem('gh_owner') || REPO_READ_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_READ_CONFIG.repo;
-            // 如果有 Token 就用，没有就用空 headers (匿名请求)
-            const token = localStorage.getItem('gh_token'); 
+            loadingState.style.display = 'flex'; dataTable.style.display = 'none'; tableBody.innerHTML = '';
+            
+            // 优先用 Token，没有则匿名
+            const token = localStorage.getItem('gh_token');
+            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // 强制读取 main 分支，加时间戳防缓存
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/prompt?ref=main&t=${Date.now()}`;
-                
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
                 const response = await fetch(url, { headers });
                 
                 if (!response.ok) {
-                    // 如果 API 失败 (403限流/404不存在)，抛出错误
-                    throw new Error(`GitHub API ${response.status}`);
+                    const errText = await response.text();
+                    throw new Error(`API Error (${response.status}): ${errText}`);
                 }
                 
                 const files = await response.json();
@@ -540,19 +435,15 @@
                     validFiles.sort((a, b) => b.name.localeCompare(a.name)); 
                     validFiles.forEach(file => {
                         const meta = parseFilename(file.name);
-                        renderRow(file, meta);
+                        renderRow(file, meta, owner, repo);
                     });
                 }
-                
-                loadingState.style.display = 'none';
-                dataTable.style.display = 'table';
-
+                loadingState.style.display = 'none'; dataTable.style.display = 'table';
             } catch (error) {
                 console.error(error);
                 let msg = error.message;
-                if(msg.includes('403')) msg = "访问频率超限 (请配置 Token)";
+                if(msg.includes('403')) msg = "API 频率超限 (请配置 Token)";
                 if(msg.includes('404')) msg = "未找到 prompt 目录";
-                
                 loadingState.innerHTML = `<div style="color:red; text-align:center">⚠️ 读取失败: ${msg}<br><button class="refresh-btn" onclick="fetchRepoData()" style="margin-top:10px">重试</button></div>`;
             }
         }
@@ -568,16 +459,11 @@
             };
         }
 
-        function renderRow(file, meta) {
+        function renderRow(file, meta, owner, repo) {
             let badgeClass = meta.version.includes('v3') || meta.version.includes('v2') ? 'badge v-new' : 'badge';
-            
             const html = `
                 <tr>
-                    <td>
-                        <a class="prompt-link" onclick="viewFileContent('${file.name}', '${meta.name}', '${meta.author}')">
-                            📄 ${file.name}
-                        </a>
-                    </td>
+                    <td><a class="prompt-link" onclick="viewFileContent('${file.name}', '${meta.name}', '${meta.author}', '${owner}', '${repo}')">📄 ${file.name}</a></td>
                     <td><span class="${badgeClass}">${meta.version}</span></td>
                     <td>${meta.desc}</td>
                     <td>${meta.author}</td>
@@ -586,28 +472,30 @@
             tableBody.insertAdjacentHTML('beforeend', html);
         }
 
-        // === 4. 查看文件逻辑 ===
-        let currentModalContent = ''; 
-
-        function viewFileContent(fileName, displayName, author) {
+        let currentModalContent = '';
+        function viewFileContent(fileName, displayName, author, owner, repo) {
             modalTitle.innerText = `${displayName} by ${author}`;
             modalBody.innerHTML = `<pre class="raw-code" id="rawCodeContent">⏳ 读取中...</pre>`;
             modal.classList.add('active');
 
-            const owner = localStorage.getItem('gh_owner') || REPO_READ_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_READ_CONFIG.repo;
-            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
-            
-            fetch(rawUrl).then(res => res.text()).then(text => {
-                document.getElementById('rawCodeContent').innerText = text;
-                currentModalContent = text;
-            })
-            .catch(() => {
-                fetch('prompt/' + fileName).then(res => res.text()).then(text => {
+            // 优先尝试 Cloudflare 本地读取 (最快，不限流)
+            fetch('prompt/' + fileName + '?t=' + new Date().getTime())
+                .then(res => {
+                    if(!res.ok) throw new Error("Local fail");
+                    return res.text();
+                })
+                .then(text => {
                     document.getElementById('rawCodeContent').innerText = text;
                     currentModalContent = text;
-                }).catch(() => document.getElementById('rawCodeContent').innerText = "❌ 无法读取文件");
-            });
+                })
+                .catch(() => {
+                    // 降级尝试 GitHub Raw
+                    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/prompt/${fileName}`;
+                    fetch(rawUrl).then(r=>r.text()).then(t=>{
+                        document.getElementById('rawCodeContent').innerText = t;
+                        currentModalContent = t;
+                    }).catch(() => document.getElementById('rawCodeContent').innerText = "❌ 无法读取文件，请检查网络或稍后再试。");
+                });
         }
 
         function closeModal() { modal.classList.remove('active'); }
@@ -616,10 +504,8 @@
             navigator.clipboard.writeText(textToCopy).then(() => alert('已复制')); 
         }
 
-        // 初始化
         checkAdminStatus();
         fetchRepoData();
     </script>
-
 </body>
 </html>
