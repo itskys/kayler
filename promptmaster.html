@@ -209,6 +209,39 @@
             th:nth-child(3), td:nth-child(3) { display: none; } /* 手机隐藏描述 */
             th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者 */
         }
+        
+        /* === 📱 移动端适配 (promptmaster.html 专用) === */
+        @media (max-width: 768px) {
+            /* 1. 标题栏 */
+            .section-title { font-size: 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .refresh-btn { width: 100%; text-align: center; }
+
+            /* 2. 撰写助手 */
+            .builder-area { padding: 15px; }
+            .meta-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .filename-input { width: 100%; }
+            .builder-actions { flex-direction: column-reverse; gap: 10px; }
+            .left-actions, .right-actions { width: 100%; display: flex; justify-content: space-between; }
+            .btn { flex: 1; justify-content: center; }
+
+            /* 3. 列表优化 */
+            .list-container { border-radius: 8px; }
+            th, td { padding: 10px; font-size: 12px; }
+            
+            /* 隐藏次要列，只保留文件名和操作 */
+            th:nth-child(2), td:nth-child(2), /* 版本 */
+            th:nth-child(3), td:nth-child(3), /* 描述 */
+            th:nth-child(4), td:nth-child(4)  /* 作者 */
+            { display: none; }
+            
+            /* 让文件名列占满 */
+            th:first-child, td:first-child { width: 100%; }
+            
+            /* 4. 弹窗适配 */
+            .modal-content { width: 95%; height: 80vh; }
+            .modal-footer { flex-direction: column; }
+            .modal-footer .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>

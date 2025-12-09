@@ -296,6 +296,56 @@
             .tool-row { justify-content: center; } 
             .signature-input-container { width: 100%; }
         }
+        /* === 📱 移动端适配 (index.html 专用) === */
+        @media (max-width: 768px) {
+            /* 1. 基础间距调整 */
+            body { padding: 10px; }
+            header { margin-top: 10px; margin-bottom: 20px; }
+            h1 { font-size: 24px; }
+            .global-counter { font-size: 12px; }
+
+            /* 2. 工具栏：紧凑堆叠 */
+            .toolbar-wrapper {
+                padding: 15px;
+                gap: 15px;
+            }
+            .tool-row {
+                justify-content: flex-start; /* 左对齐 */
+                gap: 10px;
+            }
+            .tool-group {
+                width: 100%; /* 每个组占满一行 */
+                justify-content: space-between; /* 标签和控件两端对齐 */
+            }
+            /* 特殊处理：主题按钮组不需要两端对齐，保持紧凑 */
+            .tool-group:first-child { justify-content: flex-start; }
+
+            /* 3. 主容器：改为单列 */
+            .container {
+                gap: 30px;
+                flex-direction: column-reverse; /* 关键：把预览图(Preview)放到最上面，输入框放到下面？或者保持 column */
+                /* 这里建议用 column，输入在先，预览在后 */
+                flex-direction: column; 
+            }
+
+            /* 4. 输入区 & 预览区 */
+            .input-area, .preview-area {
+                width: 100%;
+                min-width: 0; /* 防止 flex 子元素溢出 */
+            }
+            
+            /* 5. 预览卡片自适应 */
+            .card-container { width: 100%; max-width: 100%; }
+            .paper-card { 
+                padding: 30px 20px; /* 减小纸张内边距 */
+            }
+            .paper-content { font-size: 16px; } /* 稍微减小字号 */
+            .paper-title { font-size: 22px; }
+            
+            /* 6. Emoji 栏优化 */
+            .emoji-bar { padding-bottom: 10px; }
+            .emoji-item { font-size: 20px; padding: 8px; }
+        }
     </style>
 </head>
 <body>
