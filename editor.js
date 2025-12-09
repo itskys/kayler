@@ -1,36 +1,36 @@
-// editor.js - v5.2 Robust Version
-// 修复了按钮点击无反应的问题，增加了安全检查
+// editor.js - v5.3 Fixed Version
+// 修复了按钮点击无效的问题，增加了详细的调试日志
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 Editor JS loaded & DOM ready.");
+    console.log("🚀 Editor JS loaded. Initializing...");
 
     // 1. 获取核心元素
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
 
-    // 2. 核心功能：渲染 Markdown
-    // 检查 marked 库是否加载
-    if (typeof marked === 'undefined') {
-        console.error("❌ Marked.js 库未加载，请检查网络或 CDN 地址！");
-        if(preview) preview.innerHTML = "<p style='color:red'>⚠️ 核心组件加载失败，请刷新页面。</p>";
-    }
-
+    // --- 核心功能：渲染 Markdown ---
     function renderMarkdown() {
         if (!editor || !preview) return;
+        // 检查 marked 库是否加载
+        if (typeof marked === 'undefined') {
+            console.error("❌ Marked.js 库未加载，无法预览！");
+            preview.innerHTML = "<p style='color:red'>⚠️ 核心组件加载失败，请检查网络。</p>";
+            return;
+        }
         try {
-            // 使用 marked 解析，如果没加载则降级处理
-            const html = (typeof marked !== 'undefined') ? marked.parse(editor.value) : editor.value;
-            preview.innerHTML = html;
+            preview.innerHTML = marked.parse(editor.value);
         } catch (e) {
             console.error("渲染出错:", e);
+            preview.innerText = "预览渲染出错，请检查输入内容。";
         }
     }
 
-    // 3. 初始化加载
+    // --- 初始化编辑器内容 ---
     if (editor) {
         const savedContent = localStorage.getItem('editor_draft');
         if (savedContent) {
             editor.value = savedContent;
+            console.log("ℹ️ 已恢复草稿");
         } else if (typeof DEFAULT_EDITOR_CONTENT !== 'undefined') {
             editor.value = DEFAULT_EDITOR_CONTENT;
         }
@@ -59,120 +59,112 @@ document.addEventListener('DOMContentLoaded', () => {
         if(preview) preview.addEventListener('scroll', () => syncScroll(preview, editor));
     }
 
-    // 4. --- 按钮事件绑定 (带安全检查) ---
+    // --- 2. 按钮事件绑定 (重构版) ---
+    initButtons();
+});
+
+// 初始化所有按钮事件的函数
+function initButtons() {
+    console.log("🔧 Initializing buttons...");
+
+    // 辅助函数：安全绑定点击事件
+    const safeBind = (id, handler) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', handler);
+            console.log(`✅ Button '${id}' bound successfully.`);
+        } else {
+            console.warn(`⚠️ Button '${id}' not found in DOM. Skipping.`);
+        }
+    };
 
     // [设置按钮]
-    const btnSetting = document.getElementById('btn-setting');
-    if (btnSetting) {
-        btnSetting.addEventListener('click', () => {
-            console.log("点击设置");
-            if (window.openGlobalSettings) {
-                window.openGlobalSettings();
-            } else {
-                alert("⚠️ 设置面板尚未加载，请稍后再试或刷新页面。");
-            }
-        });
-    } else {
-        // 兼容旧版 HTML，尝试用 class 获取
-        const btnSettingLegacy = document.querySelector('.btn-setting');
-        if (btnSettingLegacy) {
-            btnSettingLegacy.addEventListener('click', () => {
-                if (window.openGlobalSettings) window.openGlobalSettings();
-            });
+    safeBind('btn-setting', () => {
+        console.log("👉 点击设置");
+        // 检查 layout.js 是否成功加载了全局设置函数
+        if (window.openGlobalSettings && typeof window.openGlobalSettings === 'function') {
+            window.openGlobalSettings();
+        } else {
+            console.error("❌ window.openGlobalSettings 未定义。Layout.js 可能未加载或出错。");
+            alert("⚠️ 设置面板尚未加载，请刷新页面重试。");
         }
-    }
+    });
 
     // [保存并发布]
-    const btnSave = document.getElementById('btn-save');
-    if (btnSave) {
-        btnSave.addEventListener('click', () => {
-            const token = localStorage.getItem('gh_token');
-            if (!token) {
-                if(confirm("⚠️ 未检测到 GitHub Token，无法发布。\n是否立即打开设置进行配置？")) {
-                    if(window.openGlobalSettings) window.openGlobalSettings();
-                }
-                return;
+    safeBind('btn-save', () => {
+        const token = localStorage.getItem('gh_token');
+        if (!token) {
+            if(confirm("⚠️ 未检测到 GitHub Token，无法发布。\n是否立即打开设置进行配置？")) {
+                if(window.openGlobalSettings) window.openGlobalSettings();
             }
-            alert("✅ 模拟发布成功！(Token已验证)");
-        });
-    }
+            return;
+        }
+        alert("✅ 模拟发布成功！(Token验证通过)");
+    });
 
     // [PDF 打印]
-    const btnPdf = document.getElementById('btn-pdf');
-    if (btnPdf) {
-        btnPdf.addEventListener('click', () => {
-            window.print();
-        });
-    }
+    safeBind('btn-pdf', () => {
+        window.print();
+    });
 
     // [导出 .md]
-    const btnMd = document.getElementById('btn-md');
-    if (btnMd) {
-        btnMd.addEventListener('click', () => {
-            if(!editor) return;
-            const blob = new Blob([editor.value], { type: 'text/markdown' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'kayler-article.md';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-    }
+    safeBind('btn-md', () => {
+        const editorVal = document.getElementById('editor')?.value;
+        if(!editorVal) { alert("内容为空"); return; }
+        const blob = new Blob([editorVal], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kayler-article.md';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
 
     // [长图生成]
-    const btnLongImg = document.getElementById('btn-long-img');
-    if (btnLongImg) {
-        btnLongImg.addEventListener('click', () => {
-            if(!preview) return;
-            // 获取纯文本
-            const content = preview.innerText; 
-            
-            if (!content || !content.trim()) {
-                alert("内容为空，无法生成！");
-                return;
-            }
-            
-            // 存入缓存
-            localStorage.setItem('image_gen_content', content);
-            
-            // 跳转
-            window.location.href = 'index.html';
-        });
-    }
+    safeBind('btn-long-img', () => {
+        const previewEl = document.getElementById('preview');
+        if(!previewEl) return;
+        // 获取纯文本
+        const content = previewEl.innerText; 
+        
+        if (!content || !content.trim()) {
+            alert("内容为空，无法生成长图！请先在左侧输入。");
+            return;
+        }
+        
+        // 存入缓存，供 index.html 读取
+        localStorage.setItem('image_gen_content', content);
+        console.log("📄 长图内容已存入缓存，准备跳转...");
+        // 跳转
+        window.location.href = 'index.html';
+    });
 
     // [复制源码]
-    const btnCopyCode = document.getElementById('btn-copy-code');
-    if (btnCopyCode) {
-        btnCopyCode.addEventListener('click', async function() {
-            if(!editor) return;
-            await copyToClipboard(editor.value, this);
-        });
-    }
+    safeBind('btn-copy-code', async function() {
+        const editorVal = document.getElementById('editor')?.value;
+        if(editorVal) await copyToClipboard(editorVal, this);
+    });
 
     // [复制文本]
-    const btnCopyText = document.getElementById('btn-copy-text');
-    if (btnCopyText) {
-        btnCopyText.addEventListener('click', async function() {
-            if(!preview) return;
-            await copyToClipboard(preview.innerText, this);
-        });
-    }
+    safeBind('btn-copy-text', async function() {
+        const previewTxt = document.getElementById('preview')?.innerText;
+        if(previewTxt) await copyToClipboard(previewTxt, this);
+    });
+}
 
-    // 辅助函数：复制
-    async function copyToClipboard(text, btn) {
-        try {
-            await navigator.clipboard.writeText(text);
-            const originalHtml = btn.innerHTML; // 保存带图标的 HTML
-            btn.innerText = "✅ 已复制";
-            btn.style.color = "#1a7f37";
-            setTimeout(() => {
-                btn.innerHTML = originalHtml; // 恢复图标
-                btn.style.color = "";
-            }, 1500);
-        } catch (e) {
-            console.error(e);
-            alert("复制失败，请手动复制");
-        }
+// 辅助函数：复制功能
+async function copyToClipboard(text, btn) {
+    try {
+        await navigator.clipboard.writeText(text);
+        const originalHtml = btn.innerHTML; // 保存带图标的 HTML
+        btn.innerText = "✅ 已复制";
+        btn.style.color = "#1a7f37"; // 绿色提示
+        setTimeout(() => {
+            btn.innerHTML = originalHtml; // 恢复图标
+            btn.style.color = "";
+        }, 1500);
+    } catch (e) {
+        console.error("复制失败:", e);
+        alert("复制失败，可能是浏览器权限原因，请手动复制。");
     }
-});
+}
