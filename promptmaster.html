@@ -54,21 +54,13 @@
         }
         .refresh-btn:hover { background: var(--brand-brown); color: white; }
 
-        /* === 区域 1: 提示词组装器 (Builder) === */
+        /* === 区域 1: 提示词组装器 === */
         .builder-area {
             background: white; padding: 30px; border-radius: 16px;
             box-shadow: var(--card-shadow);
             display: flex; flex-direction: column; gap: 15px;
         }
 
-        /* 文件名输入行 */
-        .meta-row { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .filename-input {
-            flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;
-        }
-        .filename-input:focus { border-color: var(--brand-brown); }
-
-        /* 编辑器 */
         #promptInput {
             width: 100%; height: 150px; border: 1px solid #eee; border-radius: 8px;
             resize: vertical; outline: none; padding: 20px; 
@@ -77,22 +69,9 @@
         }
         #promptInput:focus { background: #fff; border-color: var(--brand-brown); }
 
-        /* 预览框 */
-        #promptPreview {
-            width: 50%; height: 100%; overflow-y: auto; padding: 20px;
-            background: #fff; color: #333;
-        }
-        #promptPreview h1, #promptPreview h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 0; }
-        #promptPreview code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; color: #c7254e; }
-        #promptPreview pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
-
-        /* 按钮组 */
         .builder-actions {
             display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
         }
-        .left-actions { display: flex; gap: 10px; }
-        .right-actions { display: flex; gap: 10px; }
-
         .btn {
             padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
             font-size: 13px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
@@ -100,11 +79,7 @@
         .btn-primary { background: var(--brand-brown); color: white; }
         .btn-secondary { background: #f0f0f0; color: #666; }
         .btn-preview { background: #e3f2fd; color: #1565c0; } 
-        .btn-preview:hover { background: #bbdefb; }
         
-        /* 标签库 */
-        .library-area { margin-top: 10px; padding-top: 20px; border-top: 1px dashed #eee; }
-        .category-group h3 { font-size: 14px; color: #888; margin: 0 0 10px 0; }
         .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
         .tag {
             background: white; padding: 6px 12px; border-radius: 50px;
@@ -131,7 +106,6 @@
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
         }
         
-        /* 排序样式 */
         th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
         th.sortable:hover { background: #f0ebe4; }
         th.sortable::after { content: ' ↕'; font-size: 10px; color: #999; }
@@ -149,6 +123,17 @@
         }
         .prompt-link:hover { color: var(--brand-brown); border-bottom-color: var(--brand-brown); }
         
+        /* 示例链接样式 */
+        .example-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e3f2fd; color: #1565c0; 
+            padding: 2px 8px; border-radius: 4px; font-size: 12px; 
+            text-decoration: none; margin-right: 5px; cursor: pointer;
+            transition: all 0.2s; border: 1px solid transparent;
+        }
+        .example-tag:hover { background: #bbdefb; border-color: #1565c0; }
+        .example-tag i { font-style: normal; }
+
         .badge {
             display: inline-block; padding: 2px 8px; border-radius: 4px;
             font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555;
@@ -159,7 +144,7 @@
             display: flex; justify-content: center; align-items: center; height: 200px; color: #999; flex-direction: column; gap: 10px;
         }
 
-        /* === 弹窗 === */
+        /* === 文件/文本预览弹窗 === */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 2000;
@@ -180,64 +165,45 @@
         
         .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
         
-        /* 纯文本代码模式 */
-        pre.raw-code { 
-            white-space: pre-wrap; word-wrap: break-word; 
-            font-family: "Menlo", "Monaco", monospace; font-size: 14px; 
-            color: #333; margin: 0;
-        }
-        /* 预览渲染模式 */
+        pre.raw-code { white-space: pre-wrap; word-wrap: break-word; font-family: "Menlo", "Monaco", monospace; font-size: 14px; color: #333; margin: 0; }
         .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
         .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
         
         .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; display: flex; justify-content: flex-end; gap: 10px; }
-        .copy-btn { padding: 8px 16px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; }
         
         /* 导入按钮 */
-        .btn-import { background: #2e7d32; color: white; display: none; } /* 默认隐藏 */
+        .btn-import { background: #2e7d32; color: white; display: none; } 
         .btn-import:hover { background: #1b5e20; }
+        .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* === 媒体灯箱 (Lightbox) === */
+        #lightboxModal {
+            display: none; position: fixed; z-index: 3000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            justify-content: center; align-items: center;
+            flex-direction: column;
+        }
+        #lightboxModal.active { display: flex; }
+        #lightboxContent { max-width: 95%; max-height: 85vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; transition: 0.2s; }
+        .lightbox-close:hover { color: var(--brand-brown); }
+        .lightbox-caption { color: #ccc; margin-top: 15px; font-size: 14px; font-family: sans-serif; }
 
         footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; width: 100%; max-width: 1000px; text-align: center; color: #999; font-size: 13px; }
-        
-        /* 页脚配置链接 */
         .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
         .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
 
+        /* === 📱 移动端适配 === */
         @media (max-width: 768px) {
             .builder-actions { flex-direction: column; gap: 10px; }
             .left-actions, .right-actions { width: 100%; justify-content: space-between; }
-            th:nth-child(3), td:nth-child(3) { display: none; } /* 手机隐藏描述 */
-            th:nth-child(4), td:nth-child(4) { display: none; } /* 手机隐藏作者 */
-        }
-        
-        /* === 📱 移动端适配 (promptmaster.html 专用) === */
-        @media (max-width: 768px) {
-            /* 1. 标题栏 */
-            .section-title { font-size: 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
-            .refresh-btn { width: 100%; text-align: center; }
-
-            /* 2. 撰写助手 */
-            .builder-area { padding: 15px; }
-            .meta-row { flex-direction: column; align-items: flex-start; gap: 5px; }
-            .filename-input { width: 100%; }
-            .builder-actions { flex-direction: column-reverse; gap: 10px; }
-            .left-actions, .right-actions { width: 100%; display: flex; justify-content: space-between; }
-            .btn { flex: 1; justify-content: center; }
-
-            /* 3. 列表优化 */
-            .list-container { border-radius: 8px; }
-            th, td { padding: 10px; font-size: 12px; }
-            
-            /* 隐藏次要列，只保留文件名和操作 */
             th:nth-child(2), td:nth-child(2), /* 版本 */
-            th:nth-child(3), td:nth-child(3), /* 描述 */
             th:nth-child(4), td:nth-child(4)  /* 作者 */
             { display: none; }
+            th:first-child, td:first-child { width: 40%; }
+            th:nth-child(3), td:nth-child(3) { width: 30%; } /* 描述 */
             
-            /* 让文件名列占满 */
-            th:first-child, td:first-child { width: 100%; }
-            
-            /* 4. 弹窗适配 */
             .modal-content { width: 95%; height: 80vh; }
             .modal-footer { flex-direction: column; }
             .modal-footer .btn { width: 100%; }
@@ -288,10 +254,9 @@
                 <table id="dataTable" style="display:none;">
                     <thead>
                         <tr>
-                            <th style="width: 40%;" class="sortable" onclick="sortTable('name')" data-key="name">提示词名称</th>
-                            <th style="width: 15%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
-                            <th style="width: 30%;">智能描述</th>
-                            <th style="width: 15%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
+                            <th style="width: 35%;" class="sortable" onclick="sortTable('name')" data-key="name">提示词名称</th>
+                            <th style="width: 10%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
+                            <th style="width: 25%;">功能描述</th> <th style="width: 20%;">示例展示</th> <th style="width: 10%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -334,13 +299,20 @@
         </div>
     </div>
 
+    <div id="lightboxModal" onclick="if(event.target===this) closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightboxContent" src="" style="display:none;">
+        <video id="lightboxVideo" controls style="display:none; max-width:90%; max-height:85vh; box-shadow:0 0 30px black;"></video>
+        <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+
     <script>
         // === 配置 ===
         const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
         
         let globalFilesData = [];
         let currentSort = { key: 'name', order: 'desc' }; 
-        let currentFileData = { name: '', content: '' }; // 关键：存储当前查看的文件信息
+        let currentFileData = { name: '', content: '' }; 
 
         const promptInput = document.getElementById('promptInput');
         const tableBody = document.getElementById('tableBody');
@@ -366,7 +338,7 @@
             document.getElementById('previewModal').classList.add('active');
         }
 
-        // === 2. 列表获取 ===
+        // === 2. 列表获取 (核心升级：并发获取提示词和画廊) ===
         async function fetchRepoData() {
             loadingState.style.display = 'flex'; dataTable.style.display = 'none'; tableBody.innerHTML = '';
 
@@ -376,17 +348,46 @@
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
-                const response = await fetch(url, { headers });
+                // 并发请求：获取提示词列表 + 获取画廊列表
+                const [promptRes, galleryRes] = await Promise.all([
+                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, { headers }),
+                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, { headers }).catch(() => ({ ok: false })) // 画廊失败不影响主列表
+                ]);
+
+                if (!promptRes.ok) throw new Error("API Limit (Prompts)");
+                const promptFiles = await promptRes.json();
                 
-                if (!response.ok) throw new Error("API Limit");
-                const files = await response.json();
-                
-                globalFilesData = files
+                // 处理画廊数据
+                let galleryFiles = [];
+                if (galleryRes.ok) {
+                    galleryFiles = await galleryRes.json();
+                }
+
+                // 数据整合
+                globalFilesData = promptFiles
                     .filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'))
                     .map(file => {
                         const meta = parseFilename(file.name);
-                        return { rawName: file.name, name: meta.name, version: meta.version, desc: meta.desc, author: meta.author };
+                        
+                        // 自动关联：在画廊中寻找包含提示词名称的文件
+                        // 规则：文件名包含提示词名 (忽略大小写)
+                        const examples = galleryFiles.filter(img => 
+                            img.name.toLowerCase().includes(meta.name.toLowerCase()) &&
+                            (img.name.endsWith('.png') || img.name.endsWith('.jpg') || img.name.endsWith('.jpeg') || img.name.endsWith('.mp4'))
+                        ).map(img => ({
+                            name: img.name,
+                            url: img.download_url || `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/gallery/${encodeURIComponent(img.name)}`,
+                            type: img.name.endsWith('.mp4') ? 'video' : 'image'
+                        }));
+
+                        return { 
+                            rawName: file.name, 
+                            name: meta.name, 
+                            version: meta.version, 
+                            desc: meta.desc, 
+                            author: meta.author,
+                            examples: examples // 注入示例
+                        };
                     });
 
                 applySort();
@@ -397,22 +398,18 @@
         }
 
         function parseFilename(filename) {
-            const cleanName = filename.replace(/\.(md|txt)$/, ''); // 去除后缀
+            const cleanName = filename.replace(/\.(md|txt)$/, '');
             const parts = cleanName.split(/[_-]/);
             const ver = parts.find(p => /^v\d/.test(p.toLowerCase())) || '-';
-            
-            // 简单推断描述：如果文件名里有下划线，取最后一段作为描述
             let desc = "AI 提示词";
             if(parts.length > 1) {
-                // 排除版本号和名字，剩下的可能是描述
                 const potentialDesc = parts.filter(p => p !== parts[0] && p !== ver);
                 if(potentialDesc.length > 0) desc = potentialDesc.join(' ');
             }
-            
             return { name: cleanName, version: ver, desc: desc, author: 'Kaylerris' };
         }
 
-        // === 3. 排序 ===
+        // === 3. 排序与渲染 (含示例列) ===
         function sortTable(key) {
             if (currentSort.key === key) currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
             else { currentSort.key = key; currentSort.order = 'asc'; }
@@ -437,65 +434,103 @@
         function renderTable() {
             tableBody.innerHTML = '';
             globalFilesData.forEach(item => {
+                // 生成示例 HTML
+                let examplesHtml = '<span style="color:#ccc">-</span>';
+                if (item.examples.length > 0) {
+                    examplesHtml = item.examples.slice(0, 3).map((ex, idx) => 
+                        `<a class="example-tag" onclick="openLightbox('${ex.url}', '${ex.type}', '${ex.name}')">
+                            ${ex.type === 'video' ? '🎬' : '🖼️'} 示例${idx + 1}
+                        </a>`
+                    ).join('');
+                }
+
                 const html = `
                     <tr>
                         <td><a class="prompt-link" onclick="viewFile('${item.rawName}', '${item.name}', '${item.author}')">${item.name}</a></td>
                         <td><span class="badge ${item.version.includes('v') ? 'v-new' : ''}">${item.version}</span></td>
                         <td class="hide-mobile">${item.desc}</td>
+                        <td class="hide-mobile">${examplesHtml}</td>
                         <td class="hide-mobile">${item.author}</td>
                     </tr>`;
                 tableBody.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        // === 4. 预览与导入 (核心修复) ===
+        // === 4. 预览与导入 ===
         function viewFile(fileName, displayName, author) {
             document.getElementById('modalTitle').innerText = `${displayName} by ${author}`;
             fileContent.innerText = "⏳ 读取中...";
+            currentFileData = { name: '', content: '' };
             modal.classList.add('active');
             
-            // 检查权限显示“导入”按钮
-            if (localStorage.getItem('gh_token')) btnImport.style.display = 'inline-flex';
-            else btnImport.style.display = 'none';
+            const hasToken = localStorage.getItem('gh_token');
+            if (hasToken) {
+                btnImport.style.display = 'inline-flex';
+                btnImport.disabled = true; 
+                btnImport.style.opacity = "0.5";
+            } else {
+                btnImport.style.display = 'none';
+            }
 
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(fileName)}`;
             
-            // 策略：Raw -> Local -> Fail
-            fetch(rawUrl).then(r => {
-                if(!r.ok) throw new Error("Raw Error");
-                return r.text();
-            }).then(text => {
+            const onSuccess = (text) => {
                 fileContent.innerText = text;
-                // 关键：保存数据供导入使用
                 currentFileData = { name: fileName, content: text };
-            }).catch(() => {
-                // 降级尝试
-                fetch('prompt/'+fileName).then(r=>r.text()).then(text => {
-                    fileContent.innerText = text;
-                    // 关键：保存数据
-                    currentFileData = { name: fileName, content: text };
-                }).catch(() => fileContent.innerText = "❌ 读取失败");
+                if(hasToken) { btnImport.disabled = false; btnImport.style.opacity = "1"; }
+            };
+
+            fetch(rawUrl).then(r => {
+                if(!r.ok) throw new Error("Raw Error"); return r.text();
+            }).then(onSuccess).catch(() => {
+                fetch('prompt/' + fileName).then(r => r.text()).then(onSuccess).catch(() => {
+                    fileContent.innerText = "❌ 读取失败\n请检查网络连接或 GitHub Token 配置。";
+                });
             });
         }
 
-        // 导入到 Editor
         function importToEditor() {
-            if (!currentFileData.content) { alert("内容为空，无法导入"); return; }
-            
-            // 写入编辑器缓存
+            if (!currentFileData.content) { alert("数据尚未加载，请稍候..."); return; }
             localStorage.setItem('kayler_editor_cache', currentFileData.content);
             localStorage.setItem('kayler_editor_filename', currentFileData.name);
+            if(confirm(`确认导入 "${currentFileData.name}" 到编辑器？`)) {
+                window.location.href = 'editor.html';
+            }
+        }
+
+        // === 5. 灯箱逻辑 (新功能) ===
+        function openLightbox(url, type, caption) {
+            const lightbox = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxContent');
+            const video = document.getElementById('lightboxVideo');
+            const cap = document.getElementById('lightboxCaption');
             
-            alert(`已加载 "${currentFileData.name}"，正在跳转编辑器...`);
-            window.location.href = 'editor.html';
+            cap.innerText = caption;
+            lightbox.classList.add('active');
+            
+            if (type === 'video') {
+                img.style.display = 'none';
+                video.style.display = 'block';
+                video.src = url;
+                video.play();
+            } else {
+                video.style.display = 'none';
+                video.pause();
+                img.style.display = 'block';
+                img.src = url;
+            }
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightboxModal').classList.remove('active');
+            document.getElementById('lightboxVideo').pause();
         }
 
         function closeModal() { modal.classList.remove('active'); }
         function copyContent() { navigator.clipboard.writeText(fileContent.innerText).then(() => alert('已复制')); }
 
-        // 初始化
         fetchRepoData();
     </script>
 </body>
