@@ -8,20 +8,16 @@
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
     <script src="layout.js?v=5.0"></script>
     
     <style>
-        /* === 全局变量 === */
         :root {
             --bg-body: #f2f4f7; --text-color: #2c2c2c;
             --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
             --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
             --layout-width: 94%; --layout-max-width: 1600px;
         }
-
         * { box-sizing: border-box; }
-
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-body); margin: 0; padding: 20px;
@@ -30,386 +26,365 @@
         }
 
         /* 顶部导航由 layout.js 注入 */
-
-        header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
-        h1 { 
-            font-size: 32px; font-weight: 800; color: #222; margin-bottom: 10px; 
-            display: flex; align-items: center; justify-content: center;
-        }
+        header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
+        h1 { font-size: 28px; font-weight: 800; color: #333; display: flex; align-items: center; justify-content: center; margin: 0; }
         
-        /* === 主布局容器 === */
+        /* === 布局容器 (优化：大屏Grid) === */
         .main-container {
             width: var(--layout-width); max-width: var(--layout-max-width);
-            display: flex; flex-direction: column; gap: 40px;
-            flex: 1; 
+            display: grid; grid-template-columns: 350px 1fr; gap: 30px; /* 左侧固定，右侧自适应 */
+            align-items: start; flex: 1;
         }
 
-        .section-title {
-            font-size: 20px; font-weight: bold; color: #444; border-left: 5px solid var(--brand-brown);
-            padding-left: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .refresh-btn {
-            font-size: 14px; color: var(--brand-brown); cursor: pointer; text-decoration: none; border: 1px solid var(--brand-brown);
-            padding: 4px 10px; border-radius: 4px; transition: all 0.2s; background: transparent;
-        }
-        .refresh-btn:hover { background: var(--brand-brown); color: white; }
-
-        /* === 区域 1: 提示词组装器 === */
-        .builder-area {
-            background: white; padding: 30px; border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            display: flex; flex-direction: column; gap: 15px;
+        /* 通用卡片 */
+        .card { background: white; border-radius: 12px; box-shadow: var(--card-shadow); overflow: hidden; display: flex; flex-direction: column; }
+        .card-header { 
+            padding: 15px 20px; border-bottom: 1px solid #eee; background: #fafafa;
+            display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #555;
         }
 
+        /* === 左侧：撰写助手 === */
+        .builder-body { padding: 20px; }
         #promptInput {
-            width: 100%; height: 150px; border: 1px solid #eee; border-radius: 8px;
-            resize: vertical; outline: none; padding: 20px; 
-            font-family: "Menlo", monospace; font-size: 14px; line-height: 1.6;
-            background: #fafafa; color: #333;
+            width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 8px;
+            resize: vertical; outline: none; padding: 15px; 
+            font-family: "Menlo", monospace; font-size: 13px; line-height: 1.6;
+            background: #fdfdfd; color: #333; margin-bottom: 15px;
         }
         #promptInput:focus { background: #fff; border-color: var(--brand-brown); }
 
-        .builder-actions {
-            display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
-        }
-        .btn {
-            padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
-            font-size: 13px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
-        }
-        .btn-primary { background: var(--brand-brown); color: white; }
-        .btn-secondary { background: #f0f0f0; color: #666; }
-        .btn-preview { background: #e3f2fd; color: #1565c0; } 
-        
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .tags-wrapper { margin-bottom: 15px; max-height: 200px; overflow-y: auto; }
+        .tag-title { font-size: 12px; color: #999; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .tags-list { display: flex; flex-wrap: wrap; gap: 6px; }
         .tag {
-            background: white; padding: 6px 12px; border-radius: 50px;
-            border: 1px solid #eee; color: #555; cursor: pointer;
-            font-size: 12px; transition: all 0.2s; user-select: none;
+            background: #f0f0f0; padding: 4px 10px; border-radius: 4px;
+            font-size: 12px; cursor: pointer; color: #555; transition: 0.2s;
+            border: 1px solid transparent; user-select: none;
         }
-        .tag:hover {
-            border-color: var(--brand-brown); color: var(--brand-brown);
-            transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
+        .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: white; }
+        .tag-add-btn { background: white; border: 1px dashed #ccc; color: #888; }
+        .tag-add-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
-        /* === 区域 2: 知识库列表 === */
-        .list-container {
-            background: white; border-radius: 16px;
-            box-shadow: var(--card-shadow); overflow: hidden;
-            padding: 0; min-height: 200px; position: relative;
+        .builder-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: var(--brand-brown); color: white; }
+        .btn-secondary { background: #eee; color: #555; }
+        .btn:hover { opacity: 0.9; }
+
+        /* === 右侧：知识库列表 === */
+        .toolbar { padding: 15px 20px; display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; background: white; }
+        .search-box {
+            flex: 1; position: relative; display: flex; align-items: center;
         }
+        .search-input {
+            width: 100%; padding: 8px 12px 8px 35px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; outline: none; transition: 0.2s;
+        }
+        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 0 0 2px rgba(139, 94, 60, 0.1); }
+        .search-icon { position: absolute; left: 10px; color: #999; font-size: 14px; }
+        
+        .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e8f5e9; color: #2e7d32; display: none; }
+        .status-badge.show { display: inline-block; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         thead { background: #f9f7f1; }
-        th, td { 
-            padding: 18px 20px; text-align: left; 
-            border-bottom: 1px solid #eee; font-size: 14px; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-        }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
+        th.sortable { cursor: pointer; user-select: none; }
         th.sortable:hover { background: #f0ebe4; }
-        th.sortable::after { content: ' ↕'; font-size: 10px; color: #999; }
-        th.sortable.asc::after { content: ' ↑'; color: var(--brand-brown); opacity: 1; }
-        th.sortable.desc::after { content: ' ↓'; color: var(--brand-brown); opacity: 1; }
+        th.sortable::after { content: ' ↕'; font-size: 10px; color: #ccc; margin-left: 4px; }
+        th.sortable.asc::after { content: ' ↑'; color: var(--brand-brown); }
+        th.sortable.desc::after { content: ' ↓'; color: var(--brand-brown); }
         
-        th { font-weight: bold; color: #8b5e3c; }
-        tr:last-child td { border-bottom: none; }
+        th { font-weight: 600; color: #8b5e3c; }
         tr:hover { background-color: #fafafa; }
 
-        .prompt-link {
-            color: #2c2c2c; font-weight: 600; text-decoration: none;
-            cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 5px;
-            border-bottom: 1px dashed #ccc;
-        }
-        .prompt-link:hover { color: var(--brand-brown); border-bottom-color: var(--brand-brown); }
+        .file-link { color: #333; font-weight: 600; cursor: pointer; text-decoration: none; border-bottom: 1px dashed #ccc; }
+        .file-link:hover { color: var(--brand-brown); border-color: var(--brand-brown); }
         
-        /* 示例链接样式 */
-        .example-tag {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #e3f2fd; color: #1565c0; 
-            padding: 2px 8px; border-radius: 4px; font-size: 12px; 
-            text-decoration: none; margin-right: 5px; cursor: pointer;
-            transition: all 0.2s; border: 1px solid transparent;
-        }
-        .example-tag:hover { background: #bbdefb; border-color: #1565c0; }
-        .example-tag i { font-style: normal; }
+        .example-link { color: #1565c0; cursor: pointer; margin-right: 8px; font-size: 12px; }
+        .example-link:hover { text-decoration: underline; }
 
-        .badge {
-            display: inline-block; padding: 2px 8px; border-radius: 4px;
-            font-size: 12px; font-weight: bold; background: #e0e0e0; color: #555;
-        }
-        .badge.v-new { background: #e8f5e9; color: #2e7d32; }
-
-        .loading-state {
-            display: flex; justify-content: center; align-items: center; height: 200px; color: #999; flex-direction: column; gap: 10px;
-        }
-
-        /* === 文件/文本预览弹窗 === */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 2000;
-            justify-content: center; align-items: center;
-            backdrop-filter: blur(2px);
-        }
+        /* 弹窗 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: white; width: 90%; max-width: 900px; height: 85vh;
-            border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; overflow: hidden;
-            animation: slideUp 0.3s ease;
+        .modal-content { background: white; width: 800px; max-width: 90%; height: 80vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { flex: 1; padding: 20px; overflow-y: auto; background: #fff; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+        .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #fdfbf7; }
+
+        /* 媒体灯箱 */
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        #lightbox.active { display: flex; }
+        #lightbox img, #lightbox video { max-width: 90%; max-height: 85vh; border-radius: 4px; box-shadow: 0 0 20px black; }
+        .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .main-container { grid-template-columns: 1fr; }
+            .builder-area { order: 1; } /* 手机上列表在下 */
         }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fdfbf7; }
-        .modal-title { font-size: 18px; font-weight: bold; color: #333; }
-        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
-        
-        .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #fff; }
-        
-        pre.raw-code { white-space: pre-wrap; word-wrap: break-word; font-family: "Menlo", "Monaco", monospace; font-size: 14px; color: #333; margin: 0; }
-        .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
-        .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
-        
-        .modal-footer { padding: 15px; border-top: 1px solid #eee; text-align: right; background: white; display: flex; justify-content: flex-end; gap: 10px; }
-        
-        /* 导入按钮 */
-        .btn-import { background: #2e7d32; color: white; display: none; } 
-        .btn-import:hover { background: #1b5e20; }
-        .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* === 媒体灯箱 (Lightbox) === */
-        #lightboxModal {
-            display: none; position: fixed; z-index: 3000;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            justify-content: center; align-items: center;
-            flex-direction: column;
-        }
-        #lightboxModal.active { display: flex; }
-        #lightboxContent { max-width: 95%; max-height: 85vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-        .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; transition: 0.2s; }
-        .lightbox-close:hover { color: var(--brand-brown); }
-        .lightbox-caption { color: #ccc; margin-top: 15px; font-size: 14px; font-family: sans-serif; }
-
-        footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; width: 100%; max-width: 1000px; text-align: center; color: #999; font-size: 13px; }
-        .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
-        .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
-
-        /* === 📱 移动端适配 === */
         @media (max-width: 768px) {
-            .builder-actions { flex-direction: column; gap: 10px; }
-            .left-actions, .right-actions { width: 100%; justify-content: space-between; }
             th:nth-child(2), td:nth-child(2), /* 版本 */
-            th:nth-child(4), td:nth-child(4)  /* 作者 */
+            th:nth-child(5), td:nth-child(5)  /* 作者 */
             { display: none; }
-            th:first-child, td:first-child { width: 40%; }
-            th:nth-child(3), td:nth-child(3) { width: 30%; } /* 描述 */
-            
-            .modal-content { width: 95%; height: 80vh; }
-            .modal-footer { flex-direction: column; }
-            .modal-footer .btn { width: 100%; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>
-            <img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">
-            提示词管理器
-        </h1>
-        <p style="color:#888">撰写、组装、管理您的 AI 提示词资产</p>
+        <h1><img src="/logo.png" style="height:32px; margin-right:10px;">提示词管理器</h1>
     </header>
 
     <div class="main-container">
         
-        <div class="builder-area">
-            <textarea id="promptInput" placeholder="点击下方标签添加，或直接在此输入..."></textarea>
-            
-            <div class="tags-container">
-                <div class="tag" onclick="addTag('Cyberpunk')">赛博朋克</div>
-                <div class="tag" onclick="addTag('Ukiyo-e style')">浮世绘</div>
-                <div class="tag" onclick="addTag('8k resolution')">8K 分辨率</div>
-                <div class="tag" onclick="addTag('--ar 16:9')">宽屏 16:9</div>
-                <div class="tag" onclick="addTag('--v 6.0')">MJ V6</div>
-                <div class="tag" onclick="addTag('--niji 6')">Niji 6</div>
+        <div class="card builder-area">
+            <div class="card-header">
+                <span>🎨 撰写助手</span>
+                <span style="font-size:12px; cursor:pointer; color:#888;" onclick="clearPrompt()">清空</span>
             </div>
+            <div class="builder-body">
+                <textarea id="promptInput" placeholder="输入或点击下方标签..."></textarea>
+                
+                <div class="tags-wrapper">
+                    <div class="tag-title">
+                        <span>常用标签</span>
+                        <span style="cursor:pointer;" onclick="addNewTag()">+ 自定义</span>
+                    </div>
+                    <div class="tags-list" id="tagsList">
+                        </div>
+                </div>
 
-            <div class="builder-actions">
-                <button class="btn btn-secondary" onclick="clearPrompt()">🗑️ 清空</button>
-                <button class="btn btn-preview" onclick="openPreview()">👁️ 预览渲染</button>
-                <button class="btn btn-primary" onclick="copyPrompt()">📋 一键复制</button>
+                <div class="builder-actions">
+                    <button class="btn btn-secondary" onclick="openPreview()">👁️ 预览</button>
+                    <button class="btn btn-primary" onclick="copyPrompt()">📋 复制</button>
+                </div>
             </div>
         </div>
 
-        <div>
-            <div class="section-title">
-                📚 提示词库 (自动同步)
-                <button class="refresh-btn" onclick="fetchRepoData()">🔄 刷新列表</button>
-            </div>
-            <div class="list-container">
-                <div id="loadingState" class="loading-state">
-                    <div style="font-size:24px;">⏳</div>
-                    <div>正在读取 GitHub 列表...</div>
+        <div class="card">
+            <div class="card-header">
+                <span>📚 提示词库</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span id="cacheStatus" class="status-badge">⚡ 缓存数据</span>
+                    <button class="refresh-btn" onclick="forceRefresh()">🔄 刷新</button>
                 </div>
-                <table id="dataTable" style="display:none;">
+            </div>
+            
+            <div class="toolbar">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索名称、描述或分类..." oninput="filterFiles()">
+                </div>
+            </div>
+
+            <div class="list-container">
+                <div id="loadingState" class="loading-state" style="padding:40px; text-align:center; display:none;">
+                    <div>⏳ 读取中...</div>
+                </div>
+                <table id="dataTable">
                     <thead>
                         <tr>
-                            <th style="width: 35%;" class="sortable" onclick="sortTable('name')" data-key="name">提示词名称</th>
-                            <th style="width: 10%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
-                            <th style="width: 25%;">功能描述</th> <th style="width: 20%;">示例展示</th> <th style="width: 10%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
+                            <th style="width:35%;" class="sortable" onclick="sortTable('name')" data-key="name">名称</th>
+                            <th style="width:10%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
+                            <th style="width:15%;" class="sortable" onclick="sortTable('category')" data-key="category">分类</th>
+                            <th style="width:25%;">示例 (自动关联)</th>
+                            <th style="width:15%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
-            <p style="text-align:center; color:#999; font-size:12px; margin-top:10px;">
-                列表数据实时读取自 GitHub。点击表头可排序。
-            </p>
         </div>
-
-    </div>
-
-    <div style="text-align: center; margin-top: -20px; margin-bottom: 20px;">
-        <a onclick="openGlobalSettings()" class="admin-link">⚙️ 管理员配置</a>
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" id="modalTitle">文件预览</div>
-                <button class="close-btn" onclick="closeModal()">×</button>
+                <b id="modalTitle">文件预览</b>
+                <span class="close-btn" onclick="closeModal()">×</span>
             </div>
-            <div class="modal-body">
-                <pre class="raw-code" id="fileContent">正在加载...</pre>
-            </div>
+            <div class="modal-body" id="fileContent">加载中...</div>
             <div class="modal-footer">
-                <button class="btn btn-import" id="btnImport" onclick="importToEditor()">✏️ 导入编辑器</button>
-                <button class="btn btn-primary" onclick="copyContent()">📋 复制内容</button>
+                <button class="btn btn-secondary" onclick="downloadFile()">📥 下载 .md</button>
+                <button class="btn btn-primary" id="btnImport" style="display:none;" onclick="importToEditor()">✏️ 导入编辑器</button>
+                <button class="btn btn-primary" onclick="copyContent()">📋 复制</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="previewModal" onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')">
         <div class="modal-content">
-             <div class="modal-header">
-                <div class="modal-title">Markdown 渲染预览</div>
-                <button class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')">×</button>
-            </div>
+             <div class="modal-header"><b>Markdown 预览</b><span class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')">×</span></div>
             <div class="modal-body markdown-body" id="previewBody"></div>
         </div>
     </div>
 
-    <div id="lightboxModal" onclick="if(event.target===this) closeLightbox()">
+    <div id="lightbox" onclick="if(event.target===this) closeLightbox()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img id="lightboxContent" src="" style="display:none;">
-        <video id="lightboxVideo" controls style="display:none; max-width:90%; max-height:85vh; box-shadow:0 0 30px black;"></video>
-        <div class="lightbox-caption" id="lightboxCaption"></div>
+        <img id="lbImg" style="display:none;">
+        <video id="lbVideo" controls style="display:none;"></video>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a onclick="openGlobalSettings()" class="admin-link">⚙️ 管理配置</a>
     </div>
 
     <script>
-        // === 配置 ===
-        const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
+        // === 配置与状态 ===
+        const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
+        const CACHE_KEY = 'prompt_list_cache';
+        const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
+        let allFiles = [];      // 原始数据
+        let displayFiles = [];  // 过滤/排序后数据
+        let currentSort = { key: 'name', order: 'desc' };
+        let currentFile = { name: '', content: '' };
         
-        let globalFilesData = [];
-        let currentSort = { key: 'name', order: 'desc' }; 
-        let currentFileData = { name: '', content: '' }; 
+        // 默认标签 + 用户标签
+        const defaultTags = ['Cyberpunk', 'Ukiyo-e', '8k', '--ar 16:9', '--v 6.0', 'Masterpiece', 'Niji 6', 'Studio Ghibli'];
+        let userTags = JSON.parse(localStorage.getItem('kayler_user_tags') || '[]');
 
-        const promptInput = document.getElementById('promptInput');
-        const tableBody = document.getElementById('tableBody');
-        const loadingState = document.getElementById('loadingState');
-        const dataTable = document.getElementById('dataTable');
-        const modal = document.getElementById('modalOverlay');
-        const modalTitle = document.getElementById('modalTitle');
-        const fileContent = document.getElementById('fileContent');
-        const btnImport = document.getElementById('btnImport');
+        // === 1. 初始化 ===
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTags();
+            loadData();
+        });
 
-        // === 1. 撰写助手 ===
-        function addTag(text) {
-            let current = promptInput.value;
-            if (current.length > 0 && !current.endsWith(' ')) current += ' ';
-            promptInput.value = current + text;
-        }
-        function clearPrompt() { if(confirm('确定清空？')) promptInput.value = ''; }
-        function copyPrompt() { navigator.clipboard.writeText(promptInput.value).then(() => alert('已复制!')); }
-        function openPreview() {
-            const text = promptInput.value;
-            if(!text.trim()) return;
-            document.getElementById('previewBody').innerHTML = marked.parse(text);
-            document.getElementById('previewModal').classList.add('active');
-        }
+        // === 2. 数据获取 (带缓存与降级) ===
+        async function loadData(force = false) {
+            const loading = document.getElementById('loadingState');
+            const table = document.getElementById('dataTable');
+            const cacheBadge = document.getElementById('cacheStatus');
+            
+            loading.style.display = 'block';
+            table.style.display = 'none';
+            cacheBadge.classList.remove('show');
 
-        // === 2. 列表获取 (核心升级：并发获取提示词和画廊) ===
-        async function fetchRepoData() {
-            loadingState.style.display = 'flex'; dataTable.style.display = 'none'; tableBody.innerHTML = '';
+            // 检查缓存
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (!force && cached) {
+                const data = JSON.parse(cached);
+                if (Date.now() - data.ts < CACHE_DURATION) {
+                    console.log("Using cached data");
+                    allFiles = data.files;
+                    finishLoad(true);
+                    return;
+                }
+            }
 
-            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
+            // 发起网络请求
+            const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const token = localStorage.getItem('gh_token');
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // 并发请求：获取提示词列表 + 获取画廊列表
-                const [promptRes, galleryRes] = await Promise.all([
-                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, { headers }),
-                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, { headers }).catch(() => ({ ok: false })) // 画廊失败不影响主列表
+                // 并发请求：Prompt列表 + Gallery列表
+                const [pRes, gRes] = await Promise.all([
+                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG.path}?ref=${CONFIG.branch}&t=${Date.now()}`, { headers }),
+                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}&t=${Date.now()}`, { headers }).catch(()=>({ok:false}))
                 ]);
 
-                if (!promptRes.ok) throw new Error("API Limit (Prompts)");
-                const promptFiles = await promptRes.json();
-                
-                // 处理画廊数据
-                let galleryFiles = [];
-                if (galleryRes.ok) {
-                    galleryFiles = await galleryRes.json();
+                if (!pRes.ok) {
+                    if (pRes.status === 403) throw new Error("API限流，请配置Token");
+                    throw new Error("API请求失败");
                 }
 
-                // 数据整合
-                globalFilesData = promptFiles
+                const pFiles = await pRes.json();
+                let gFiles = gRes.ok ? await gRes.json() : [];
+
+                // 数据处理与关联
+                allFiles = pFiles
                     .filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'))
-                    .map(file => {
-                        const meta = parseFilename(file.name);
+                    .map(f => {
+                        const meta = parseFilenameRegex(f.name); // 使用增强正则解析
                         
-                        // 自动关联：在画廊中寻找包含提示词名称的文件
-                        // 规则：文件名包含提示词名 (忽略大小写)
-                        const examples = galleryFiles.filter(img => 
-                            img.name.toLowerCase().includes(meta.name.toLowerCase()) &&
-                            (img.name.endsWith('.png') || img.name.endsWith('.jpg') || img.name.endsWith('.jpeg') || img.name.endsWith('.mp4'))
+                        // 查找关联示例 (文件名包含提示词名)
+                        const examples = gFiles.filter(img => 
+                            img.name.toLowerCase().includes(meta.pureName.toLowerCase()) &&
+                            ['.png','.jpg','.jpeg','.mp4'].some(ext => img.name.endsWith(ext))
                         ).map(img => ({
                             name: img.name,
-                            url: img.download_url || `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/gallery/${encodeURIComponent(img.name)}`,
+                            url: img.download_url, // GitHub API直接提供CDN链接
                             type: img.name.endsWith('.mp4') ? 'video' : 'image'
                         }));
 
-                        return { 
-                            rawName: file.name, 
-                            name: meta.name, 
-                            version: meta.version, 
-                            desc: meta.desc, 
-                            author: meta.author,
-                            examples: examples // 注入示例
-                        };
+                        return { ...meta, rawName: f.name, examples };
                     });
 
-                applySort();
-                loadingState.style.display = 'none'; dataTable.style.display = 'table';
-            } catch (error) {
-                loadingState.innerHTML = `<span style="color:red">⚠️ 加载失败: ${error.message}</span>`;
+                // 写入缓存
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files: allFiles }));
+                finishLoad(false);
+
+            } catch (e) {
+                loading.innerHTML = `<span style="color:red">⚠️ ${e.message}<br>请点击页脚“管理员配置”输入Token</span>`;
             }
         }
 
-        function parseFilename(filename) {
-            const cleanName = filename.replace(/\.(md|txt)$/, '');
-            const parts = cleanName.split(/[_-]/);
-            const ver = parts.find(p => /^v\d/.test(p.toLowerCase())) || '-';
-            let desc = "AI 提示词";
-            if(parts.length > 1) {
-                const potentialDesc = parts.filter(p => p !== parts[0] && p !== ver);
-                if(potentialDesc.length > 0) desc = potentialDesc.join(' ');
-            }
-            return { name: cleanName, version: ver, desc: desc, author: 'Kaylerris' };
+        function finishLoad(isCached) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'table';
+            if(isCached) document.getElementById('cacheStatus').classList.add('show');
+            filterFiles(); // 初始渲染
         }
 
-        // === 3. 排序与渲染 (含示例列) ===
+        function forceRefresh() { loadData(true); }
+
+        // === 3. 增强解析逻辑 (Regex) ===
+        function parseFilenameRegex(filename) {
+            const clean = filename.replace(/\.(md|txt)$/, '');
+            
+            // 尝试匹配 "Category_Name_v1.0" 或 "Name_v1.0"
+            // 逻辑：寻找版本号 vX.X，前面的是名字，后面的是描述
+            // 如果名字里有下划线，第一部分视为分类
+            
+            const parts = clean.split(/[_-]/);
+            let category = '-';
+            let name = clean;
+            let version = '-';
+            
+            // 提取版本号
+            const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
+            
+            if (verIndex > -1) {
+                version = parts[verIndex];
+                // 版本号之前的部分是名字
+                const nameParts = parts.slice(0, verIndex);
+                if (nameParts.length > 1) {
+                    category = nameParts[0]; // 第一个词作为分类
+                    name = nameParts.slice(1).join(' '); // 剩下的作为名字
+                } else {
+                    name = nameParts[0];
+                }
+            } else {
+                // 没有版本号，尝试简单的首词分类
+                if (parts.length > 1) {
+                    category = parts[0];
+                    name = parts.slice(1).join(' ');
+                }
+            }
+
+            return { 
+                pureName: name, // 用于匹配图片的纯名称
+                displayName: name, // 显示名称
+                category: category,
+                version: version,
+                author: 'Kaylerris' 
+            };
+        }
+
+        // === 4. 搜索与排序 ===
+        function filterFiles() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            displayFiles = allFiles.filter(f => 
+                f.displayName.toLowerCase().includes(q) || 
+                f.category.toLowerCase().includes(q)
+            );
+            applySort();
+        }
+
         function sortTable(key) {
             if (currentSort.key === key) currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
             else { currentSort.key = key; currentSort.order = 'asc'; }
@@ -417,121 +392,147 @@
         }
 
         function applySort() {
+            // 更新箭头UI
             document.querySelectorAll('th.sortable').forEach(th => {
                 th.classList.remove('asc', 'desc');
                 if (th.dataset.key === currentSort.key) th.classList.add(currentSort.order);
             });
-            globalFilesData.sort((a, b) => {
-                let valA = a[currentSort.key].toLowerCase();
-                let valB = b[currentSort.key].toLowerCase();
-                if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+
+            displayFiles.sort((a, b) => {
+                let va = a[currentSort.key].toLowerCase();
+                let vb = b[currentSort.key].toLowerCase();
+                if (va < vb) return currentSort.order === 'asc' ? -1 : 1;
+                if (va > vb) return currentSort.order === 'asc' ? 1 : -1;
                 return 0;
             });
+            
             renderTable();
         }
 
         function renderTable() {
-            tableBody.innerHTML = '';
-            globalFilesData.forEach(item => {
-                // 生成示例 HTML
-                let examplesHtml = '<span style="color:#ccc">-</span>';
-                if (item.examples.length > 0) {
-                    examplesHtml = item.examples.slice(0, 3).map((ex, idx) => 
-                        `<a class="example-tag" onclick="openLightbox('${ex.url}', '${ex.type}', '${ex.name}')">
-                            ${ex.type === 'video' ? '🎬' : '🖼️'} 示例${idx + 1}
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            displayFiles.forEach(item => {
+                let exHtml = '<span style="color:#ccc">-</span>';
+                if (item.examples.length) {
+                    exHtml = item.examples.slice(0, 3).map((ex, i) => 
+                        `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">
+                            ${ex.type==='video'?'🎬':'🖼️'} 示例${i+1}
                         </a>`
                     ).join('');
                 }
 
-                const html = `
-                    <tr>
-                        <td><a class="prompt-link" onclick="viewFile('${item.rawName}', '${item.name}', '${item.author}')">${item.name}</a></td>
-                        <td><span class="badge ${item.version.includes('v') ? 'v-new' : ''}">${item.version}</span></td>
-                        <td class="hide-mobile">${item.desc}</td>
-                        <td class="hide-mobile">${examplesHtml}</td>
-                        <td class="hide-mobile">${item.author}</td>
-                    </tr>`;
-                tableBody.insertAdjacentHTML('beforeend', html);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><a class="file-link" onclick="viewFile('${item.rawName}', '${item.displayName}')">${item.displayName}</a></td>
+                    <td><span class="badge ${item.version.includes('v')?'v-new':''}">${item.version}</span></td>
+                    <td><span style="background:#eee;padding:2px 6px;border-radius:4px;font-size:12px;">${item.category}</span></td>
+                    <td>${exHtml}</td>
+                    <td>${item.author}</td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        // === 4. 预览与导入 ===
-        function viewFile(fileName, displayName, author) {
-            document.getElementById('modalTitle').innerText = `${displayName} by ${author}`;
-            fileContent.innerText = "⏳ 读取中...";
-            currentFileData = { name: '', content: '' };
-            modal.classList.add('active');
-            
-            const hasToken = localStorage.getItem('gh_token');
-            if (hasToken) {
-                btnImport.style.display = 'inline-flex';
-                btnImport.disabled = true; 
-                btnImport.style.opacity = "0.5";
-            } else {
-                btnImport.style.display = 'none';
-            }
+        // === 5. 撰写助手 (动态标签) ===
+        function renderTags() {
+            const container = document.getElementById('tagsList');
+            const allTags = [...defaultTags, ...userTags];
+            container.innerHTML = allTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
+        }
 
-            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
-            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(fileName)}`;
+        function addTag(txt) {
+            const el = document.getElementById('promptInput');
+            el.value += (el.value ? ' ' : '') + txt;
+        }
+
+        function addNewTag() {
+            const newTag = prompt("请输入新标签:");
+            if (newTag && !userTags.includes(newTag)) {
+                userTags.push(newTag);
+                localStorage.setItem('kayler_user_tags', JSON.stringify(userTags));
+                renderTags();
+            }
+        }
+        
+        function clearPrompt() { if(confirm('清空内容？')) document.getElementById('promptInput').value = ''; }
+        function copyPrompt() { navigator.clipboard.writeText(document.getElementById('promptInput').value).then(()=>alert('已复制')); }
+        function openPreview() {
+            const txt = document.getElementById('promptInput').value;
+            if(!txt.trim()) return;
+            document.getElementById('previewBody').innerHTML = marked.parse(txt);
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        // === 6. 文件操作与弹窗 ===
+        function viewFile(filename, display) {
+            document.getElementById('modalTitle').innerText = display;
+            document.getElementById('fileContent').innerText = "⏳ 读取中...";
+            document.getElementById('modalOverlay').classList.add('active');
             
+            // 权限检查
+            const btn = document.getElementById('btnImport');
+            if(localStorage.getItem('gh_token')) {
+                btn.style.display = 'inline-block';
+                btn.disabled = true; btn.style.opacity = '0.5';
+            } else { btn.style.display = 'none'; }
+
+            // 读取
+            const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
+            const url = `https://raw.githubusercontent.com/${owner}/${repo}/${CONFIG.branch}/${CONFIG.path}/${encodeURIComponent(filename)}`;
+
             const onSuccess = (text) => {
-                fileContent.innerText = text;
-                currentFileData = { name: fileName, content: text };
-                if(hasToken) { btnImport.disabled = false; btnImport.style.opacity = "1"; }
+                document.getElementById('fileContent').innerText = text;
+                currentFile = { name: filename, content: text };
+                btn.disabled = false; btn.style.opacity = '1';
             };
 
-            fetch(rawUrl).then(r => {
-                if(!r.ok) throw new Error("Raw Error"); return r.text();
-            }).then(onSuccess).catch(() => {
-                fetch('prompt/' + fileName).then(r => r.text()).then(onSuccess).catch(() => {
-                    fileContent.innerText = "❌ 读取失败\n请检查网络连接或 GitHub Token 配置。";
+            fetch(url).then(r=>{if(!r.ok)throw new Error();return r.text()})
+                .then(onSuccess)
+                .catch(()=>{
+                    // 降级本地
+                    fetch(`prompt/${filename}`).then(r=>r.text()).then(onSuccess)
+                    .catch(()=>document.getElementById('fileContent').innerText="❌ 读取失败");
                 });
-            });
         }
 
         function importToEditor() {
-            if (!currentFileData.content) { alert("数据尚未加载，请稍候..."); return; }
-            localStorage.setItem('kayler_editor_cache', currentFileData.content);
-            localStorage.setItem('kayler_editor_filename', currentFileData.name);
-            if(confirm(`确认导入 "${currentFileData.name}" 到编辑器？`)) {
-                window.location.href = 'editor.html';
-            }
+            if(!currentFile.content) return;
+            localStorage.setItem('kayler_editor_cache', currentFile.content);
+            localStorage.setItem('kayler_editor_filename', currentFile.name);
+            window.location.href = 'editor.html';
         }
 
-        // === 5. 灯箱逻辑 (新功能) ===
-        function openLightbox(url, type, caption) {
-            const lightbox = document.getElementById('lightboxModal');
-            const img = document.getElementById('lightboxContent');
-            const video = document.getElementById('lightboxVideo');
-            const cap = document.getElementById('lightboxCaption');
-            
-            cap.innerText = caption;
-            lightbox.classList.add('active');
-            
-            if (type === 'video') {
-                img.style.display = 'none';
-                video.style.display = 'block';
-                video.src = url;
-                video.play();
-            } else {
-                video.style.display = 'none';
-                video.pause();
-                img.style.display = 'block';
-                img.src = url;
-            }
+        function downloadFile() {
+            if(!currentFile.content) return;
+            const blob = new Blob([currentFile.content], {type:'text/markdown'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = currentFile.name;
+            a.click();
         }
 
+        // 灯箱
+        function openLightbox(url, type) {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lbImg');
+            const vid = document.getElementById('lbVideo');
+            lb.classList.add('active');
+            if(type==='video') { img.style.display='none'; vid.style.display='block'; vid.src=url; }
+            else { vid.style.display='none'; img.style.display='block'; img.src=url; }
+        }
         function closeLightbox() {
-            document.getElementById('lightboxModal').classList.remove('active');
-            document.getElementById('lightboxVideo').pause();
+            document.getElementById('lightbox').classList.remove('active');
+            document.getElementById('lbVideo').pause();
         }
+        
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+        function copyContent() { navigator.clipboard.writeText(document.getElementById('fileContent').innerText).then(()=>alert('已复制')); }
 
-        function closeModal() { modal.classList.remove('active'); }
-        function copyContent() { navigator.clipboard.writeText(fileContent.innerText).then(() => alert('已复制')); }
-
-        fetchRepoData();
+        // 配置入口
+        function openGlobalSettings() { window.openGlobalSettings(); }
     </script>
 </body>
 </html>
