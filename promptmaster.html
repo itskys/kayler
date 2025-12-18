@@ -33,7 +33,7 @@
         /* === 布局容器 (Grid) === */
         .main-container {
             width: var(--layout-width); max-width: var(--layout-max-width);
-            display: grid; grid-template-columns: 350px 1fr; gap: 30px;
+            display: grid; grid-template-columns: 380px 1fr; gap: 30px; /* 左侧稍微加宽以容纳说明 */
             align-items: start; flex: 1;
         }
 
@@ -53,6 +53,16 @@
             background: #fdfdfd; color: #333; margin-bottom: 15px;
         }
         #promptInput:focus { background: #fff; border-color: var(--brand-brown); }
+
+        /* 命名规范向导 (新) */
+        .naming-guide {
+            background: #f9f9f9; border: 1px dashed #ddd; border-radius: 8px;
+            padding: 12px; margin-bottom: 15px; font-size: 12px; color: #888;
+            line-height: 1.6;
+        }
+        .naming-guide strong { color: #555; font-weight: 600; }
+        .naming-guide code { background: #eee; padding: 2px 4px; border-radius: 3px; color: #c7254e; font-family: monospace; }
+        .naming-guide ul { margin: 5px 0 0 0; padding-left: 18px; }
 
         .tags-wrapper { margin-bottom: 15px; max-height: 200px; overflow-y: auto; }
         .tag-title { font-size: 12px; color: #999; margin-bottom: 8px; display: flex; justify-content: space-between; }
@@ -132,7 +142,7 @@
         /* === 响应式适配 === */
         @media (max-width: 1024px) {
             .main-container { grid-template-columns: 1fr; }
-            .builder-area { order: 1; } /* 手机上列表在下 */
+            .builder-area { order: 1; } 
         }
         @media (max-width: 768px) {
             th:nth-child(2), td:nth-child(2), /* 版本 */
@@ -161,6 +171,15 @@
             <div class="builder-body">
                 <textarea id="promptInput" placeholder="输入或点击下方标签..."></textarea>
                 
+                <div class="naming-guide">
+                    <strong>📌 Kayler 命名规范</strong>
+                    <ul>
+                        <li>文件: <code>分类_名称_版本_描述.md</code><br>例: <code>风格_赛博朋克_v1.0_红蓝.md</code></li>
+                        <li>图片: 自动关联含 <code>名称</code> 的文件<br>例: <code>..._赛博朋克_001.png</code></li>
+                        <li>版本: 图片含 <code>v2</code> 则只关联 v2版文件</li>
+                    </ul>
+                </div>
+
                 <div class="tags-wrapper">
                     <div class="tag-title">
                         <span>常用标签</span>
@@ -248,7 +267,7 @@
     <script>
         // === 配置与状态 ===
         const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-        const CACHE_KEY = 'prompt_list_v8_1'; // 升级Key以清除旧缓存
+        const CACHE_KEY = 'prompt_list_v9'; // 升级缓存Key
         const CACHE_DURATION = 5 * 60 * 1000;
 
         let allFiles = [];      
@@ -313,45 +332,34 @@
                     if(gRes.ok) gFiles = await gRes.json();
                 } catch(e) { console.warn("Gallery fetch failed", e); }
 
-                // 3. 数据处理 (v8.1 智能关联)
+                // 3. 数据处理 (v9.0 版本隔离关联)
                 allFiles = pFiles
                     .filter(f => f.name && (f.name.endsWith('.md') || f.name.endsWith('.txt')))
                     .map(f => {
                         const meta = parseFilenameV8(f.name);
                         
-                       // v9.0 版本隔离关联算法
                         const examples = gFiles.filter(img => {
                             if (!img.name) return false;
                             
                             const imgNameLower = img.name.toLowerCase();
-                            // 1. 基础检查：图片必须包含核心名 (去符号)
+                            // 基础核心名匹配 (去符号)
                             const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
-                            const imgCore = imgNameLower.replace(/^\d{14}_/, ''); // 去掉时间戳
+                            const imgCore = imgNameLower.replace(/^\d{14}_/, ''); // 去时间戳
                             const imgKey = imgCore.replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
                             
-                            if (!imgKey.includes(promptKey)) return false; // 核心名都不对，直接排除
+                            if (!imgKey.includes(promptKey)) return false;
 
-                            // 2. 版本隔离检查 (关键升级)
-                            // 提取当前提示词的版本数字 (如 "v2.0" -> "2.0")
-                            const currentVer = meta.version.replace(/[vV]/, ''); 
-                            
-                            // 检查图片名里是否包含版本信息 (如 "v2.0", "v2", "ver2")
-                            // 正则匹配图片名里的版本号：v数字 或 ver数字
+                            // 版本隔离逻辑
+                            const currentVer = meta.version.replace(/[vV]/, ''); // 2.0
                             const imgVerMatch = imgCore.match(/(?:v|ver|_v)(\d+(?:\.\d+)?)/i);
 
                             if (imgVerMatch) {
-                                // A. 如果图片名里带了版本号
+                                // 图片有版本号，必须匹配
                                 const imgVer = imgVerMatch[1];
-                                // 只有当图片版本号 == 当前提示词版本号 (或者主版本号相同) 时才匹配
-                                // 例如：提示词 v2.0，图片 v2 -> 匹配
-                                // 例如：提示词 v2.0，图片 v1 -> 不匹配
                                 return Math.floor(parseFloat(imgVer)) === Math.floor(parseFloat(currentVer));
                             } else {
-                                // B. 如果图片名里没写版本号
-                                // 策略：视为“通用示例”或“v1.0示例”
-                                // 这里我们采用：视为当前版本的示例（宽容模式）
-                                // 如果您希望图片没写版本号时只给v1.0，可以加判断
-                                return true; 
+                                // 图片无版本号，通用匹配
+                                return true;
                             }
                         }).map(img => ({
                             name: img.name,

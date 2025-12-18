@@ -2,144 +2,85 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 图片展 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
-    <script src="layout.js?v=5.0"></script>
+    <script src="layout.js?v=5.1"></script>
 
     <style>
         :root {
-            --bg-body: #f2f4f7; 
-            --brand-brown: #8b5e3c;
-            --brand-brown-hover: #6d4c41;
+            --bg-body: #f2f4f7; --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
             --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --layout-width: 94%;
-            --layout-max-width: 1600px;
+            --layout-width: 94%; --layout-max-width: 1600px;
         }
-
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-body); margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; color: #333;
         }
-
-        header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
-        h1 { 
-            font-size: 32px; font-weight: 800; margin-bottom: 10px; 
-            display: flex; align-items: center; justify-content: center;
-        }
+        header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
+        h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
         
-        /* 顶部操作栏 */
-        .action-bar {
-            display: flex; justify-content: center; gap: 15px; margin-bottom: 30px;
+        /* 顶部操作区 */
+        .action-area {
+            display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 30px;
+            width: 100%; max-width: 800px;
         }
+        .action-bar { display: flex; justify-content: center; gap: 15px; }
         .btn-pill {
             padding: 8px 20px; border-radius: 50px; border: 1px solid #ddd;
             background: white; color: #666; cursor: pointer; font-size: 14px;
             display: flex; align-items: center; gap: 6px; transition: all 0.2s;
         }
         .btn-pill:hover { border-color: var(--brand-brown); color: var(--brand-brown); transform: translateY(-1px); }
-        
-        /* 上传按钮 (默认隐藏，管理员可见) */
-        .btn-upload {
-            background: var(--brand-brown); color: white; border-color: var(--brand-brown);
-            display: none; /* 默认隐藏 */
-        }
+        .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
-        /* 瀑布流布局 */
-        .gallery-container {
-            column-count: 5; column-gap: 20px;
-            width: var(--layout-width); max-width: var(--layout-max-width);
-            min-height: 600px;
+        /* 上传提示 (v9.0 新增) */
+        .upload-tip {
+            background: #fff3e0; border: 1px solid #ffe0b2; color: #e65100;
+            padding: 10px 20px; border-radius: 8px; font-size: 12px; line-height: 1.5;
+            text-align: center; display: none; /* 默认隐藏，有权限才显示 */
         }
+        .upload-tip code { background: rgba(255,255,255,0.5); padding: 0 4px; border-radius: 3px; font-family: monospace; font-weight: bold; }
 
+        /* 瀑布流布局 */
+        .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
         .gallery-item {
-            background: white; border-radius: 12px;
-            margin-bottom: 20px; overflow: hidden;
-            break-inside: avoid;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s; 
-            cursor: zoom-in;
-            position: relative;
-            opacity: 0; animation: fadeIn 0.5s forwards;
+            background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; break-inside: avoid;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s, box-shadow 0.3s; 
+            cursor: zoom-in; position: relative; opacity: 0; animation: fadeIn 0.5s forwards;
         }
         .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-
-        .gallery-item img {
-            width: 100%; height: auto; display: block;
-            border-radius: 12px 12px 0 0;
-            background: #eee; min-height: 150px;
-        }
-        
+        .gallery-item img { width: 100%; height: auto; display: block; background: #eee; min-height: 150px; }
         .item-info { padding: 15px; border-top: 1px solid #f5f5f5; }
-        .item-title {
-            font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .item-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-meta { font-size: 12px; color: #999; display: flex; justify-content: space-between; }
 
-        /* 分页控件 */
-        .pagination {
-            display: flex; justify-content: center; align-items: center; gap: 8px;
-            margin-top: 40px; margin-bottom: 20px; flex-wrap: wrap;
-        }
-        .page-btn {
-            padding: 8px 14px; border: 1px solid #ddd; background: white;
-            color: #555; border-radius: 6px; cursor: pointer; font-size: 14px;
-            transition: all 0.2s; min-width: 36px; text-align: center;
-        }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; margin-bottom: 20px; flex-wrap: wrap; }
+        .page-btn { padding: 8px 14px; border: 1px solid #ddd; background: white; color: #555; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; min-width: 36px; text-align: center; }
         .page-btn:hover:not(:disabled) { border-color: var(--brand-brown); color: var(--brand-brown); }
         .page-btn.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
         .page-btn:disabled { background: #f5f5f5; color: #ccc; cursor: not-allowed; border-color: #eee; }
 
-        /* Loading & Toast */
-        #loadingState {
-            width: 100%; text-align: center; color: #999; margin-top: 50px;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-        }
-        .spinner {
-            width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown);
-            border-radius: 50%; animation: spin 1s linear infinite;
-        }
-        #upload-toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 12px 25px;
-            border-radius: 30px; font-size: 14px; z-index: 9999; display: none;
-        }
+        #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; }
+        #upload-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 30px; font-size: 14px; z-index: 9999; display: none; }
 
-        /* 模态框 */
-        .modal {
-            display: none; position: fixed; z-index: 2000;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            justify-content: center; align-items: center;
-            flex-direction: column; backdrop-filter: blur(5px);
-        }
+        .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
-        .modal img { 
-            max-width: 90%; max-height: 80vh; border-radius: 4px; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain;
-        }
+        .modal img, .modal video { max-width: 90%; max-height: 80vh; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
         .modal-caption { color: #ccc; margin-top: 20px; font-size: 16px; text-align: center; max-width: 80%; }
-        .close-modal {
-            position: absolute; top: 30px; right: 30px; color: white;
-            font-size: 40px; cursor: pointer; transition: 0.2s;
-        }
+        .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; transition: 0.2s; }
         .close-modal:hover { color: var(--brand-brown); }
         
         .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
         .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
         
-        /* 配置弹窗 */
-        #settings-modal { z-index: 20000; display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { to { opacity: 1; } }
-
         @media (max-width: 1600px) { .gallery-container { column-count: 4; } }
         @media (max-width: 1200px) { .gallery-container { column-count: 3; } }
         @media (max-width: 900px) { .gallery-container { column-count: 2; } }
@@ -151,22 +92,23 @@
     <div id="upload-toast">⏳ 正在上传...</div>
 
     <header>
-        <h1>
-            <img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">
-            Kayler AI 艺术馆
-        </h1>
+        <h1><img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">Kayler AI 艺术馆</h1>
         <p style="color:#888">精选 AI 生成作品展示</p>
     </header>
 
-    <div class="action-bar">
-        <button class="btn-pill" onclick="initGallery()">
-            <span>🔄 刷新画廊</span>
-        </button>
-        
-        <input type="file" id="imgUploadInput" accept="image/*" multiple style="display:none;" onchange="processUploads(this)">
-        <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()">
-            <span>☁️ 上传图片 (Admin)</span>
-        </button>
+    <div class="action-area">
+        <div id="uploadTip" class="upload-tip">
+            <strong>⚠️ 关联提示：</strong>上传前请确保文件名包含对应的 <code>核心名称</code>。<br>
+            如需指定版本，请包含版本号（如 <code>_v2_</code>）。例：<code>Concept_v2_001.png</code>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新画廊</span></button>
+            <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="processUploads(this)">
+            <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()">
+                <span>☁️ 上传图片 (Admin)</span>
+            </button>
+        </div>
     </div>
 
     <div id="loadingState">
@@ -183,18 +125,14 @@
 
     <div id="imageModal" class="modal" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <img id="modalImg" src="">
+        <img id="modalImg" src="" style="display:none;">
+        <video id="modalVideo" src="" controls style="display:none;"></video>
         <div class="modal-caption" id="modalCaption"></div>
     </div>
 
-    <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
-        </div>
-
     <script>
-        // === 配置 ===
         const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'gallery', branch: 'main' };
         const ITEMS_PER_PAGE = 30;
-
         let allImages = [];
         let currentPage = 1;
 
@@ -203,88 +141,62 @@
         const pagination = document.getElementById('pagination');
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImg');
+        const modalVideo = document.getElementById('modalVideo');
         const modalCaption = document.getElementById('modalCaption');
         const btnUpload = document.getElementById('btnUpload');
+        const uploadTip = document.getElementById('uploadTip');
         const toast = document.getElementById('upload-toast');
 
-        // === 1. 权限检查 (v3.1) ===
         function checkAdmin() {
             if(localStorage.getItem('gh_token')) {
                 btnUpload.style.display = 'inline-flex';
+                uploadTip.style.display = 'block'; 
             } else {
                 btnUpload.style.display = 'none';
+                uploadTip.style.display = 'none';
             }
         }
-        // 监听 layout.js 登录事件
         window.addEventListener('auth-updated', checkAdmin);
 
-        // === 2. 上传逻辑 (v3.1) ===
-        function triggerUpload() {
-            document.getElementById('imgUploadInput').click();
-        }
+        function triggerUpload() { document.getElementById('imgUploadInput').click(); }
 
         async function processUploads(input) {
             const files = input.files;
             if(files.length === 0) return;
-            if(files.length > 3) {
-                alert("⚠️ 单次最多只能上传 3 张图片！");
-                input.value = ''; // 清空
-                return;
-            }
+            if(files.length > 3) { alert("⚠️ 单次最多只能上传 3 个文件！"); input.value = ''; return; }
 
             const token = localStorage.getItem('gh_token');
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
 
             if(!token) { alert("Token 丢失，请重新登录"); return; }
-
             toast.style.display = 'block';
             let successCount = 0;
 
-            // 并发上传
             const uploadPromises = Array.from(files).map(async (file) => {
                 try {
                     const contentBase64 = await toBase64(file);
-                    
-                    // 生成文件名: 20251208103001_原始名.png
                     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                    // 简单清洗文件名
-                    const safeName = file.name.replace(/\s+/g, '_');
+                    const safeName = file.name.replace(/\s+/g, '_'); 
                     const filename = `${timestamp}_${safeName}`;
                     const path = `${REPO_CONFIG.path}/${filename}`;
 
-                    // GitHub API
                     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
                     const res = await fetch(url, {
                         method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Upload gallery: ${filename}`,
-                            content: contentBase64,
-                            branch: 'main'
-                        })
+                        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: `Upload gallery: ${filename}`, content: contentBase64, branch: 'main' })
                     });
-
                     if(!res.ok) throw new Error((await res.json()).message);
                     successCount++;
-
-                } catch(e) {
-                    console.error(e);
-                    alert(`❌ ${file.name} 上传失败: ${e.message}`);
-                }
+                } catch(e) { console.error(e); alert(`❌ ${file.name} 上传失败: ${e.message}`); }
             });
 
             await Promise.all(uploadPromises);
-            
             toast.style.display = 'none';
-            input.value = ''; // 清空选择
-            
+            input.value = ''; 
             if(successCount > 0) {
-                alert(`✅ 成功上传 ${successCount} 张图片！\n画廊正在刷新...`);
-                // 延时刷新以等待 GitHub API 索引更新
+                alert(`✅ 成功上传 ${successCount} 个文件！\n画廊正在刷新...`);
                 setTimeout(initGallery, 1000);
             }
         }
@@ -298,12 +210,8 @@
             });
         }
 
-        // === 3. 初始化与获取数据 ===
         async function initGallery() {
-            loadingState.style.display = 'flex';
-            galleryContainer.innerHTML = ''; 
-            pagination.innerHTML = '';
-
+            loadingState.style.display = 'flex'; galleryContainer.innerHTML = ''; pagination.innerHTML = '';
             const token = localStorage.getItem('gh_token');
             const headers = token ? { 'Authorization': `token ${token}` } : {};
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
@@ -312,35 +220,24 @@
             try {
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
                 const response = await fetch(url, { headers });
-                
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`API Error: ${errText}`);
-                }
+                if (!response.ok) throw new Error((await response.text()));
                 
                 const files = await response.json();
-                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-                allImages = files.filter(file => imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext)));
+                const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4'];
+                allImages = files.filter(file => validExtensions.some(ext => file.name.toLowerCase().endsWith(ext)));
 
-                if (allImages.length === 0) {
-                    loadingState.innerHTML = "暂无图片，请先上传到 /gallery 目录";
-                    return;
-                }
-
+                if (allImages.length === 0) { loadingState.innerHTML = "暂无内容，请先上传到 /gallery 目录"; return; }
                 allImages.sort((a, b) => b.name.localeCompare(a.name));
                 renderPage(1);
                 loadingState.style.display = 'none';
-
             } catch (error) {
-                console.error(error);
                 let msg = error.message;
                 if (msg.includes("403")) msg = "API 访问频率超限。请配置 Token。";
                 if (msg.includes("404")) msg = "无法读取 gallery 目录。";
-                loadingState.innerHTML = `<span style="color:red; line-height:1.6;">⚠️ 加载失败<br>${msg}</span><br><br><button class="btn-refresh" onclick="initGallery()">重试</button>`;
+                loadingState.innerHTML = `<span style="color:red; line-height:1.6;">⚠️ 加载失败<br>${msg}</span><br><br><button class="btn-pill" onclick="initGallery()">重试</button>`;
             }
         }
 
-        // === 4. 分页渲染逻辑 ===
         function renderPage(page) {
             currentPage = page;
             const start = (page - 1) * ITEMS_PER_PAGE;
@@ -357,13 +254,23 @@
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             
             images.forEach(img => {
-                const title = img.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "); 
+                // 清理文件名: 去除时间戳前缀(14位+_)
+                const title = img.name.replace(/^\d{14}_/, "").replace(/\.[^/.]+$/, "").replace(/_/g, " "); 
                 const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
                 const item = document.createElement('div');
                 item.className = 'gallery-item';
-                item.onclick = () => openModal(rawUrl, title);
+                
+                // 判断类型
+                let mediaTag = `<img src="${rawUrl}" alt="${title}" loading="lazy">`;
+                let type = 'image';
+                if(img.name.endsWith('.mp4')) {
+                    mediaTag = `<video src="${rawUrl}" muted autoplay loop style="width:100%; display:block;"></video>`;
+                    type = 'video';
+                }
+
+                item.onclick = () => openModal(rawUrl, title, type);
                 item.innerHTML = `
-                    <img src="${rawUrl}" alt="${title}" loading="lazy">
+                    ${mediaTag}
                     <div class="item-info">
                         <div class="item-title">${title}</div>
                         <div class="item-meta"><span>Kayler AI</span><span>📥 查看</span></div>
@@ -395,13 +302,29 @@
             const btn = document.createElement('button'); btn.className = 'page-btn'; btn.innerText = text; btn.onclick = onClick; return btn;
         }
 
-        function openModal(src, caption) { modalImg.src = src; modalCaption.innerText = caption; modal.classList.add('active'); }
-        function closeModal() { modal.classList.remove('active'); }
+        function openModal(src, caption, type) {
+            modalCaption.innerText = caption;
+            modal.classList.add('active');
+            if(type === 'video') {
+                modalImg.style.display = 'none';
+                modalVideo.style.display = 'block';
+                modalVideo.src = src;
+                modalVideo.play();
+            } else {
+                modalVideo.style.display = 'none';
+                modalVideo.pause();
+                modalImg.style.display = 'block';
+                modalImg.src = src;
+            }
+        }
+        
+        function closeModal() { 
+            modal.classList.remove('active'); 
+            modalVideo.pause();
+        }
 
-        // 配置逻辑 (复用 layout.js 弹窗，这里只提供入口)
         function openGlobalSettings() { window.openGlobalSettings(); }
         function closeSettings() { window.closeGlobalSettings(); }
-        function saveSettings() { window.saveGlobalSettings(); initGallery(); }
 
         checkAdmin();
         initGallery();
