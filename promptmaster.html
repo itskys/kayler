@@ -8,9 +8,10 @@
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="layout.js?v=5.0"></script>
+    <script src="layout.js?v=5.1"></script>
     
     <style>
+        /* === 全局变量 === */
         :root {
             --bg-body: #f2f4f7; --text-color: #2c2c2c;
             --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
@@ -29,10 +30,10 @@
         header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; color: #333; display: flex; align-items: center; justify-content: center; margin: 0; }
         
-        /* === 布局容器 (优化：大屏Grid) === */
+        /* === 布局容器 (Grid) === */
         .main-container {
             width: var(--layout-width); max-width: var(--layout-max-width);
-            display: grid; grid-template-columns: 350px 1fr; gap: 30px; /* 左侧固定，右侧自适应 */
+            display: grid; grid-template-columns: 350px 1fr; gap: 30px;
             align-items: start; flex: 1;
         }
 
@@ -62,8 +63,6 @@
             border: 1px solid transparent; user-select: none;
         }
         .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: white; }
-        .tag-add-btn { background: white; border: 1px dashed #ccc; color: #888; }
-        .tag-add-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
         .builder-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
@@ -73,9 +72,7 @@
 
         /* === 右侧：知识库列表 === */
         .toolbar { padding: 15px 20px; display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; background: white; }
-        .search-box {
-            flex: 1; position: relative; display: flex; align-items: center;
-        }
+        .search-box { flex: 1; position: relative; display: flex; align-items: center; }
         .search-input {
             width: 100%; padding: 8px 12px 8px 35px; border: 1px solid #ddd; border-radius: 6px;
             font-size: 14px; outline: none; transition: 0.2s;
@@ -104,30 +101,47 @@
         
         .example-link { color: #1565c0; cursor: pointer; margin-right: 8px; font-size: 12px; }
         .example-link:hover { text-decoration: underline; }
+        
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; background: #eee; color: #555; }
+        .badge.ver { background: #e8f5e9; color: #2e7d32; font-weight: bold; }
+        .badge.cat { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
 
-        /* 弹窗 */
+        /* === 弹窗 === */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: white; width: 800px; max-width: 90%; height: 80vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
         .modal-body { flex: 1; padding: 20px; overflow-y: auto; background: #fff; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
-        .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #fdfbf7; }
+        .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #fff; }
+        
+        /* 预览模式 Markdown 样式 */
+        .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
+        .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
 
-        /* 媒体灯箱 */
-        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        /* 灯箱 */
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
         #lightbox.active { display: flex; }
-        #lightbox img, #lightbox video { max-width: 90%; max-height: 85vh; border-radius: 4px; box-shadow: 0 0 20px black; }
-        .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; }
+        #lightbox img, #lightbox video { max-width: 95%; max-height: 85vh; border-radius: 4px; box-shadow: 0 0 30px black; }
+        .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; transition: 0.2s; }
+        .lightbox-close:hover { color: var(--brand-brown); }
 
-        /* 响应式 */
+        /* 管理员链接 */
+        .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
+        .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
+
+        /* === 响应式适配 === */
         @media (max-width: 1024px) {
             .main-container { grid-template-columns: 1fr; }
             .builder-area { order: 1; } /* 手机上列表在下 */
         }
         @media (max-width: 768px) {
             th:nth-child(2), td:nth-child(2), /* 版本 */
-            th:nth-child(5), td:nth-child(5)  /* 作者 */
+            th:nth-child(3), td:nth-child(3), /* 分类 */
+            th:nth-child(6), td:nth-child(6)  /* 作者 */
             { display: none; }
+            th:nth-child(1) { width: 40%; } /* 名称 */
+            th:nth-child(4) { width: 30%; } /* 描述 */
+            th:nth-child(5) { width: 30%; } /* 示例 */
         }
     </style>
 </head>
@@ -152,8 +166,7 @@
                         <span>常用标签</span>
                         <span style="cursor:pointer;" onclick="addNewTag()">+ 自定义</span>
                     </div>
-                    <div class="tags-list" id="tagsList">
-                        </div>
+                    <div class="tags-list" id="tagsList"></div>
                 </div>
 
                 <div class="builder-actions">
@@ -167,8 +180,8 @@
             <div class="card-header">
                 <span>📚 提示词库</span>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <span id="cacheStatus" class="status-badge">⚡ 缓存数据</span>
-                    <button class="refresh-btn" onclick="forceRefresh()">🔄 刷新</button>
+                    <span id="cacheStatus" class="status-badge">⚡ 缓存</span>
+                    <button class="refresh-btn" onclick="forceRefresh()" style="border:none; background:none; cursor:pointer;">🔄</button>
                 </div>
             </div>
             
@@ -180,17 +193,18 @@
             </div>
 
             <div class="list-container">
-                <div id="loadingState" class="loading-state" style="padding:40px; text-align:center; display:none;">
+                <div id="loadingState" style="padding:40px; text-align:center; display:none; color:#999;">
                     <div>⏳ 读取中...</div>
                 </div>
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th style="width:35%;" class="sortable" onclick="sortTable('name')" data-key="name">名称</th>
+                            <th style="width:25%;" class="sortable" onclick="sortTable('displayName')" data-key="displayName">名称</th>
                             <th style="width:10%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
-                            <th style="width:15%;" class="sortable" onclick="sortTable('category')" data-key="category">分类</th>
-                            <th style="width:25%;">示例 (自动关联)</th>
-                            <th style="width:15%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
+                            <th style="width:10%;" class="sortable" onclick="sortTable('category')" data-key="category">分类</th>
+                            <th style="width:25%;">功能描述</th>
+                            <th style="width:20%;">示例</th>
+                            <th style="width:10%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -203,7 +217,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <b id="modalTitle">文件预览</b>
-                <span class="close-btn" onclick="closeModal()">×</span>
+                <span class="close-btn" onclick="closeModal()" style="cursor:pointer; font-size:20px;">×</span>
             </div>
             <div class="modal-body" id="fileContent">加载中...</div>
             <div class="modal-footer">
@@ -216,7 +230,7 @@
 
     <div class="modal-overlay" id="previewModal" onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')">
         <div class="modal-content">
-             <div class="modal-header"><b>Markdown 预览</b><span class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')">×</span></div>
+             <div class="modal-header"><b>Markdown 预览</b><span class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')" style="cursor:pointer; font-size:20px;">×</span></div>
             <div class="modal-body markdown-body" id="previewBody"></div>
         </div>
     </div>
@@ -234,24 +248,24 @@
     <script>
         // === 配置与状态 ===
         const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-        const CACHE_KEY = 'prompt_list_cache_v7'; // 升级缓存Key，避免旧数据冲突
+        const CACHE_KEY = 'prompt_list_v8'; // 升级Key
         const CACHE_DURATION = 5 * 60 * 1000;
 
         let allFiles = [];      
         let displayFiles = [];  
-        let currentSort = { key: 'name', order: 'desc' };
+        let currentSort = { key: 'displayName', order: 'asc' };
         let currentFile = { name: '', content: '' };
         
-        const defaultTags = ['Cyberpunk', 'Ukiyo-e', '8k', '--ar 16:9', '--v 6.0', 'Masterpiece', 'Niji 6', 'Studio Ghibli'];
+        const defaultTags = ['Cyberpunk', 'Ukiyo-e', '8k', '--ar 16:9', '--v 6.0', 'Masterpiece', 'Niji 6'];
         let userTags = JSON.parse(localStorage.getItem('kayler_user_tags') || '[]');
 
-        // === 1. 初始化 ===
+        // === 初始化 ===
         document.addEventListener('DOMContentLoaded', () => {
             renderTags();
             loadData();
         });
 
-        // === 2. 数据获取 (稳健版) ===
+        // === 数据获取 ===
         async function loadData(force = false) {
             const loading = document.getElementById('loadingState');
             const table = document.getElementById('dataTable');
@@ -261,18 +275,17 @@
             table.style.display = 'none';
             if(cacheBadge) cacheBadge.classList.remove('show');
 
-            // 缓存策略
+            // 缓存检查
             const cached = localStorage.getItem(CACHE_KEY);
             if (!force && cached) {
                 try {
                     const data = JSON.parse(cached);
                     if (Date.now() - data.ts < CACHE_DURATION && Array.isArray(data.files)) {
-                        console.log("Using cached data");
                         allFiles = data.files;
                         finishLoad(true);
                         return;
                     }
-                } catch(e) { localStorage.removeItem(CACHE_KEY); } // 缓存损坏则清除
+                } catch(e) { localStorage.removeItem(CACHE_KEY); }
             }
 
             const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
@@ -281,53 +294,49 @@
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // 1. 先只请求提示词列表 (确保这步最稳)
+                // 1. 获取提示词
                 const promptUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG.path}?ref=${CONFIG.branch}&t=${Date.now()}`;
                 const pRes = await fetch(promptUrl, { headers });
-
+                
                 if (!pRes.ok) {
                     if (pRes.status === 403) throw new Error("API限流，请配置Token");
                     if (pRes.status === 404) throw new Error("找不到 prompt 目录");
                     throw new Error(`API Error: ${pRes.status}`);
                 }
-
                 const pFiles = await pRes.json();
                 
-                // 2. 尝试获取画廊 (非阻塞)
+                // 2. 获取画廊 (非阻塞)
                 let gFiles = [];
                 try {
-                    const galleryUrl = `https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}`;
+                    const galleryUrl = `https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}&t=${Date.now()}`;
                     const gRes = await fetch(galleryUrl, { headers });
                     if(gRes.ok) gFiles = await gRes.json();
                 } catch(e) { console.warn("Gallery fetch failed", e); }
 
-                // 3. 数据处理 (增加容错)
+                // 3. 数据处理 (v8.0 智能解析)
                 allFiles = pFiles
                     .filter(f => f.name && (f.name.endsWith('.md') || f.name.endsWith('.txt')))
                     .map(f => {
-                        // 使用安全解析
-                        const meta = safeParseFilename(f.name); 
+                        const meta = parseFilenameV8(f.name);
                         
-                        // 关联示例
+                        // 关联示例：图片名包含 [核心名称]
                         const examples = gFiles.filter(img => 
                             img.name && 
                             img.name.toLowerCase().includes(meta.pureName.toLowerCase()) &&
                             ['.png','.jpg','.jpeg','.mp4'].some(ext => img.name.toLowerCase().endsWith(ext))
                         ).map(img => ({
                             name: img.name,
-                            url: img.download_url || img.url, // 兼容
+                            url: img.download_url || img.url,
                             type: img.name.endsWith('.mp4') ? 'video' : 'image'
                         }));
 
                         return { ...meta, rawName: f.name, examples };
                     });
 
-                // 写入新缓存
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files: allFiles }));
                 finishLoad(false);
 
             } catch (e) {
-                console.error(e);
                 loading.innerHTML = `<span style="color:red">⚠️ ${e.message}<br>请检查网络或点击页脚配置 Token</span>`;
             }
         }
@@ -343,69 +352,64 @@
 
         function forceRefresh() { loadData(true); }
 
-        // === 3. 安全解析逻辑 (修正版) ===
-        function safeParseFilename(filename) {
-            try {
-                const clean = filename.replace(/\.(md|txt)$/i, '');
-                const parts = clean.split(/[_-]/); // 按 _ 或 - 分割
+        // === v8.0 智能解析引擎 ===
+        function parseFilenameV8(filename) {
+            const clean = filename.replace(/\.(md|txt)$/i, '');
+            // 分割符支持 _
+            const parts = clean.split('_');
+
+            let category = 'Base'; // 默认分类
+            let name = clean;
+            let version = '-';
+            let desc = '-';
+
+            // 策略：寻找版本号 vX.X
+            const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
+
+            if (verIndex > -1) {
+                version = parts[verIndex];
                 
-                let category = '-';
-                let name = clean;
-                let version = '-';
-                
-                // 1. 尝试找版本号 v1.0, v2
-                const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
-                
-                if (verIndex > -1) {
-                    version = parts[verIndex];
-                    // 版本号前面的是名字
-                    const nameParts = parts.slice(0, verIndex);
-                    
-                    // 如果名字有多段，第一段可能是分类
-                    if (nameParts.length > 1) {
-                        // 检查第一段是否是很短的词（如 Role, Style），如果是则归为分类
-                        if(nameParts[0].length < 10) {
-                            category = nameParts[0];
-                            name = nameParts.slice(1).join(' ');
-                        } else {
-                            name = nameParts.join(' ');
-                        }
-                    } else if(nameParts.length === 1) {
-                        name = nameParts[0];
-                    }
-                } else {
-                    // 没有版本号的情况
-                    if(parts.length > 1 && parts[0].length < 10) {
-                        category = parts[0];
-                        name = parts.slice(1).join(' ');
-                    }
+                // 版本号前面的是 [分类] 和 [名称]
+                const preVer = parts.slice(0, verIndex);
+                if (preVer.length >= 2) {
+                    category = preVer[0];
+                    name = preVer.slice(1).join(' '); // 中间可能还有下划线，合并
+                } else if (preVer.length === 1) {
+                    name = preVer[0];
+                    // 如果只有一个词，就不分分类了，或者默认为 Base
                 }
 
-                return { 
-                    pureName: name, 
-                    displayName: name, 
-                    category: category,
-                    version: version,
-                    author: 'Kaylerris' 
-                };
-            } catch(e) {
-                // 兜底：如果解析出错，直接返回原始文件名
-                return { 
-                    pureName: filename, 
-                    displayName: filename, 
-                    category: '-', 
-                    version: '-', 
-                    author: '-' 
-                };
+                // 版本号后面的是 [描述]
+                const postVer = parts.slice(verIndex + 1);
+                if (postVer.length > 0) {
+                    desc = postVer.join(' ');
+                }
+            } else {
+                // 没有版本号的降级策略
+                if (parts.length >= 2) {
+                    // 假设第一个是分类，后面是名字
+                    category = parts[0];
+                    name = parts.slice(1).join(' ');
+                }
             }
+
+            return { 
+                pureName: name, // 用于匹配图片
+                displayName: name,
+                category: category,
+                version: version,
+                desc: desc,
+                author: 'Kaylerris' 
+            };
         }
 
-        // === 4. 搜索与排序 ===
+        // === 搜索与排序 ===
         function filterFiles() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             displayFiles = allFiles.filter(f => 
                 (f.displayName && f.displayName.toLowerCase().includes(q)) || 
-                (f.category && f.category.toLowerCase().includes(q))
+                (f.category && f.category.toLowerCase().includes(q)) ||
+                (f.desc && f.desc.toLowerCase().includes(q))
             );
             applySort();
         }
@@ -423,10 +427,10 @@
             });
 
             displayFiles.sort((a, b) => {
-                let valA = (a[currentSort.key] || '').toLowerCase();
-                let valB = (b[currentSort.key] || '').toLowerCase();
-                if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+                let va = (a[currentSort.key] || '').toLowerCase();
+                let vb = (b[currentSort.key] || '').toLowerCase();
+                if (va < vb) return currentSort.order === 'asc' ? -1 : 1;
+                if (va > vb) return currentSort.order === 'asc' ? 1 : -1;
                 return 0;
             });
             renderTable();
@@ -437,14 +441,14 @@
             tbody.innerHTML = '';
             
             if(displayFiles.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">暂无数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">暂无数据</td></tr>';
                 return;
             }
 
             displayFiles.forEach(item => {
                 let exHtml = '<span style="color:#ccc">-</span>';
                 if (item.examples && item.examples.length) {
-                    exHtml = item.examples.slice(0, 3).map((ex, i) => 
+                    exHtml = item.examples.slice(0, 2).map((ex, i) => 
                         `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">
                             ${ex.type==='video'?'🎬':'🖼️'} 示例${i+1}
                         </a>`
@@ -454,8 +458,9 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><a class="file-link" onclick="viewFile('${item.rawName}', '${item.displayName}')">${item.displayName}</a></td>
-                    <td><span class="badge ${item.version.includes('v')?'v-new':''}">${item.version}</span></td>
-                    <td><span style="background:#eee;padding:2px 6px;border-radius:4px;font-size:12px;">${item.category}</span></td>
+                    <td><span class="badge ver">${item.version}</span></td>
+                    <td><span class="badge cat">${item.category}</span></td>
+                    <td style="color:#666; font-size:12px;">${item.desc}</td>
                     <td>${exHtml}</td>
                     <td>${item.author}</td>
                 `;
@@ -463,28 +468,25 @@
             });
         }
 
-        // === 5. 撰写助手 ===
+        // === 标签与撰写 ===
         function renderTags() {
             const container = document.getElementById('tagsList');
             const allTags = [...defaultTags, ...userTags];
             if(container) container.innerHTML = allTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
         }
-
         function addTag(txt) {
             const el = document.getElementById('promptInput');
             el.value += (el.value ? ' ' : '') + txt;
         }
-
         function addNewTag() {
-            const newTag = prompt("请输入新标签:");
+            const newTag = prompt("新标签:");
             if (newTag && !userTags.includes(newTag)) {
                 userTags.push(newTag);
                 localStorage.setItem('kayler_user_tags', JSON.stringify(userTags));
                 renderTags();
             }
         }
-        
-        function clearPrompt() { if(confirm('清空内容？')) document.getElementById('promptInput').value = ''; }
+        function clearPrompt() { if(confirm('清空？')) document.getElementById('promptInput').value = ''; }
         function copyPrompt() { navigator.clipboard.writeText(document.getElementById('promptInput').value).then(()=>alert('已复制')); }
         function openPreview() {
             const txt = document.getElementById('promptInput').value;
@@ -493,13 +495,14 @@
             document.getElementById('previewModal').classList.add('active');
         }
 
-        // === 6. 文件操作 ===
+        // === 文件操作 ===
         function viewFile(filename, display) {
             document.getElementById('modalTitle').innerText = display;
             document.getElementById('fileContent').innerText = "⏳ 读取中...";
             document.getElementById('modalOverlay').classList.add('active');
             
             const btn = document.getElementById('btnImport');
+            // 权限控制
             if(localStorage.getItem('gh_token')) {
                 btn.style.display = 'inline-block';
                 btn.disabled = true; btn.style.opacity = '0.5';
@@ -515,11 +518,12 @@
                 btn.disabled = false; btn.style.opacity = '1';
             };
 
+            // 策略：Raw -> Local
             fetch(url).then(r=>{if(!r.ok)throw new Error();return r.text()})
                 .then(onSuccess)
                 .catch(()=>{
                     fetch(`prompt/${filename}`).then(r=>r.text()).then(onSuccess)
-                    .catch(()=>document.getElementById('fileContent').innerText="❌ 读取失败");
+                    .catch(()=>document.getElementById('fileContent').innerText="❌ 读取失败，请检查Token或网络");
                 });
         }
 
@@ -539,6 +543,7 @@
             a.click();
         }
 
+        // 灯箱
         function openLightbox(url, type) {
             const lb = document.getElementById('lightbox');
             const img = document.getElementById('lbImg');
