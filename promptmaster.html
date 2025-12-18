@@ -203,7 +203,7 @@
                             <th style="width:10%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
                             <th style="width:10%;" class="sortable" onclick="sortTable('category')" data-key="category">分类</th>
                             <th style="width:25%;">功能描述</th>
-                            <th style="width:20%;">示例</th>
+                            <th style="width:20%;">示例 (自动)</th>
                             <th style="width:10%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
                         </tr>
                     </thead>
@@ -248,7 +248,7 @@
     <script>
         // === 配置与状态 ===
         const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-        const CACHE_KEY = 'prompt_list_v8'; // 升级Key
+        const CACHE_KEY = 'prompt_list_v8_1'; // 升级Key以清除旧缓存
         const CACHE_DURATION = 5 * 60 * 1000;
 
         let allFiles = [];      
@@ -313,18 +313,28 @@
                     if(gRes.ok) gFiles = await gRes.json();
                 } catch(e) { console.warn("Gallery fetch failed", e); }
 
-                // 3. 数据处理 (v8.0 智能解析)
+                // 3. 数据处理 (v8.1 智能关联)
                 allFiles = pFiles
                     .filter(f => f.name && (f.name.endsWith('.md') || f.name.endsWith('.txt')))
                     .map(f => {
                         const meta = parseFilenameV8(f.name);
                         
-                        // 关联示例：图片名包含 [核心名称]
-                        const examples = gFiles.filter(img => 
-                            img.name && 
-                            img.name.toLowerCase().includes(meta.pureName.toLowerCase()) &&
-                            ['.png','.jpg','.jpeg','.mp4'].some(ext => img.name.toLowerCase().endsWith(ext))
-                        ).map(img => ({
+                        // v8.1 智能关联算法: 忽略时间戳、忽略符号、忽略大小写
+                        const examples = gFiles.filter(img => {
+                            if (!img.name) return false;
+                            
+                            // 1. 提示词Key: 去符号
+                            const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+                            
+                            // 2. 图片Key: 去时间戳前缀(14位+_)，去符号
+                            const imgNameLower = img.name.toLowerCase();
+                            const imgCore = imgNameLower.replace(/^\d{14}_/, ''); 
+                            const imgKey = imgCore.replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+
+                            // 3. 包含匹配
+                            return imgKey.includes(promptKey) && 
+                                   ['.png','.jpg','.jpeg','.mp4'].some(ext => imgNameLower.endsWith(ext));
+                        }).map(img => ({
                             name: img.name,
                             url: img.download_url || img.url,
                             type: img.name.endsWith('.mp4') ? 'video' : 'image'
@@ -355,52 +365,34 @@
         // === v8.0 智能解析引擎 ===
         function parseFilenameV8(filename) {
             const clean = filename.replace(/\.(md|txt)$/i, '');
-            // 分割符支持 _
             const parts = clean.split('_');
 
-            let category = 'Base'; // 默认分类
+            let category = 'Base'; 
             let name = clean;
             let version = '-';
             let desc = '-';
 
-            // 策略：寻找版本号 vX.X
             const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
 
             if (verIndex > -1) {
                 version = parts[verIndex];
-                
-                // 版本号前面的是 [分类] 和 [名称]
                 const preVer = parts.slice(0, verIndex);
                 if (preVer.length >= 2) {
                     category = preVer[0];
-                    name = preVer.slice(1).join(' '); // 中间可能还有下划线，合并
+                    name = preVer.slice(1).join(' ');
                 } else if (preVer.length === 1) {
                     name = preVer[0];
-                    // 如果只有一个词，就不分分类了，或者默认为 Base
                 }
-
-                // 版本号后面的是 [描述]
                 const postVer = parts.slice(verIndex + 1);
-                if (postVer.length > 0) {
-                    desc = postVer.join(' ');
-                }
+                if (postVer.length > 0) desc = postVer.join(' ');
             } else {
-                // 没有版本号的降级策略
                 if (parts.length >= 2) {
-                    // 假设第一个是分类，后面是名字
                     category = parts[0];
                     name = parts.slice(1).join(' ');
                 }
             }
 
-            return { 
-                pureName: name, // 用于匹配图片
-                displayName: name,
-                category: category,
-                version: version,
-                desc: desc,
-                author: 'Kaylerris' 
-            };
+            return { pureName: name, displayName: name, category, version, desc, author: 'Kaylerris' };
         }
 
         // === 搜索与排序 ===
@@ -502,7 +494,6 @@
             document.getElementById('modalOverlay').classList.add('active');
             
             const btn = document.getElementById('btnImport');
-            // 权限控制
             if(localStorage.getItem('gh_token')) {
                 btn.style.display = 'inline-block';
                 btn.disabled = true; btn.style.opacity = '0.5';
@@ -518,7 +509,6 @@
                 btn.disabled = false; btn.style.opacity = '1';
             };
 
-            // 策略：Raw -> Local
             fetch(url).then(r=>{if(!r.ok)throw new Error();return r.text()})
                 .then(onSuccess)
                 .catch(()=>{
@@ -543,7 +533,6 @@
             a.click();
         }
 
-        // 灯箱
         function openLightbox(url, type) {
             const lb = document.getElementById('lightbox');
             const img = document.getElementById('lbImg');
