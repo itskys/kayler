@@ -234,15 +234,14 @@
     <script>
         // === 配置与状态 ===
         const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-        const CACHE_KEY = 'prompt_list_cache';
-        const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+        const CACHE_KEY = 'prompt_list_cache_v7'; // 升级缓存Key，避免旧数据冲突
+        const CACHE_DURATION = 5 * 60 * 1000;
 
-        let allFiles = [];      // 原始数据
-        let displayFiles = [];  // 过滤/排序后数据
+        let allFiles = [];      
+        let displayFiles = [];  
         let currentSort = { key: 'name', order: 'desc' };
         let currentFile = { name: '', content: '' };
         
-        // 默认标签 + 用户标签
         const defaultTags = ['Cyberpunk', 'Ukiyo-e', '8k', '--ar 16:9', '--v 6.0', 'Masterpiece', 'Niji 6', 'Studio Ghibli'];
         let userTags = JSON.parse(localStorage.getItem('kayler_user_tags') || '[]');
 
@@ -252,7 +251,7 @@
             loadData();
         });
 
-        // === 2. 数据获取 (带缓存与降级) ===
+        // === 2. 数据获取 (稳健版) ===
         async function loadData(force = false) {
             const loading = document.getElementById('loadingState');
             const table = document.getElementById('dataTable');
@@ -260,127 +259,153 @@
             
             loading.style.display = 'block';
             table.style.display = 'none';
-            cacheBadge.classList.remove('show');
+            if(cacheBadge) cacheBadge.classList.remove('show');
 
-            // 检查缓存
+            // 缓存策略
             const cached = localStorage.getItem(CACHE_KEY);
             if (!force && cached) {
-                const data = JSON.parse(cached);
-                if (Date.now() - data.ts < CACHE_DURATION) {
-                    console.log("Using cached data");
-                    allFiles = data.files;
-                    finishLoad(true);
-                    return;
-                }
+                try {
+                    const data = JSON.parse(cached);
+                    if (Date.now() - data.ts < CACHE_DURATION && Array.isArray(data.files)) {
+                        console.log("Using cached data");
+                        allFiles = data.files;
+                        finishLoad(true);
+                        return;
+                    }
+                } catch(e) { localStorage.removeItem(CACHE_KEY); } // 缓存损坏则清除
             }
 
-            // 发起网络请求
             const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const token = localStorage.getItem('gh_token');
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // 并发请求：Prompt列表 + Gallery列表
-                const [pRes, gRes] = await Promise.all([
-                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG.path}?ref=${CONFIG.branch}&t=${Date.now()}`, { headers }),
-                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}&t=${Date.now()}`, { headers }).catch(()=>({ok:false}))
-                ]);
+                // 1. 先只请求提示词列表 (确保这步最稳)
+                const promptUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG.path}?ref=${CONFIG.branch}&t=${Date.now()}`;
+                const pRes = await fetch(promptUrl, { headers });
 
                 if (!pRes.ok) {
                     if (pRes.status === 403) throw new Error("API限流，请配置Token");
-                    throw new Error("API请求失败");
+                    if (pRes.status === 404) throw new Error("找不到 prompt 目录");
+                    throw new Error(`API Error: ${pRes.status}`);
                 }
 
                 const pFiles = await pRes.json();
-                let gFiles = gRes.ok ? await gRes.json() : [];
+                
+                // 2. 尝试获取画廊 (非阻塞)
+                let gFiles = [];
+                try {
+                    const galleryUrl = `https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}`;
+                    const gRes = await fetch(galleryUrl, { headers });
+                    if(gRes.ok) gFiles = await gRes.json();
+                } catch(e) { console.warn("Gallery fetch failed", e); }
 
-                // 数据处理与关联
+                // 3. 数据处理 (增加容错)
                 allFiles = pFiles
-                    .filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'))
+                    .filter(f => f.name && (f.name.endsWith('.md') || f.name.endsWith('.txt')))
                     .map(f => {
-                        const meta = parseFilenameRegex(f.name); // 使用增强正则解析
+                        // 使用安全解析
+                        const meta = safeParseFilename(f.name); 
                         
-                        // 查找关联示例 (文件名包含提示词名)
+                        // 关联示例
                         const examples = gFiles.filter(img => 
+                            img.name && 
                             img.name.toLowerCase().includes(meta.pureName.toLowerCase()) &&
-                            ['.png','.jpg','.jpeg','.mp4'].some(ext => img.name.endsWith(ext))
+                            ['.png','.jpg','.jpeg','.mp4'].some(ext => img.name.toLowerCase().endsWith(ext))
                         ).map(img => ({
                             name: img.name,
-                            url: img.download_url, // GitHub API直接提供CDN链接
+                            url: img.download_url || img.url, // 兼容
                             type: img.name.endsWith('.mp4') ? 'video' : 'image'
                         }));
 
                         return { ...meta, rawName: f.name, examples };
                     });
 
-                // 写入缓存
+                // 写入新缓存
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files: allFiles }));
                 finishLoad(false);
 
             } catch (e) {
-                loading.innerHTML = `<span style="color:red">⚠️ ${e.message}<br>请点击页脚“管理员配置”输入Token</span>`;
+                console.error(e);
+                loading.innerHTML = `<span style="color:red">⚠️ ${e.message}<br>请检查网络或点击页脚配置 Token</span>`;
             }
         }
 
         function finishLoad(isCached) {
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('dataTable').style.display = 'table';
-            if(isCached) document.getElementById('cacheStatus').classList.add('show');
-            filterFiles(); // 初始渲染
+            if(isCached && document.getElementById('cacheStatus')) {
+                document.getElementById('cacheStatus').classList.add('show');
+            }
+            filterFiles();
         }
 
         function forceRefresh() { loadData(true); }
 
-        // === 3. 增强解析逻辑 (Regex) ===
-        function parseFilenameRegex(filename) {
-            const clean = filename.replace(/\.(md|txt)$/, '');
-            
-            // 尝试匹配 "Category_Name_v1.0" 或 "Name_v1.0"
-            // 逻辑：寻找版本号 vX.X，前面的是名字，后面的是描述
-            // 如果名字里有下划线，第一部分视为分类
-            
-            const parts = clean.split(/[_-]/);
-            let category = '-';
-            let name = clean;
-            let version = '-';
-            
-            // 提取版本号
-            const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
-            
-            if (verIndex > -1) {
-                version = parts[verIndex];
-                // 版本号之前的部分是名字
-                const nameParts = parts.slice(0, verIndex);
-                if (nameParts.length > 1) {
-                    category = nameParts[0]; // 第一个词作为分类
-                    name = nameParts.slice(1).join(' '); // 剩下的作为名字
+        // === 3. 安全解析逻辑 (修正版) ===
+        function safeParseFilename(filename) {
+            try {
+                const clean = filename.replace(/\.(md|txt)$/i, '');
+                const parts = clean.split(/[_-]/); // 按 _ 或 - 分割
+                
+                let category = '-';
+                let name = clean;
+                let version = '-';
+                
+                // 1. 尝试找版本号 v1.0, v2
+                const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
+                
+                if (verIndex > -1) {
+                    version = parts[verIndex];
+                    // 版本号前面的是名字
+                    const nameParts = parts.slice(0, verIndex);
+                    
+                    // 如果名字有多段，第一段可能是分类
+                    if (nameParts.length > 1) {
+                        // 检查第一段是否是很短的词（如 Role, Style），如果是则归为分类
+                        if(nameParts[0].length < 10) {
+                            category = nameParts[0];
+                            name = nameParts.slice(1).join(' ');
+                        } else {
+                            name = nameParts.join(' ');
+                        }
+                    } else if(nameParts.length === 1) {
+                        name = nameParts[0];
+                    }
                 } else {
-                    name = nameParts[0];
+                    // 没有版本号的情况
+                    if(parts.length > 1 && parts[0].length < 10) {
+                        category = parts[0];
+                        name = parts.slice(1).join(' ');
+                    }
                 }
-            } else {
-                // 没有版本号，尝试简单的首词分类
-                if (parts.length > 1) {
-                    category = parts[0];
-                    name = parts.slice(1).join(' ');
-                }
-            }
 
-            return { 
-                pureName: name, // 用于匹配图片的纯名称
-                displayName: name, // 显示名称
-                category: category,
-                version: version,
-                author: 'Kaylerris' 
-            };
+                return { 
+                    pureName: name, 
+                    displayName: name, 
+                    category: category,
+                    version: version,
+                    author: 'Kaylerris' 
+                };
+            } catch(e) {
+                // 兜底：如果解析出错，直接返回原始文件名
+                return { 
+                    pureName: filename, 
+                    displayName: filename, 
+                    category: '-', 
+                    version: '-', 
+                    author: '-' 
+                };
+            }
         }
 
         // === 4. 搜索与排序 ===
         function filterFiles() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             displayFiles = allFiles.filter(f => 
-                f.displayName.toLowerCase().includes(q) || 
-                f.category.toLowerCase().includes(q)
+                (f.displayName && f.displayName.toLowerCase().includes(q)) || 
+                (f.category && f.category.toLowerCase().includes(q))
             );
             applySort();
         }
@@ -392,20 +417,18 @@
         }
 
         function applySort() {
-            // 更新箭头UI
             document.querySelectorAll('th.sortable').forEach(th => {
                 th.classList.remove('asc', 'desc');
                 if (th.dataset.key === currentSort.key) th.classList.add(currentSort.order);
             });
 
             displayFiles.sort((a, b) => {
-                let va = a[currentSort.key].toLowerCase();
-                let vb = b[currentSort.key].toLowerCase();
-                if (va < vb) return currentSort.order === 'asc' ? -1 : 1;
-                if (va > vb) return currentSort.order === 'asc' ? 1 : -1;
+                let valA = (a[currentSort.key] || '').toLowerCase();
+                let valB = (b[currentSort.key] || '').toLowerCase();
+                if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
                 return 0;
             });
-            
             renderTable();
         }
 
@@ -413,9 +436,14 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
+            if(displayFiles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">暂无数据</td></tr>';
+                return;
+            }
+
             displayFiles.forEach(item => {
                 let exHtml = '<span style="color:#ccc">-</span>';
-                if (item.examples.length) {
+                if (item.examples && item.examples.length) {
                     exHtml = item.examples.slice(0, 3).map((ex, i) => 
                         `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">
                             ${ex.type==='video'?'🎬':'🖼️'} 示例${i+1}
@@ -435,11 +463,11 @@
             });
         }
 
-        // === 5. 撰写助手 (动态标签) ===
+        // === 5. 撰写助手 ===
         function renderTags() {
             const container = document.getElementById('tagsList');
             const allTags = [...defaultTags, ...userTags];
-            container.innerHTML = allTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
+            if(container) container.innerHTML = allTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
         }
 
         function addTag(txt) {
@@ -465,20 +493,18 @@
             document.getElementById('previewModal').classList.add('active');
         }
 
-        // === 6. 文件操作与弹窗 ===
+        // === 6. 文件操作 ===
         function viewFile(filename, display) {
             document.getElementById('modalTitle').innerText = display;
             document.getElementById('fileContent').innerText = "⏳ 读取中...";
             document.getElementById('modalOverlay').classList.add('active');
             
-            // 权限检查
             const btn = document.getElementById('btnImport');
             if(localStorage.getItem('gh_token')) {
                 btn.style.display = 'inline-block';
                 btn.disabled = true; btn.style.opacity = '0.5';
             } else { btn.style.display = 'none'; }
 
-            // 读取
             const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const url = `https://raw.githubusercontent.com/${owner}/${repo}/${CONFIG.branch}/${CONFIG.path}/${encodeURIComponent(filename)}`;
@@ -492,7 +518,6 @@
             fetch(url).then(r=>{if(!r.ok)throw new Error();return r.text()})
                 .then(onSuccess)
                 .catch(()=>{
-                    // 降级本地
                     fetch(`prompt/${filename}`).then(r=>r.text()).then(onSuccess)
                     .catch(()=>document.getElementById('fileContent').innerText="❌ 读取失败");
                 });
@@ -514,7 +539,6 @@
             a.click();
         }
 
-        // 灯箱
         function openLightbox(url, type) {
             const lb = document.getElementById('lightbox');
             const img = document.getElementById('lbImg');
@@ -530,8 +554,6 @@
         
         function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
         function copyContent() { navigator.clipboard.writeText(document.getElementById('fileContent').innerText).then(()=>alert('已复制')); }
-
-        // 配置入口
         function openGlobalSettings() { window.openGlobalSettings(); }
     </script>
 </body>
