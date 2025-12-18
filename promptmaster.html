@@ -319,21 +319,40 @@
                     .map(f => {
                         const meta = parseFilenameV8(f.name);
                         
-                        // v8.1 智能关联算法: 忽略时间戳、忽略符号、忽略大小写
+                       // v9.0 版本隔离关联算法
                         const examples = gFiles.filter(img => {
                             if (!img.name) return false;
                             
-                            // 1. 提示词Key: 去符号
-                            const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
-                            
-                            // 2. 图片Key: 去时间戳前缀(14位+_)，去符号
                             const imgNameLower = img.name.toLowerCase();
-                            const imgCore = imgNameLower.replace(/^\d{14}_/, ''); 
+                            // 1. 基础检查：图片必须包含核心名 (去符号)
+                            const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+                            const imgCore = imgNameLower.replace(/^\d{14}_/, ''); // 去掉时间戳
                             const imgKey = imgCore.replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+                            
+                            if (!imgKey.includes(promptKey)) return false; // 核心名都不对，直接排除
 
-                            // 3. 包含匹配
-                            return imgKey.includes(promptKey) && 
-                                   ['.png','.jpg','.jpeg','.mp4'].some(ext => imgNameLower.endsWith(ext));
+                            // 2. 版本隔离检查 (关键升级)
+                            // 提取当前提示词的版本数字 (如 "v2.0" -> "2.0")
+                            const currentVer = meta.version.replace(/[vV]/, ''); 
+                            
+                            // 检查图片名里是否包含版本信息 (如 "v2.0", "v2", "ver2")
+                            // 正则匹配图片名里的版本号：v数字 或 ver数字
+                            const imgVerMatch = imgCore.match(/(?:v|ver|_v)(\d+(?:\.\d+)?)/i);
+
+                            if (imgVerMatch) {
+                                // A. 如果图片名里带了版本号
+                                const imgVer = imgVerMatch[1];
+                                // 只有当图片版本号 == 当前提示词版本号 (或者主版本号相同) 时才匹配
+                                // 例如：提示词 v2.0，图片 v2 -> 匹配
+                                // 例如：提示词 v2.0，图片 v1 -> 不匹配
+                                return Math.floor(parseFloat(imgVer)) === Math.floor(parseFloat(currentVer));
+                            } else {
+                                // B. 如果图片名里没写版本号
+                                // 策略：视为“通用示例”或“v1.0示例”
+                                // 这里我们采用：视为当前版本的示例（宽容模式）
+                                // 如果您希望图片没写版本号时只给v1.0，可以加判断
+                                return true; 
+                            }
                         }).map(img => ({
                             name: img.name,
                             url: img.download_url || img.url,
