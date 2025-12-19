@@ -38,8 +38,15 @@
         .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
-        /* 简单的灰色提示 */
-        .page-hint { font-size: 12px; color: #aaa; text-align: center; margin-top: 5px; }
+        /* 上传提示 */
+        .upload-tip {
+            font-size: 12px; color: #999; text-align: center; line-height: 1.6;
+            margin-top: 5px; display: none;
+        }
+        .upload-tip code { 
+            background: #eee; padding: 2px 5px; border-radius: 3px; 
+            font-family: monospace; color: #666;
+        }
 
         /* 瀑布流布局 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
@@ -69,10 +76,20 @@
         .modal.active { display: flex; }
         .modal img, .modal video { max-width: 90%; max-height: 80vh; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
         .modal-caption { color: #ccc; margin-top: 20px; font-size: 16px; text-align: center; max-width: 80%; }
-        .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; transition: 0.2s; }
+        .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; transition: 0.2s; z-index: 2001; }
         .close-modal:hover { color: var(--brand-brown); }
         
-        /* === 上传配置模态框 (v10.0) === */
+        /* v11.0 删除按钮 */
+        .btn-delete {
+            position: absolute; top: 30px; left: 30px; /* 左上角 */
+            background: rgba(255, 0, 0, 0.7); color: white; border: none;
+            padding: 8px 16px; border-radius: 20px; font-size: 14px; cursor: pointer;
+            display: none; /* 默认隐藏 */ z-index: 2001;
+            transition: 0.2s; backdrop-filter: blur(4px);
+        }
+        .btn-delete:hover { background: rgba(255, 0, 0, 1); transform: scale(1.05); }
+
+        /* 上传配置模态框 */
         #uploadConfigModal { background: rgba(0,0,0,0.5); }
         .config-box { 
             background: white; width: 400px; max-width: 90%; padding: 25px; border-radius: 12px; 
@@ -125,7 +142,11 @@
                 <span>☁️ 上传图片 (Admin)</span>
             </button>
         </div>
-        <div class="page-hint" id="adminHint" style="display:none;">仅管理员可上传，支持 jpg/png/mp4</div>
+        
+        <div id="uploadTip" class="upload-tip">
+            关联提示：文件名需包含 <code>核心名称</code> 才能在 PromptMaster 显示。<br>
+            如需指定版本，请包含 <code>v2</code> 等版本号。例：<code>Concept_v2_001.png</code>
+        </div>
     </div>
 
     <div id="loadingState">
@@ -142,6 +163,9 @@
 
     <div id="imageModal" class="modal" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
+        
+        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
+        
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
         <div class="modal-caption" id="modalCaption"></div>
@@ -183,9 +207,12 @@
         const ITEMS_PER_PAGE = 30;
         let allImages = [];
         let currentPage = 1;
-        let pendingFiles = []; // 暂存待上传文件
+        let pendingFiles = [];
+        
+        // 删除功能需要的全局变量
+        let currentImgSHA = null;
+        let currentImgName = null;
 
-        // DOM 元素
         const galleryContainer = document.getElementById('galleryContainer');
         const loadingState = document.getElementById('loadingState');
         const pagination = document.getElementById('pagination');
@@ -194,7 +221,8 @@
         const modalVideo = document.getElementById('modalVideo');
         const modalCaption = document.getElementById('modalCaption');
         const btnUpload = document.getElementById('btnUpload');
-        const adminHint = document.getElementById('adminHint');
+        const btnDelete = document.getElementById('btnDelete');
+        const uploadTip = document.getElementById('uploadTip');
         const toast = document.getElementById('upload-toast');
         const uploadModal = document.getElementById('uploadConfigModal');
 
@@ -202,39 +230,37 @@
         function checkAdmin() {
             if(localStorage.getItem('gh_token')) {
                 btnUpload.style.display = 'inline-flex';
-                adminHint.style.display = 'block';
+                uploadTip.style.display = 'block'; 
+                // 删除按钮在 openModal 时控制，但这里先设为有权限状态
+                btnDelete.dataset.auth = "true";
             } else {
                 btnUpload.style.display = 'none';
-                adminHint.style.display = 'none';
+                uploadTip.style.display = 'none';
+                btnDelete.style.display = 'none';
+                btnDelete.dataset.auth = "false";
             }
         }
         window.addEventListener('auth-updated', checkAdmin);
 
-        // === 2. 上传流程 (v10.0 重构) ===
+        // === 2. 上传逻辑 ===
         function triggerUpload() { document.getElementById('imgUploadInput').click(); }
 
-        // 第一步：暂存文件并打开配置窗
         function prepareUpload(input) {
             if(input.files.length === 0) return;
             if(input.files.length > 3) { alert("⚠️ 单次最多只能上传 3 个文件！"); input.value = ''; return; }
-            
-            pendingFiles = Array.from(input.files); // 暂存
+            pendingFiles = Array.from(input.files); 
             document.getElementById('fileCount').innerText = pendingFiles.length;
-            
-            // 重置表单
             document.getElementById('isPromptExample').checked = false;
             document.getElementById('coreNameInput').value = '';
             document.getElementById('verNameInput').value = '';
             toggleExampleFields();
-            
-            uploadModal.classList.add('active'); // 显示弹窗
-            input.value = ''; // 清空input以便下次触发
+            uploadModal.classList.add('active'); 
+            input.value = ''; 
         }
 
         function toggleExampleFields() {
             const isChecked = document.getElementById('isPromptExample').checked;
-            const fields = document.getElementById('exampleFields');
-            fields.style.display = isChecked ? 'flex' : 'none';
+            document.getElementById('exampleFields').style.display = isChecked ? 'flex' : 'none';
             updateFilenamePreview();
         }
 
@@ -244,66 +270,48 @@
             const verStr = ver ? `_${ver}` : '';
             document.getElementById('filenamePreview').innerText = `2025..._${core}${verStr}_原名.png`;
         }
-        
-        // 监听输入以更新预览
         document.getElementById('coreNameInput').addEventListener('input', updateFilenamePreview);
         document.getElementById('verNameInput').addEventListener('input', updateFilenamePreview);
 
-        function cancelUpload() {
-            uploadModal.classList.remove('active');
-            pendingFiles = [];
-        }
+        function cancelUpload() { uploadModal.classList.remove('active'); pendingFiles = []; }
 
-        // 第二步：确认并上传
         async function confirmUpload() {
             const isExample = document.getElementById('isPromptExample').checked;
             const coreName = document.getElementById('coreNameInput').value.trim();
             const verName = document.getElementById('verNameInput').value.trim();
 
-            if (isExample && !coreName) {
-                alert("⚠️ 请输入核心名称（例如 PromptMaster 中的文件名关键词）");
-                return;
-            }
+            if (isExample && !coreName) { alert("⚠️ 请输入核心名称"); return; }
 
-            uploadModal.classList.remove('active'); // 关闭弹窗
+            uploadModal.classList.remove('active'); 
             toast.style.display = 'block';
             
             const token = localStorage.getItem('gh_token');
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
 
-            if(!token) { alert("Token 丢失，请重新登录"); return; }
+            if(!token) { alert("Token 丢失"); return; }
 
             let successCount = 0;
             const uploadPromises = pendingFiles.map(async (file) => {
                 try {
                     const contentBase64 = await toBase64(file);
                     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                    const originalClean = file.name.replace(/\s+/g, '_'); // 原名清洗
-                    
+                    const originalClean = file.name.replace(/\s+/g, '_'); 
                     let filename = '';
-                    
                     if (isExample) {
-                        // 智能重命名模式
-                        // 格式: 20251219..._CoreName_v2.0_原名.png
-                        // 确保 coreName 不含非法字符
                         const safeCore = coreName.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '');
                         const verStr = verName ? `_${verName}` : '';
                         filename = `${timestamp}_${safeCore}${verStr}_${originalClean}`;
                     } else {
-                        // 普通上传模式
                         filename = `${timestamp}_${originalClean}`;
                     }
-
                     const path = `${REPO_CONFIG.path}/${filename}`;
                     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-                    
                     const res = await fetch(url, {
                         method: 'PUT',
                         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: `Upload: ${filename}`, content: contentBase64, branch: 'main' })
                     });
-                    
                     if(!res.ok) throw new Error((await res.json()).message);
                     successCount++;
                 } catch(e) { console.error(e); alert(`❌ 上传失败: ${e.message}`); }
@@ -311,15 +319,54 @@
 
             await Promise.all(uploadPromises);
             toast.style.display = 'none';
-            pendingFiles = []; // 清空暂存
-            
+            pendingFiles = []; 
             if(successCount > 0) {
-                alert(`✅ 成功上传 ${successCount} 个文件！\n画廊正在刷新...`);
+                alert(`✅ 上传成功！\n画廊正在刷新...`);
                 setTimeout(initGallery, 1000);
             }
         }
 
-        // === 3. 基础功能 ===
+        // === 3. 删除逻辑 (v11.0 新增) ===
+        async function deleteCurrentImage() {
+            if(!currentImgSHA || !currentImgName) return;
+            
+            const confirmDelete = confirm(`⚠️ 警告：确定要永久删除这张图片吗？\n\n文件名: ${currentImgName}\n此操作不可恢复！`);
+            if(!confirmDelete) return;
+
+            const token = localStorage.getItem('gh_token');
+            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
+            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
+            const path = `${REPO_CONFIG.path}/${currentImgName}`;
+
+            btnDelete.innerText = "⏳ 删除中...";
+            btnDelete.disabled = true;
+
+            try {
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Delete gallery item: ${currentImgName}`, sha: currentImgSHA, branch: 'main' })
+                });
+
+                if(res.ok) {
+                    alert("✅ 删除成功！");
+                    closeModal();
+                    // 稍等片刻刷新，等待GitHub API生效
+                    loadingState.style.display = 'flex';
+                    galleryContainer.innerHTML = '';
+                    setTimeout(initGallery, 1000); 
+                } else {
+                    throw new Error((await res.json()).message);
+                }
+            } catch(e) {
+                alert("❌ 删除失败: " + e.message);
+                btnDelete.innerText = "🗑️ 删除此图";
+                btnDelete.disabled = false;
+            }
+        }
+
+        // === 4. 核心功能 ===
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -385,7 +432,9 @@
                     type = 'video';
                 }
 
-                item.onclick = () => openModal(rawUrl, title, type);
+                // 传递 img.sha 和 img.name (v11.0 修改)
+                item.onclick = () => openModal(rawUrl, title, type, img.sha, img.name);
+                
                 item.innerHTML = `
                     ${mediaTag}
                     <div class="item-info">
@@ -419,8 +468,23 @@
             const btn = document.createElement('button'); btn.className = 'page-btn'; btn.innerText = text; btn.onclick = onClick; return btn;
         }
 
-        function openModal(src, caption, type) {
+        // 修改后的 openModal (v11.0)
+        function openModal(src, caption, type, sha, filename) {
             modalCaption.innerText = caption;
+            
+            // 存储当前图片信息供删除使用
+            currentImgSHA = sha;
+            currentImgName = filename;
+            
+            // 只有管理员才显示删除按钮
+            if (btnDelete.dataset.auth === "true") {
+                btnDelete.style.display = "block";
+                btnDelete.innerText = "🗑️ 删除此图"; // 重置按钮文字
+                btnDelete.disabled = false;
+            } else {
+                btnDelete.style.display = "none";
+            }
+
             modal.classList.add('active');
             if(type === 'video') {
                 modalImg.style.display = 'none';
