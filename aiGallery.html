@@ -38,15 +38,8 @@
         .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
-        /* 上传提示 (v9.1 优化：极简灰色风格) */
-        .upload-tip {
-            font-size: 12px; color: #999; text-align: center; line-height: 1.6;
-            margin-top: 5px; display: none; /* 默认隐藏 */
-        }
-        .upload-tip code { 
-            background: #eee; padding: 2px 5px; border-radius: 3px; 
-            font-family: monospace; color: #666;
-        }
+        /* 简单的灰色提示 */
+        .page-hint { font-size: 12px; color: #aaa; text-align: center; margin-top: 5px; }
 
         /* 瀑布流布局 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
@@ -65,12 +58,13 @@
         .page-btn { padding: 8px 14px; border: 1px solid #ddd; background: white; color: #555; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; min-width: 36px; text-align: center; }
         .page-btn:hover:not(:disabled) { border-color: var(--brand-brown); color: var(--brand-brown); }
         .page-btn.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
-        .page-btn.disabled { background: #f5f5f5; color: #ccc; cursor: not-allowed; border-color: #eee; }
+        .page-btn:disabled { background: #f5f5f5; color: #ccc; cursor: not-allowed; border-color: #eee; }
 
         #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; }
         #upload-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 30px; font-size: 14px; z-index: 9999; display: none; }
 
+        /* 图片预览模态框 */
         .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
         .modal img, .modal video { max-width: 90%; max-height: 80vh; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
@@ -78,6 +72,31 @@
         .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; transition: 0.2s; }
         .close-modal:hover { color: var(--brand-brown); }
         
+        /* === 上传配置模态框 (v10.0) === */
+        #uploadConfigModal { background: rgba(0,0,0,0.5); }
+        .config-box { 
+            background: white; width: 400px; max-width: 90%; padding: 25px; border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 15px; 
+        }
+        .config-title { font-size: 18px; font-weight: bold; color: #333; margin: 0; }
+        .config-row { display: flex; flex-direction: column; gap: 5px; }
+        .config-label { font-size: 13px; font-weight: 600; color: #555; }
+        .config-input { 
+            padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; 
+            background: #fafafa;
+        }
+        .config-input:focus { border-color: var(--brand-brown); background: white; }
+        .config-check-label { 
+            display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #333; 
+            background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee;
+        }
+        .config-check-input { width: 18px; height: 18px; accent-color: var(--brand-brown); }
+        .config-hidden-area { display: none; flex-direction: column; gap: 15px; padding: 15px; background: #fdfdfd; border: 1px dashed #ddd; border-radius: 8px; }
+        
+        .config-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        .btn-cancel { padding: 8px 16px; background: #eee; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-confirm { padding: 8px 20px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
         .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
         .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
         
@@ -101,16 +120,12 @@
     <div class="action-area">
         <div class="action-bar">
             <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新画廊</span></button>
-            <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="processUploads(this)">
+            <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="prepareUpload(this)">
             <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()">
                 <span>☁️ 上传图片 (Admin)</span>
             </button>
         </div>
-        
-        <div id="uploadTip" class="upload-tip">
-            关联提示：文件名需包含 <code>核心名称</code> 才能在 PromptMaster 显示。<br>
-            如需指定版本，请包含 <code>v2</code> 等版本号。例：<code>Concept_v2_001.png</code>
-        </div>
+        <div class="page-hint" id="adminHint" style="display:none;">仅管理员可上传，支持 jpg/png/mp4</div>
     </div>
 
     <div id="loadingState">
@@ -132,12 +147,45 @@
         <div class="modal-caption" id="modalCaption"></div>
     </div>
 
+    <div id="uploadConfigModal" class="modal">
+        <div class="config-box">
+            <h3 class="config-title">📤 上传配置</h3>
+            <p style="margin:0; font-size:13px; color:#666;">即将上传 <span id="fileCount" style="font-weight:bold;">0</span> 个文件</p>
+            
+            <label class="config-check-label">
+                <input type="checkbox" id="isPromptExample" class="config-check-input" onchange="toggleExampleFields()">
+                <span>🔗 作为提示词示例图片</span>
+            </label>
+
+            <div id="exampleFields" class="config-hidden-area">
+                <div class="config-row">
+                    <span class="config-label">核心名称 (Core Name) <span style="color:red">*</span></span>
+                    <input type="text" id="coreNameInput" class="config-input" placeholder="例如: Cyberpunk (对应文件名)">
+                </div>
+                <div class="config-row">
+                    <span class="config-label">版本号 (可选)</span>
+                    <input type="text" id="verNameInput" class="config-input" placeholder="例如: v2.0">
+                </div>
+                <div style="font-size:11px; color:#999;">
+                    预览: <span id="filenamePreview">2025..._Cyberpunk_v2.0_原名.png</span>
+                </div>
+            </div>
+
+            <div class="config-actions">
+                <button class="btn-cancel" onclick="cancelUpload()">取消</button>
+                <button class="btn-confirm" onclick="confirmUpload()">开始上传</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'gallery', branch: 'main' };
         const ITEMS_PER_PAGE = 30;
         let allImages = [];
         let currentPage = 1;
+        let pendingFiles = []; // 暂存待上传文件
 
+        // DOM 元素
         const galleryContainer = document.getElementById('galleryContainer');
         const loadingState = document.getElementById('loadingState');
         const pagination = document.getElementById('pagination');
@@ -146,63 +194,132 @@
         const modalVideo = document.getElementById('modalVideo');
         const modalCaption = document.getElementById('modalCaption');
         const btnUpload = document.getElementById('btnUpload');
-        const uploadTip = document.getElementById('uploadTip');
+        const adminHint = document.getElementById('adminHint');
         const toast = document.getElementById('upload-toast');
+        const uploadModal = document.getElementById('uploadConfigModal');
 
+        // === 1. 权限检查 ===
         function checkAdmin() {
             if(localStorage.getItem('gh_token')) {
                 btnUpload.style.display = 'inline-flex';
-                uploadTip.style.display = 'block'; 
+                adminHint.style.display = 'block';
             } else {
                 btnUpload.style.display = 'none';
-                uploadTip.style.display = 'none';
+                adminHint.style.display = 'none';
             }
         }
         window.addEventListener('auth-updated', checkAdmin);
 
+        // === 2. 上传流程 (v10.0 重构) ===
         function triggerUpload() { document.getElementById('imgUploadInput').click(); }
 
-        async function processUploads(input) {
-            const files = input.files;
-            if(files.length === 0) return;
-            if(files.length > 3) { alert("⚠️ 单次最多只能上传 3 个文件！"); input.value = ''; return; }
+        // 第一步：暂存文件并打开配置窗
+        function prepareUpload(input) {
+            if(input.files.length === 0) return;
+            if(input.files.length > 3) { alert("⚠️ 单次最多只能上传 3 个文件！"); input.value = ''; return; }
+            
+            pendingFiles = Array.from(input.files); // 暂存
+            document.getElementById('fileCount').innerText = pendingFiles.length;
+            
+            // 重置表单
+            document.getElementById('isPromptExample').checked = false;
+            document.getElementById('coreNameInput').value = '';
+            document.getElementById('verNameInput').value = '';
+            toggleExampleFields();
+            
+            uploadModal.classList.add('active'); // 显示弹窗
+            input.value = ''; // 清空input以便下次触发
+        }
 
+        function toggleExampleFields() {
+            const isChecked = document.getElementById('isPromptExample').checked;
+            const fields = document.getElementById('exampleFields');
+            fields.style.display = isChecked ? 'flex' : 'none';
+            updateFilenamePreview();
+        }
+
+        function updateFilenamePreview() {
+            const core = document.getElementById('coreNameInput').value || 'Name';
+            const ver = document.getElementById('verNameInput').value;
+            const verStr = ver ? `_${ver}` : '';
+            document.getElementById('filenamePreview').innerText = `2025..._${core}${verStr}_原名.png`;
+        }
+        
+        // 监听输入以更新预览
+        document.getElementById('coreNameInput').addEventListener('input', updateFilenamePreview);
+        document.getElementById('verNameInput').addEventListener('input', updateFilenamePreview);
+
+        function cancelUpload() {
+            uploadModal.classList.remove('active');
+            pendingFiles = [];
+        }
+
+        // 第二步：确认并上传
+        async function confirmUpload() {
+            const isExample = document.getElementById('isPromptExample').checked;
+            const coreName = document.getElementById('coreNameInput').value.trim();
+            const verName = document.getElementById('verNameInput').value.trim();
+
+            if (isExample && !coreName) {
+                alert("⚠️ 请输入核心名称（例如 PromptMaster 中的文件名关键词）");
+                return;
+            }
+
+            uploadModal.classList.remove('active'); // 关闭弹窗
+            toast.style.display = 'block';
+            
             const token = localStorage.getItem('gh_token');
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
 
             if(!token) { alert("Token 丢失，请重新登录"); return; }
-            toast.style.display = 'block';
-            let successCount = 0;
 
-            const uploadPromises = Array.from(files).map(async (file) => {
+            let successCount = 0;
+            const uploadPromises = pendingFiles.map(async (file) => {
                 try {
                     const contentBase64 = await toBase64(file);
                     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                    const safeName = file.name.replace(/\s+/g, '_'); 
-                    const filename = `${timestamp}_${safeName}`;
-                    const path = `${REPO_CONFIG.path}/${filename}`;
+                    const originalClean = file.name.replace(/\s+/g, '_'); // 原名清洗
+                    
+                    let filename = '';
+                    
+                    if (isExample) {
+                        // 智能重命名模式
+                        // 格式: 20251219..._CoreName_v2.0_原名.png
+                        // 确保 coreName 不含非法字符
+                        const safeCore = coreName.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '');
+                        const verStr = verName ? `_${verName}` : '';
+                        filename = `${timestamp}_${safeCore}${verStr}_${originalClean}`;
+                    } else {
+                        // 普通上传模式
+                        filename = `${timestamp}_${originalClean}`;
+                    }
 
+                    const path = `${REPO_CONFIG.path}/${filename}`;
                     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                    
                     const res = await fetch(url, {
                         method: 'PUT',
                         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: `Upload gallery: ${filename}`, content: contentBase64, branch: 'main' })
+                        body: JSON.stringify({ message: `Upload: ${filename}`, content: contentBase64, branch: 'main' })
                     });
+                    
                     if(!res.ok) throw new Error((await res.json()).message);
                     successCount++;
-                } catch(e) { console.error(e); alert(`❌ ${file.name} 上传失败: ${e.message}`); }
+                } catch(e) { console.error(e); alert(`❌ 上传失败: ${e.message}`); }
             });
 
             await Promise.all(uploadPromises);
             toast.style.display = 'none';
-            input.value = ''; 
+            pendingFiles = []; // 清空暂存
+            
             if(successCount > 0) {
                 alert(`✅ 成功上传 ${successCount} 个文件！\n画廊正在刷新...`);
                 setTimeout(initGallery, 1000);
             }
         }
 
+        // === 3. 基础功能 ===
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -256,7 +373,6 @@
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             
             images.forEach(img => {
-                // 清理文件名: 去除时间戳前缀(14位+_)
                 const title = img.name.replace(/^\d{14}_/, "").replace(/\.[^/.]+$/, "").replace(/_/g, " "); 
                 const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
                 const item = document.createElement('div');
