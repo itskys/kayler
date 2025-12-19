@@ -79,13 +79,12 @@
         .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; transition: 0.2s; z-index: 2001; }
         .close-modal:hover { color: var(--brand-brown); }
         
-        /* v11.0 删除按钮 */
+        /* 删除按钮 */
         .btn-delete {
             position: absolute; top: 30px; left: 30px; /* 左上角 */
             background: rgba(255, 0, 0, 0.7); color: white; border: none;
             padding: 8px 16px; border-radius: 20px; font-size: 14px; cursor: pointer;
-            display: none; /* 默认隐藏 */ z-index: 2001;
-            transition: 0.2s; backdrop-filter: blur(4px);
+            display: none; z-index: 2001; transition: 0.2s; backdrop-filter: blur(4px);
         }
         .btn-delete:hover { background: rgba(255, 0, 0, 1); transform: scale(1.05); }
 
@@ -113,6 +112,9 @@
         .config-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
         .btn-cancel { padding: 8px 16px; background: #eee; border: none; border-radius: 6px; cursor: pointer; }
         .btn-confirm { padding: 8px 20px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* 全局配置弹窗容器 (重要修复：v11.1补回) */
+        #settings-modal { z-index: 20000; display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
 
         .admin-link { color: #ddd; text-decoration: none; font-size: 12px; cursor: pointer; }
         .admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
@@ -144,7 +146,8 @@
         </div>
         
         <div id="uploadTip" class="upload-tip">
-            只有管理员才能上传图片！
+            关联提示：文件名需包含 <code>核心名称</code> 才能在 PromptMaster 显示。<br>
+            如需指定版本，请包含 <code>v2</code> 等版本号。例：<code>Concept_v2_001.png</code>
         </div>
     </div>
 
@@ -201,6 +204,8 @@
         </div>
     </div>
 
+    <div id="settings-modal" onclick="if(event.target===this) closeSettings()"></div>
+
     <script>
         const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'gallery', branch: 'main' };
         const ITEMS_PER_PAGE = 30;
@@ -208,7 +213,7 @@
         let currentPage = 1;
         let pendingFiles = [];
         
-        // 删除功能需要的全局变量
+        // 删除功能全局变量
         let currentImgSHA = null;
         let currentImgName = null;
 
@@ -230,7 +235,6 @@
             if(localStorage.getItem('gh_token')) {
                 btnUpload.style.display = 'inline-flex';
                 uploadTip.style.display = 'block'; 
-                // 删除按钮在 openModal 时控制，但这里先设为有权限状态
                 btnDelete.dataset.auth = "true";
             } else {
                 btnUpload.style.display = 'none';
@@ -325,7 +329,7 @@
             }
         }
 
-        // === 3. 删除逻辑 (v11.0 新增) ===
+        // === 3. 删除逻辑 ===
         async function deleteCurrentImage() {
             if(!currentImgSHA || !currentImgName) return;
             
@@ -351,7 +355,6 @@
                 if(res.ok) {
                     alert("✅ 删除成功！");
                     closeModal();
-                    // 稍等片刻刷新，等待GitHub API生效
                     loadingState.style.display = 'flex';
                     galleryContainer.innerHTML = '';
                     setTimeout(initGallery, 1000); 
@@ -431,9 +434,7 @@
                     type = 'video';
                 }
 
-                // 传递 img.sha 和 img.name (v11.0 修改)
                 item.onclick = () => openModal(rawUrl, title, type, img.sha, img.name);
-                
                 item.innerHTML = `
                     ${mediaTag}
                     <div class="item-info">
@@ -467,18 +468,14 @@
             const btn = document.createElement('button'); btn.className = 'page-btn'; btn.innerText = text; btn.onclick = onClick; return btn;
         }
 
-        // 修改后的 openModal (v11.0)
         function openModal(src, caption, type, sha, filename) {
             modalCaption.innerText = caption;
-            
-            // 存储当前图片信息供删除使用
             currentImgSHA = sha;
             currentImgName = filename;
             
-            // 只有管理员才显示删除按钮
             if (btnDelete.dataset.auth === "true") {
                 btnDelete.style.display = "block";
-                btnDelete.innerText = "🗑️ 删除此图"; // 重置按钮文字
+                btnDelete.innerText = "🗑️ 删除此图"; 
                 btnDelete.disabled = false;
             } else {
                 btnDelete.style.display = "none";
@@ -505,6 +502,7 @@
 
         function openGlobalSettings() { window.openGlobalSettings(); }
         function closeSettings() { window.closeGlobalSettings(); }
+        function saveSettings() { window.saveGlobalSettings(); initGallery(); }
 
         checkAdmin();
         initGallery();
