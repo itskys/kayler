@@ -33,7 +33,7 @@
         /* === 布局容器 (Grid) === */
         .main-container {
             width: var(--layout-width); max-width: var(--layout-max-width);
-            display: grid; grid-template-columns: 380px 1fr; gap: 30px;
+            display: grid; grid-template-columns: 400px 1fr; gap: 30px;
             align-items: start; flex: 1;
         }
 
@@ -44,33 +44,60 @@
             display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #555;
         }
 
-        /* === 左侧：撰写助手 (v12.0 升级版) === */
-        .builder-body { padding: 20px; }
+        /* === 左侧：高级撰写助手 (v13.0) === */
+        .builder-tabs { display: flex; border-bottom: 1px solid #eee; background: #fcfcfc; }
+        .tab-btn {
+            flex: 1; padding: 12px 0; text-align: center; cursor: pointer; font-size: 13px; color: #666;
+            border-bottom: 2px solid transparent; transition: 0.2s;
+        }
+        .tab-btn:hover { background: #f0f0f0; }
+        .tab-btn.active { color: var(--brand-brown); border-bottom-color: var(--brand-brown); font-weight: bold; background: white; }
+
+        .builder-body { padding: 20px; display: none; }
+        .builder-body.active { display: block; }
+
+        /* 控件样式 */
+        .control-group { margin-bottom: 15px; }
+        .control-label { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; display: block; }
+        
+        /* 文本域 */
         #promptInput {
-            width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 8px;
-            resize: vertical; outline: none; padding: 15px; 
+            width: 100%; height: 180px; border: 1px solid #ddd; border-radius: 8px;
+            resize: vertical; outline: none; padding: 12px; 
             font-family: "Menlo", monospace; font-size: 13px; line-height: 1.6;
-            background: #fdfdfd; color: #333; margin-bottom: 15px;
+            background: #fdfdfd; color: #333; margin-bottom: 10px;
         }
         #promptInput:focus { background: #fff; border-color: var(--brand-brown); }
 
-        /* 分类标签栏 */
-        .tags-category { margin-bottom: 15px; }
-        .cat-title { font-size: 12px; color: #999; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .tags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+        /* 比例按钮 */
+        .ar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .ar-btn {
+            border: 1px solid #eee; background: white; padding: 6px; border-radius: 6px;
+            text-align: center; font-size: 12px; cursor: pointer; color: #555; transition: 0.2s;
+        }
+        .ar-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
+        .ar-btn.selected { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
+
+        /* 滑块 */
+        .slider-row { display: flex; align-items: center; gap: 10px; }
+        .slider { flex: 1; accent-color: var(--brand-brown); }
+        .slider-val { width: 40px; text-align: right; font-size: 12px; font-family: monospace; color: #666; }
+
+        /* 标签云 */
+        .tags-list { display: flex; flex-wrap: wrap; gap: 6px; }
         .tag {
             background: #f0f0f0; padding: 4px 10px; border-radius: 4px;
             font-size: 12px; cursor: pointer; color: #555; transition: 0.2s;
             border: 1px solid transparent; user-select: none;
         }
         .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: white; }
-        .tag.param { background: #e3f2fd; color: #1565c0; }
         .tag.style { background: #f3e5f5; color: #7b1fa2; }
 
-        .builder-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; white-space: nowrap; }
+        .builder-footer { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; background: #fff; }
+        .btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
         .btn-primary { background: var(--brand-brown); color: white; }
         .btn-secondary { background: #eee; color: #555; }
+        .btn-preview { background: #e3f2fd; color: #1565c0; }
         .btn:hover { opacity: 0.9; }
 
         /* === 右侧：知识库列表 === */
@@ -86,13 +113,13 @@
         .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e8f5e9; color: #2e7d32; display: none; }
         .status-badge.show { display: inline-block; }
 
-        /* 管理员状态按钮 */
-        .admin-status-btn {
-            font-size: 12px; padding: 6px 12px; border-radius: 20px; cursor: pointer; border: 1px solid #ddd;
-            display: flex; align-items: center; gap: 5px; transition: 0.2s; background: white; color: #666;
+        /* 功能按钮 (v13.0 统一风格) */
+        .icon-btn {
+            font-size: 14px; color: #666; cursor: pointer; text-decoration: none; border: 1px solid #ddd;
+            padding: 6px 12px; border-radius: 6px; transition: all 0.2s; background: white;
+            display: flex; align-items: center; gap: 5px;
         }
-        .admin-status-btn.active { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; font-weight: bold; }
-        .admin-status-btn:hover { opacity: 0.8; }
+        .icon-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         thead { background: #f9f7f1; }
@@ -124,7 +151,7 @@
         .modal-body { flex: 1; padding: 20px; overflow-y: auto; background: #fff; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
         .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #fff; }
         
-        /* 删除按钮 (v12.0) */
+        /* 删除按钮 */
         .btn-delete-file { 
             background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; display: none; 
         }
@@ -154,13 +181,10 @@
             .builder-area { order: 1; } 
         }
         @media (max-width: 768px) {
-            th:nth-child(2), td:nth-child(2), /* 版本 */
-            th:nth-child(3), td:nth-child(3), /* 分类 */
-            th:nth-child(6), td:nth-child(6)  /* 作者 */
-            { display: none; }
-            th:nth-child(1) { width: 40%; } /* 名称 */
-            th:nth-child(4) { width: 30%; } /* 描述 */
-            th:nth-child(5) { width: 30%; } /* 示例 */
+            th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display: none; }
+            th:nth-child(1) { width: 40%; }
+            th:nth-child(4) { width: 30%; }
+            th:nth-child(5) { width: 30%; }
         }
     </style>
 </head>
@@ -174,41 +198,75 @@
         
         <div class="card builder-area">
             <div class="card-header">
-                <span>🎨 撰写助手</span>
+                <span>🪄 提示词工作台</span>
                 <span style="font-size:12px; cursor:pointer; color:#888;" onclick="clearPrompt()">清空</span>
             </div>
-            <div class="builder-body">
-                <textarea id="promptInput" placeholder="输入或点击下方标签..."></textarea>
+            
+            <div class="builder-tabs">
+                <div class="tab-btn active" onclick="switchTab('basic')">📝 基础</div>
+                <div class="tab-btn" onclick="switchTab('style')">🎨 风格</div>
+                <div class="tab-btn" onclick="switchTab('params')">🎛️ 参数</div>
+            </div>
+
+            <div id="tab-basic" class="builder-body active">
+                <textarea id="promptInput" placeholder="在此描述画面主体、动作、环境..."></textarea>
+                <div class="control-group">
+                    <span class="control-label">📚 快捷标签</span>
+                    <div class="tags-list" id="customTagsList"></div>
+                    <div style="margin-top:10px;">
+                        <button class="btn btn-secondary" onclick="addNewTag()">+ 自定义标签</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-style" class="builder-body">
+                <div class="control-group">
+                    <span class="control-label">流行风格</span>
+                    <div class="tags-list" id="styleTagsList"></div>
+                </div>
+            </div>
+
+            <div id="tab-params" class="builder-body">
+                <div class="control-group">
+                    <span class="control-label">画幅比例 (--ar)</span>
+                    <div class="ar-grid">
+                        <div class="ar-btn" onclick="insertParam('--ar 1:1')">1:1</div>
+                        <div class="ar-btn" onclick="insertParam('--ar 16:9')">16:9</div>
+                        <div class="ar-btn" onclick="insertParam('--ar 9:16')">9:16</div>
+                        <div class="ar-btn" onclick="insertParam('--ar 4:3')">4:3</div>
+                    </div>
+                </div>
                 
-                <div class="tags-wrapper">
-                    <div class="tags-category">
-                        <div class="cat-title">✨ 常用参数</div>
-                        <div class="tags-list">
-                            <div class="tag param" onclick="addTag('--ar 16:9')">16:9</div>
-                            <div class="tag param" onclick="addTag('--ar 9:16')">9:16</div>
-                            <div class="tag param" onclick="addTag('--v 6.0')">V6.0</div>
-                            <div class="tag param" onclick="addTag('--niji 6')">Niji 6</div>
-                            <div class="tag param" onclick="addTag('--stylize 250')">风格化 250</div>
-                        </div>
-                    </div>
-                    
-                    <div class="tags-category">
-                        <div class="cat-title">🎨 风格/画质</div>
-                        <div class="tags-list" id="styleTagsList">
-                            </div>
-                    </div>
-
-                    <div class="tags-category">
-                        <div class="cat-title">🏷️ 自定义</div>
-                        <div class="tags-list" id="customTagsList"></div>
-                        <button class="btn btn-secondary" style="width:100%" onclick="addNewTag()">+ 添加自定义标签</button>
+                <div class="control-group">
+                    <div class="slider-row">
+                        <span class="control-label" style="width:80px;">风格化 (--s)</span>
+                        <input type="range" class="slider" min="0" max="1000" value="100" oninput="updateSliderVal(this, '--stylize')">
+                        <span class="slider-val" id="val-s">100</span>
                     </div>
                 </div>
 
-                <div class="builder-actions">
-                    <button class="btn btn-secondary" onclick="openPreview()">👁️ 预览</button>
-                    <button class="btn btn-primary" onclick="copyPrompt()">📋 复制</button>
+                <div class="control-group">
+                    <div class="slider-row">
+                        <span class="control-label" style="width:80px;">混乱度 (--c)</span>
+                        <input type="range" class="slider" min="0" max="100" value="0" oninput="updateSliderVal(this, '--chaos')">
+                        <span class="slider-val" id="val-c">0</span>
+                    </div>
                 </div>
+
+                <div class="control-group">
+                    <span class="control-label">模型版本</span>
+                    <select id="modelSelect" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" onchange="insertParam(this.value)">
+                        <option value="">选择模型...</option>
+                        <option value="--v 6.0">Midjourney V6.0</option>
+                        <option value="--v 5.2">Midjourney V5.2</option>
+                        <option value="--niji 6">Niji Journey V6</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="builder-footer">
+                <button class="btn btn-secondary" onclick="openPreview()">👁️ 预览</button>
+                <button class="btn btn-primary" onclick="copyPrompt()">📋 一键复制</button>
             </div>
         </div>
 
@@ -216,12 +274,10 @@
             <div class="card-header">
                 <span>📚 提示词库</span>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <div id="adminStatusBtn" class="admin-status-btn" onclick="openLocalSettings()">
-                        ⚙️ 配置 (未登录)
-                    </div>
+                    <button class="icon-btn" onclick="openLocalSettings()">⚙️</button>
                     
                     <span id="cacheStatus" class="status-badge">⚡ 缓存</span>
-                    <button class="refresh-btn" onclick="forceRefresh()" style="border:none; background:none; cursor:pointer;">🔄</button>
+                    <button class="icon-btn" onclick="forceRefresh()">🔄</button>
                 </div>
             </div>
             
@@ -314,31 +370,73 @@
         let allFiles = [];      
         let displayFiles = [];  
         let currentSort = { key: 'displayName', order: 'asc' };
-        let currentFile = { name: '', content: '', sha: '' }; // v12.0: 增加SHA
+        let currentFile = { name: '', content: '', sha: '' }; // 需存储SHA用于删除
         
-        const defaultStyleTags = ['Cyberpunk', 'Ukiyo-e', '8k resolution', 'Masterpiece', 'Studio Ghibli', 'Realistic'];
+        const defaultStyleTags = ['Cyberpunk', 'Ukiyo-e', '8k resolution', 'Masterpiece', 'Studio Ghibli', 'Realistic', 'Anime'];
         let userTags = JSON.parse(localStorage.getItem('kayler_user_tags') || '[]');
 
         // === 初始化 ===
         document.addEventListener('DOMContentLoaded', () => {
             renderTags();
-            checkAdminStatus();
             loadData();
         });
 
-        // === 1. 管理员逻辑 (v12.0) ===
-        function checkAdminStatus() {
-            const btn = document.getElementById('adminStatusBtn');
-            const token = localStorage.getItem('gh_token');
-            if(token) {
-                btn.classList.add('active');
-                btn.innerHTML = '🟢 管理员 (已配置)';
-            } else {
-                btn.classList.remove('active');
-                btn.innerHTML = '⚙️ 配置 (未登录)';
-            }
+        // === 1. 撰写助手 (v13.0) ===
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.builder-body').forEach(b => b.classList.remove('active'));
+            
+            // 找到对应索引并激活
+            const idx = tabName === 'basic' ? 0 : tabName === 'style' ? 1 : 2;
+            document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
         }
 
+        function renderTags() {
+            const styleContainer = document.getElementById('styleTagsList');
+            const customContainer = document.getElementById('customTagsList');
+            styleContainer.innerHTML = defaultStyleTags.map(t => `<div class="tag style" onclick="addTag('${t}')">${t}</div>`).join('');
+            customContainer.innerHTML = userTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
+        }
+
+        function addTag(txt) {
+            const el = document.getElementById('promptInput');
+            let val = el.value.trim();
+            if (val && !val.endsWith(' ')) val += ' ';
+            el.value = val + txt;
+        }
+
+        function insertParam(val) {
+            if(!val) return;
+            addTag(val);
+        }
+
+        function updateSliderVal(input, prefix) {
+            const val = input.value;
+            // 简单的防抖更新机制 (实际生产可用 debounce)
+            input.nextElementSibling.innerText = val;
+            // 简单追加模式：如果存在则不做替换(复杂正则这里略过)，直接追加
+            addTag(`${prefix} ${val}`);
+        }
+
+        function addNewTag() {
+            const newTag = prompt("新标签:");
+            if (newTag && !userTags.includes(newTag)) {
+                userTags.push(newTag);
+                localStorage.setItem('kayler_user_tags', JSON.stringify(userTags));
+                renderTags();
+            }
+        }
+        function clearPrompt() { if(confirm('清空？')) document.getElementById('promptInput').value = ''; }
+        function copyPrompt() { navigator.clipboard.writeText(document.getElementById('promptInput').value).then(()=>alert('已复制')); }
+        function openPreview() {
+            const txt = document.getElementById('promptInput').value;
+            if(!txt.trim()) return;
+            document.getElementById('previewBody').innerHTML = marked.parse(txt);
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        // === 2. 配置与数据 ===
         function openLocalSettings() {
             document.getElementById('confToken').value = localStorage.getItem('gh_token') || '';
             document.getElementById('confOwner').value = localStorage.getItem('gh_owner') || 'itskys';
@@ -351,18 +449,14 @@
             localStorage.setItem('gh_owner', document.getElementById('confOwner').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('confRepo').value.trim());
             closeLocalSettings();
-            checkAdminStatus();
-            forceRefresh(); // 配置变更后强制刷新
+            forceRefresh();
         }
 
-        // === 2. 数据获取 ===
         async function loadData(force = false) {
             const loading = document.getElementById('loadingState');
             const table = document.getElementById('dataTable');
             const cacheBadge = document.getElementById('cacheStatus');
-            
-            loading.style.display = 'block';
-            table.style.display = 'none';
+            loading.style.display = 'block'; table.style.display = 'none';
             if(cacheBadge) cacheBadge.classList.remove('show');
 
             if (!force) {
@@ -371,9 +465,7 @@
                     try {
                         const data = JSON.parse(cached);
                         if (Date.now() - data.ts < CACHE_DURATION && Array.isArray(data.files)) {
-                            allFiles = data.files;
-                            finishLoad(true);
-                            return;
+                            allFiles = data.files; finishLoad(true); return;
                         }
                     } catch(e) {}
                 }
@@ -385,18 +477,11 @@
             const headers = token ? { 'Authorization': `token ${token}` } : {};
 
             try {
-                // Fetch Prompt
                 const promptUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG.path}?ref=${CONFIG.branch}&t=${Date.now()}`;
                 const pRes = await fetch(promptUrl, { headers });
-                
-                if (!pRes.ok) {
-                    if (pRes.status === 403) throw new Error("API限流或Token无效");
-                    if (pRes.status === 404) throw new Error("找不到 prompt 目录");
-                    throw new Error(`API Error: ${pRes.status}`);
-                }
+                if (!pRes.ok) throw new Error(`API Error: ${pRes.status}`);
                 const pFiles = await pRes.json();
                 
-                // Fetch Gallery (Async)
                 let gFiles = [];
                 try {
                     const galleryUrl = `https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}&t=${Date.now()}`;
@@ -404,7 +489,6 @@
                     if(gRes.ok) gFiles = await gRes.json();
                 } catch(e) {}
 
-                // Process Data
                 allFiles = pFiles
                     .filter(f => f.name && (f.name.endsWith('.md') || f.name.endsWith('.txt')))
                     .map(f => {
@@ -414,31 +498,23 @@
                             const imgNameLower = img.name.toLowerCase();
                             const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
                             const imgCore = imgNameLower.replace(/^\d{14}_/, '').replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
-                            
                             if (!imgCore.includes(promptKey)) return false;
-
-                            // Version Check
+                            
                             const currentVer = meta.version.replace(/[vV]/, ''); 
                             const imgVerMatch = imgNameLower.match(/(?:v|ver|_v)(\d+(?:\.\d+)?)/i);
-                            if (imgVerMatch) {
-                                return Math.floor(parseFloat(imgVerMatch[1])) === Math.floor(parseFloat(currentVer));
-                            }
+                            if (imgVerMatch) return Math.floor(parseFloat(imgVerMatch[1])) === Math.floor(parseFloat(currentVer));
                             return true;
                         }).map(img => ({
                             name: img.name,
                             url: img.download_url || img.url,
                             type: img.name.endsWith('.mp4') ? 'video' : 'image'
                         }));
-
-                        return { ...meta, rawName: f.name, sha: f.sha, examples };
+                        return { ...meta, rawName: f.name, sha: f.sha, examples }; // sha 必须保留
                     });
 
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files: allFiles }));
                 finishLoad(false);
-
-            } catch (e) {
-                loading.innerHTML = `<span style="color:red">⚠️ ${e.message}</span>`;
-            }
+            } catch (e) { loading.innerHTML = `<span style="color:red">⚠️ ${e.message}</span>`; }
         }
 
         function finishLoad(isCached) {
@@ -447,7 +523,6 @@
             if(isCached && document.getElementById('cacheStatus')) document.getElementById('cacheStatus').classList.add('show');
             filterFiles();
         }
-
         function forceRefresh() { loadData(true); }
 
         function parseFilenameV8(filename) {
@@ -455,7 +530,6 @@
             const parts = clean.split('_');
             let category = 'Base', name = clean, version = '-', desc = '-';
             const verIndex = parts.findIndex(p => /^v\d+(\.\d+)?$/i.test(p));
-
             if (verIndex > -1) {
                 version = parts[verIndex];
                 const preVer = parts.slice(0, verIndex);
@@ -464,11 +538,10 @@
                 const postVer = parts.slice(verIndex + 1);
                 if (postVer.length > 0) desc = postVer.join(' ');
             } else if (parts.length >= 2) { category = parts[0]; name = parts.slice(1).join(' '); }
-
             return { pureName: name, displayName: name, category, version, desc, author: 'Kaylerris' };
         }
 
-        // === 搜索与排序 ===
+        // === 3. 排序与渲染 ===
         function filterFiles() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             displayFiles = allFiles.filter(f => 
@@ -478,13 +551,11 @@
             );
             applySort();
         }
-
         function sortTable(key) {
             if (currentSort.key === key) currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
             else { currentSort.key = key; currentSort.order = 'asc'; }
             applySort();
         }
-
         function applySort() {
             document.querySelectorAll('th.sortable').forEach(th => {
                 th.classList.remove('asc', 'desc');
@@ -499,12 +570,10 @@
             });
             renderTable();
         }
-
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             if(displayFiles.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">暂无数据</td></tr>'; return; }
-
             displayFiles.forEach(item => {
                 let exHtml = '<span style="color:#ccc">-</span>';
                 if (item.examples && item.examples.length) {
@@ -524,36 +593,7 @@
             });
         }
 
-        // === 撰写助手 (v12.0) ===
-        function renderTags() {
-            const styleContainer = document.getElementById('styleTagsList');
-            const customContainer = document.getElementById('customTagsList');
-            
-            styleContainer.innerHTML = defaultStyleTags.map(t => `<div class="tag style" onclick="addTag('${t}')">${t}</div>`).join('');
-            customContainer.innerHTML = userTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
-        }
-        function addTag(txt) {
-            const el = document.getElementById('promptInput');
-            el.value += (el.value ? ' ' : '') + txt;
-        }
-        function addNewTag() {
-            const newTag = prompt("新标签:");
-            if (newTag && !userTags.includes(newTag)) {
-                userTags.push(newTag);
-                localStorage.setItem('kayler_user_tags', JSON.stringify(userTags));
-                renderTags();
-            }
-        }
-        function clearPrompt() { if(confirm('清空？')) document.getElementById('promptInput').value = ''; }
-        function copyPrompt() { navigator.clipboard.writeText(document.getElementById('promptInput').value).then(()=>alert('已复制')); }
-        function openPreview() {
-            const txt = document.getElementById('promptInput').value;
-            if(!txt.trim()) return;
-            document.getElementById('previewBody').innerHTML = marked.parse(txt);
-            document.getElementById('previewModal').classList.add('active');
-        }
-
-        // === 文件操作 ===
+        // === 4. 文件操作 (含删除) ===
         function viewFile(filename, display, sha) {
             document.getElementById('modalTitle').innerText = display;
             document.getElementById('fileContent').innerText = "⏳ 读取中...";
@@ -561,12 +601,11 @@
             
             const btnImport = document.getElementById('btnImport');
             const btnDelete = document.getElementById('btnDelete');
-            
-            // 权限检查
             const token = localStorage.getItem('gh_token');
+            
             if(token) {
                 btnImport.style.display = 'inline-block'; btnImport.disabled = true; btnImport.style.opacity = '0.5';
-                btnDelete.style.display = 'inline-block'; // 显示删除按钮
+                btnDelete.style.display = 'inline-block'; // 显示删除
             } else {
                 btnImport.style.display = 'none';
                 btnDelete.style.display = 'none';
@@ -582,20 +621,18 @@
                     currentFile = { name: filename, content: text, sha: sha };
                     if(token) { btnImport.disabled = false; btnImport.style.opacity = '1'; }
                 })
-                .catch(()=>{
-                    document.getElementById('fileContent').innerText = "❌ 读取失败，请检查Token或网络";
-                });
+                .catch(()=>{ document.getElementById('fileContent').innerText = "❌ 读取失败，请检查Token或网络"; });
         }
 
-        // === 删除功能 (v12.0) ===
+        // 删除核心逻辑
         async function deleteCurrentFile() {
-            if(!confirm(`⚠️ 警告：确定要永久删除 "${currentFile.name}" 吗？`)) return;
-            
+            if(!confirm(`⚠️ 警告：确定要永久删除 "${currentFile.name}" 吗？\n此操作不可撤销！`)) return;
             const token = localStorage.getItem('gh_token');
             const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const btn = document.getElementById('btnDelete');
             
+            if(!token) return alert("无权限");
             btn.innerText = "⏳..."; btn.disabled = true;
 
             try {
@@ -605,14 +642,12 @@
                     headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: `Delete prompt: ${currentFile.name}`, sha: currentFile.sha, branch: 'main' })
                 });
-
                 if(res.ok) {
-                    alert("✅ 删除成功！");
+                    alert("✅ 删除成功");
                     closeModal();
                     forceRefresh();
                 } else { throw new Error((await res.json()).message); }
             } catch(e) { alert("❌ 删除失败: " + e.message); }
-            
             btn.innerText = "🗑️ 删除文件"; btn.disabled = false;
         }
 
@@ -622,14 +657,12 @@
             localStorage.setItem('kayler_editor_filename', currentFile.name);
             window.location.href = 'editor.html';
         }
-
         function downloadFile() {
             if(!currentFile.content) return;
             const blob = new Blob([currentFile.content], {type:'text/markdown'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = currentFile.name; a.click();
         }
-
         function openLightbox(url, type) {
             const lb = document.getElementById('lightbox');
             const img = document.getElementById('lbImg');
