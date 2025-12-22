@@ -145,7 +145,7 @@ window.initEditor = function() {
         
         // 1. 创建临时容器
         const stage = document.createElement('div');
-        stage.style.position = 'absolute';
+        stage.style.position = 'relative'; // [FIX] Use relative to expand body height
         stage.style.top = '0';
         stage.style.left = '0';
         stage.style.zIndex = '99999';
@@ -177,10 +177,13 @@ window.initEditor = function() {
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        html2pdf().set(opt).from(stage).save().then(() => {
-            document.body.removeChild(stage);
-            document.body.classList.remove('export-mode');
-        });
+        // [FIX] Add delay to ensure layout paint
+        setTimeout(() => {
+            html2pdf().set(opt).from(stage).save().then(() => {
+                document.body.removeChild(stage);
+                document.body.classList.remove('export-mode');
+            });
+        }, 100);
     });
 
     // [.md 下载]
