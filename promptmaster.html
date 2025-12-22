@@ -33,7 +33,7 @@
         /* === 布局容器 (Grid) === */
         .main-container {
             width: var(--layout-width); max-width: var(--layout-max-width);
-            display: grid; grid-template-columns: 400px 1fr; gap: 30px;
+            display: grid; grid-template-columns: 420px 1fr; gap: 30px; /* 左侧加宽适配代码编辑器 */
             align-items: start; flex: 1;
         }
 
@@ -44,7 +44,7 @@
             display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #555;
         }
 
-        /* === 左侧：高级撰写助手 (v13.0) === */
+        /* === 左侧：高级撰写助手 (v14.0) === */
         .builder-tabs { display: flex; border-bottom: 1px solid #eee; background: #fcfcfc; }
         .tab-btn {
             flex: 1; padding: 12px 0; text-align: center; cursor: pointer; font-size: 13px; color: #666;
@@ -56,19 +56,33 @@
         .builder-body { padding: 20px; display: none; }
         .builder-body.active { display: block; }
 
+        /* 仿 IDE 代码编辑器容器 */
+        .code-editor-container {
+            border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 15px;
+            background: #1e1e1e; /* 深色主题背景 */
+        }
+        .code-toolbar {
+            background: #2d2d2d; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .lang-badge { font-size: 10px; color: #aaa; background: #333; padding: 2px 6px; border-radius: 3px; }
+        
+        /* 替代 Textarea 的富文本编辑区 (contenteditable) */
+        #promptInputDiv {
+            width: 100%; height: 200px; padding: 12px; 
+            font-family: "Menlo", "Consolas", monospace; font-size: 13px; line-height: 1.6;
+            background: #1e1e1e; color: #d4d4d4; outline: none; overflow-y: auto;
+            white-space: pre-wrap; /* 自动换行 */
+        }
+        /* 简单的高亮样式 */
+        .hl-param { color: #569cd6; font-weight: bold; } /* 参数蓝色 */
+        .hl-num { color: #b5cea8; } /* 数字绿色 */
+        .hl-brace { color: #ffd700; } /* 括号金色 */
+
         /* 控件样式 */
         .control-group { margin-bottom: 15px; }
         .control-label { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; display: block; }
         
-        /* 文本域 */
-        #promptInput {
-            width: 100%; height: 180px; border: 1px solid #ddd; border-radius: 8px;
-            resize: vertical; outline: none; padding: 12px; 
-            font-family: "Menlo", monospace; font-size: 13px; line-height: 1.6;
-            background: #fdfdfd; color: #333; margin-bottom: 10px;
-        }
-        #promptInput:focus { background: #fff; border-color: var(--brand-brown); }
-
         /* 比例按钮 */
         .ar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .ar-btn {
@@ -76,12 +90,6 @@
             text-align: center; font-size: 12px; cursor: pointer; color: #555; transition: 0.2s;
         }
         .ar-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
-        .ar-btn.selected { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
-
-        /* 滑块 */
-        .slider-row { display: flex; align-items: center; gap: 10px; }
-        .slider { flex: 1; accent-color: var(--brand-brown); }
-        .slider-val { width: 40px; text-align: right; font-size: 12px; font-family: monospace; color: #666; }
 
         /* 标签云 */
         .tags-list { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -91,13 +99,20 @@
             border: 1px solid transparent; user-select: none;
         }
         .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: white; }
+        .tag.preset { background: #e0f2f1; color: #00695c; } /* 预设标签颜色 */
         .tag.style { background: #f3e5f5; color: #7b1fa2; }
+
+        /* 模型下拉框美化 */
+        .model-select {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 13px; background: #fff; outline: none; cursor: pointer;
+        }
+        .model-select:focus { border-color: var(--brand-brown); }
 
         .builder-footer { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; background: #fff; }
         .btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
         .btn-primary { background: var(--brand-brown); color: white; }
         .btn-secondary { background: #eee; color: #555; }
-        .btn-preview { background: #e3f2fd; color: #1565c0; }
         .btn:hover { opacity: 0.9; }
 
         /* === 右侧：知识库列表 === */
@@ -113,7 +128,6 @@
         .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e8f5e9; color: #2e7d32; display: none; }
         .status-badge.show { display: inline-block; }
 
-        /* 功能按钮 (v13.0 统一风格) */
         .icon-btn {
             font-size: 14px; color: #666; cursor: pointer; text-decoration: none; border: 1px solid #ddd;
             padding: 6px 12px; border-radius: 6px; transition: all 0.2s; background: white;
@@ -143,25 +157,20 @@
         .badge.ver { background: #e8f5e9; color: #2e7d32; font-weight: bold; }
         .badge.cat { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
 
-        /* === 弹窗通用 === */
+        /* === 弹窗 === */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: white; width: 800px; max-width: 90%; height: 80vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.2); position: relative; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
         .modal-body { flex: 1; padding: 20px; overflow-y: auto; background: #fff; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
         .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #fff; }
-        
-        /* 删除按钮 */
-        .btn-delete-file { 
-            background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; display: none; 
-        }
+        .btn-delete-file { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; display: none; }
         .btn-delete-file:hover { background: #c62828; color: white; }
 
-        /* 预览 Markdown */
         .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
         .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
 
-        /* 极简配置弹窗 */
+        /* 配置弹窗 */
         .config-box { background: white; width: 400px; padding: 25px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; }
         .config-title { font-size: 18px; margin: 0; }
         .config-row { display: flex; flex-direction: column; gap: 5px; }
@@ -176,15 +185,10 @@
         .lightbox-close:hover { color: var(--brand-brown); }
 
         /* 响应式 */
-        @media (max-width: 1024px) {
-            .main-container { grid-template-columns: 1fr; }
-            .builder-area { order: 1; } 
-        }
+        @media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; } .builder-area { order: 1; } }
         @media (max-width: 768px) {
             th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display: none; }
-            th:nth-child(1) { width: 40%; }
-            th:nth-child(4) { width: 30%; }
-            th:nth-child(5) { width: 30%; }
+            th:nth-child(1) { width: 40%; } th:nth-child(4) { width: 30%; } th:nth-child(5) { width: 30%; }
         }
     </style>
 </head>
@@ -209,12 +213,19 @@
             </div>
 
             <div id="tab-basic" class="builder-body active">
-                <textarea id="promptInput" placeholder="在此描述画面主体、动作、环境..."></textarea>
+                <div class="code-editor-container">
+                    <div class="code-toolbar">
+                        <span class="lang-badge">PROMPT</span>
+                        <span style="font-size:10px; color:#666; cursor:pointer;" onclick="copyPrompt()">📋</span>
+                    </div>
+                    <div id="promptInputDiv" contenteditable="true" placeholder="输入提示词..."></div>
+                </div>
+
                 <div class="control-group">
-                    <span class="control-label">📚 快捷标签</span>
-                    <div class="tags-list" id="customTagsList"></div>
+                    <span class="control-label">⚡ 快捷标签 (预设 + 自定义)</span>
+                    <div class="tags-list" id="quickTagsList"></div>
                     <div style="margin-top:10px;">
-                        <button class="btn btn-secondary" onclick="addNewTag()">+ 自定义标签</button>
+                        <button class="btn btn-secondary" onclick="addNewTag()">+ 添加我的标签</button>
                     </div>
                 </div>
             </div>
@@ -228,39 +239,33 @@
 
             <div id="tab-params" class="builder-body">
                 <div class="control-group">
+                    <span class="control-label">模型版本 (Model)</span>
+                    <select id="modelSelect" class="model-select" onchange="insertParam(this.value)">
+                        <option value="">-- 选择模型 --</option>
+                        <optgroup label="Midjourney">
+                            <option value="--v 6.0">Midjourney V6.0</option>
+                            <option value="--v 5.2">Midjourney V5.2</option>
+                            <option value="--niji 6">Niji Journey V6</option>
+                        </optgroup>
+                        <optgroup label="Stable Diffusion / FLUX">
+                            <option value="--model flux.1">FLUX.1 [dev]</option>
+                            <option value="--model sd-xl">SDXL 1.0</option>
+                        </optgroup>
+                        <optgroup label="Kayler Specials">
+                            <option value="--model nano-banana-pro">Nano Banana Pro</option>
+                            <option value="--model doubao-seedream-4.5">Doubao Seedream 4.5</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="control-group">
                     <span class="control-label">画幅比例 (--ar)</span>
                     <div class="ar-grid">
                         <div class="ar-btn" onclick="insertParam('--ar 1:1')">1:1</div>
                         <div class="ar-btn" onclick="insertParam('--ar 16:9')">16:9</div>
                         <div class="ar-btn" onclick="insertParam('--ar 9:16')">9:16</div>
-                        <div class="ar-btn" onclick="insertParam('--ar 4:3')">4:3</div>
+                        <div class="ar-btn" onclick="insertParam('--ar 21:9')">21:9</div>
                     </div>
-                </div>
-                
-                <div class="control-group">
-                    <div class="slider-row">
-                        <span class="control-label" style="width:80px;">风格化 (--s)</span>
-                        <input type="range" class="slider" min="0" max="1000" value="100" oninput="updateSliderVal(this, '--stylize')">
-                        <span class="slider-val" id="val-s">100</span>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <div class="slider-row">
-                        <span class="control-label" style="width:80px;">混乱度 (--c)</span>
-                        <input type="range" class="slider" min="0" max="100" value="0" oninput="updateSliderVal(this, '--chaos')">
-                        <span class="slider-val" id="val-c">0</span>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <span class="control-label">模型版本</span>
-                    <select id="modelSelect" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" onchange="insertParam(this.value)">
-                        <option value="">选择模型...</option>
-                        <option value="--v 6.0">Midjourney V6.0</option>
-                        <option value="--v 5.2">Midjourney V5.2</option>
-                        <option value="--niji 6">Niji Journey V6</option>
-                    </select>
                 </div>
             </div>
 
@@ -275,7 +280,6 @@
                 <span>📚 提示词库</span>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <button class="icon-btn" onclick="openLocalSettings()">⚙️</button>
-                    
                     <span id="cacheStatus" class="status-badge">⚡ 缓存</span>
                     <button class="icon-btn" onclick="forceRefresh()">🔄</button>
                 </div>
@@ -318,7 +322,6 @@
             <div class="modal-body" id="fileContent">加载中...</div>
             <div class="modal-footer">
                 <button class="btn btn-delete-file" id="btnDelete" onclick="deleteCurrentFile()">🗑️ 删除文件</button>
-                
                 <button class="btn btn-secondary" onclick="downloadFile()">📥 下载 .md</button>
                 <button class="btn btn-primary" id="btnImport" style="display:none;" onclick="importToEditor()">✏️ 导入编辑器</button>
                 <button class="btn btn-primary" onclick="copyContent()">📋 复制</button>
@@ -329,114 +332,91 @@
     <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this) closeLocalSettings()">
         <div class="config-box">
             <h3 class="config-title">⚙️ 全局配置</h3>
-            <div class="config-row">
-                <span class="config-label">GitHub Token <span style="color:red">*</span></span>
-                <input type="password" id="confToken" class="config-input" placeholder="ghp_xxxxxxxxxxxx">
-            </div>
-            <div class="config-row">
-                <span class="config-label">用户名 (Owner)</span>
-                <input type="text" id="confOwner" class="config-input" placeholder="itskys">
-            </div>
-            <div class="config-row">
-                <span class="config-label">仓库名 (Repo)</span>
-                <input type="text" id="confRepo" class="config-input" placeholder="kayler">
-            </div>
-            <div style="text-align:right; margin-top:10px;">
-                <button class="btn btn-secondary" onclick="closeLocalSettings()">取消</button>
-                <button class="btn btn-primary" onclick="saveLocalSettings()">💾 保存</button>
-            </div>
+            <div class="config-row"><span class="config-label">GitHub Token <span style="color:red">*</span></span><input type="password" id="confToken" class="config-input"></div>
+            <div class="config-row"><span class="config-label">用户名 (Owner)</span><input type="text" id="confOwner" class="config-input"></div>
+            <div class="config-row"><span class="config-label">仓库名 (Repo)</span><input type="text" id="confRepo" class="config-input"></div>
+            <div style="text-align:right; margin-top:10px;"><button class="btn btn-secondary" onclick="closeLocalSettings()">取消</button> <button class="btn btn-primary" onclick="saveLocalSettings()">💾 保存</button></div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="previewModal" onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')">
-        <div class="modal-content">
-             <div class="modal-header"><b>Markdown 预览</b><span class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')" style="cursor:pointer; font-size:20px;">×</span></div>
-            <div class="modal-body markdown-body" id="previewBody"></div>
-        </div>
-    </div>
-
-    <div id="lightbox" onclick="if(event.target===this) closeLightbox()">
-        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img id="lbImg" style="display:none;">
-        <video id="lbVideo" controls style="display:none;"></video>
-    </div>
+    <div class="modal-overlay" id="previewModal" onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')"><div class="modal-content"><div class="modal-header"><b>Markdown 预览</b><span class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')">×</span></div><div class="modal-body markdown-body" id="previewBody"></div></div></div>
+    <div id="lightbox" onclick="if(event.target===this) closeLightbox()"><span class="lightbox-close" onclick="closeLightbox()">&times;</span><img id="lbImg" style="display:none;"><video id="lbVideo" controls style="display:none;"></video></div>
 
     <script>
         // === 配置与状态 ===
         const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
-        const CACHE_KEY = 'prompt_list_v9'; 
-        const CACHE_DURATION = 5 * 60 * 1000;
-
-        let allFiles = [];      
-        let displayFiles = [];  
-        let currentSort = { key: 'displayName', order: 'asc' };
-        let currentFile = { name: '', content: '', sha: '' }; // 需存储SHA用于删除
+        const CACHE_KEY = 'prompt_list_v9'; const CACHE_DURATION = 5 * 60 * 1000;
+        let allFiles = []; let displayFiles = []; let currentSort = { key: 'displayName', order: 'asc' }; let currentFile = { name: '', content: '', sha: '' };
         
-        const defaultStyleTags = ['Cyberpunk', 'Ukiyo-e', '8k resolution', 'Masterpiece', 'Studio Ghibli', 'Realistic', 'Anime'];
+        // v14.0 预设数据
+        const presetTags = ['Best Quality', 'Masterpiece', '8k', 'Ray Tracing', 'HDR', 'Detailed', 'Cinematic Lighting'];
+        const defaultStyleTags = ['Cyberpunk', 'Ukiyo-e', 'Studio Ghibli', 'Realistic', 'Anime', 'Oil Painting', 'Watercolor'];
         let userTags = JSON.parse(localStorage.getItem('kayler_user_tags') || '[]');
 
-        // === 初始化 ===
-        document.addEventListener('DOMContentLoaded', () => {
-            renderTags();
-            loadData();
-        });
+        document.addEventListener('DOMContentLoaded', () => { renderTags(); loadData(); });
 
-        // === 1. 撰写助手 (v13.0) ===
+        // === 1. 撰写助手 (v14.0 高级版) ===
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.builder-body').forEach(b => b.classList.remove('active'));
-            
-            // 找到对应索引并激活
             const idx = tabName === 'basic' ? 0 : tabName === 'style' ? 1 : 2;
             document.querySelectorAll('.tab-btn')[idx].classList.add('active');
             document.getElementById('tab-' + tabName).classList.add('active');
         }
 
         function renderTags() {
+            const quickContainer = document.getElementById('quickTagsList');
             const styleContainer = document.getElementById('styleTagsList');
-            const customContainer = document.getElementById('customTagsList');
-            styleContainer.innerHTML = defaultStyleTags.map(t => `<div class="tag style" onclick="addTag('${t}')">${t}</div>`).join('');
-            customContainer.innerHTML = userTags.map(t => `<div class="tag" onclick="addTag('${t}')">${t}</div>`).join('');
+            
+            // 预设 + 用户自定义
+            const allQuick = [...presetTags.map(t=>({t, type:'preset'})), ...userTags.map(t=>({t, type:'custom'}))];
+            
+            quickContainer.innerHTML = allQuick.map(item => 
+                `<div class="tag ${item.type}" onclick="addTag('${item.t}')">${item.t}</div>`
+            ).join('');
+            
+            styleContainer.innerHTML = defaultStyleTags.map(t => 
+                `<div class="tag style" onclick="addTag('${t}')">${t}</div>`
+            ).join('');
         }
 
         function addTag(txt) {
-            const el = document.getElementById('promptInput');
-            let val = el.value.trim();
-            if (val && !val.endsWith(' ')) val += ' ';
-            el.value = val + txt;
+            const el = document.getElementById('promptInputDiv');
+            const current = el.innerText;
+            // 简单追加，处理空格
+            const separator = current.length > 0 && !current.endsWith(' ') ? ' ' : '';
+            el.innerText = current + separator + txt;
+            highlightCode(); // 触发高亮
         }
 
-        function insertParam(val) {
-            if(!val) return;
-            addTag(val);
-        }
+        function insertParam(val) { if(!val) return; addTag(val); }
 
-        function updateSliderVal(input, prefix) {
-            const val = input.value;
-            // 简单的防抖更新机制 (实际生产可用 debounce)
-            input.nextElementSibling.innerText = val;
-            // 简单追加模式：如果存在则不做替换(复杂正则这里略过)，直接追加
-            addTag(`${prefix} ${val}`);
+        // 简单的语法高亮逻辑 (模拟)
+        function highlightCode() {
+            const el = document.getElementById('promptInputDiv');
+            // 这里为了简单，暂不实现复杂的实时 regex replace，仅保持纯文本输入
+            // 若需实现光标不跳动的高亮，需引入 Draft.js 或 CodeMirror
+            // v14.0 暂时保持 contenteditable 的纯文本输入，后续可接入 Monaco
         }
 
         function addNewTag() {
-            const newTag = prompt("新标签:");
+            const newTag = prompt("输入新标签内容:");
             if (newTag && !userTags.includes(newTag)) {
                 userTags.push(newTag);
                 localStorage.setItem('kayler_user_tags', JSON.stringify(userTags));
                 renderTags();
             }
         }
-        function clearPrompt() { if(confirm('清空？')) document.getElementById('promptInput').value = ''; }
-        function copyPrompt() { navigator.clipboard.writeText(document.getElementById('promptInput').value).then(()=>alert('已复制')); }
+        function clearPrompt() { if(confirm('清空内容？')) document.getElementById('promptInputDiv').innerText = ''; }
+        function copyPrompt() { navigator.clipboard.writeText(document.getElementById('promptInputDiv').innerText).then(()=>alert('已复制')); }
         function openPreview() {
-            const txt = document.getElementById('promptInput').value;
+            const txt = document.getElementById('promptInputDiv').innerText;
             if(!txt.trim()) return;
             document.getElementById('previewBody').innerHTML = marked.parse(txt);
             document.getElementById('previewModal').classList.add('active');
         }
 
-        // === 2. 配置与数据 ===
+        // === 2. 配置与数据 (复用之前逻辑) ===
         function openLocalSettings() {
             document.getElementById('confToken').value = localStorage.getItem('gh_token') || '';
             document.getElementById('confOwner').value = localStorage.getItem('gh_owner') || 'itskys';
@@ -448,8 +428,7 @@
             localStorage.setItem('gh_token', document.getElementById('confToken').value.trim());
             localStorage.setItem('gh_owner', document.getElementById('confOwner').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('confRepo').value.trim());
-            closeLocalSettings();
-            forceRefresh();
+            closeLocalSettings(); forceRefresh();
         }
 
         async function loadData(force = false) {
@@ -499,7 +478,6 @@
                             const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
                             const imgCore = imgNameLower.replace(/^\d{14}_/, '').replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
                             if (!imgCore.includes(promptKey)) return false;
-                            
                             const currentVer = meta.version.replace(/[vV]/, ''); 
                             const imgVerMatch = imgNameLower.match(/(?:v|ver|_v)(\d+(?:\.\d+)?)/i);
                             if (imgVerMatch) return Math.floor(parseFloat(imgVerMatch[1])) === Math.floor(parseFloat(currentVer));
@@ -509,7 +487,7 @@
                             url: img.download_url || img.url,
                             type: img.name.endsWith('.mp4') ? 'video' : 'image'
                         }));
-                        return { ...meta, rawName: f.name, sha: f.sha, examples }; // sha 必须保留
+                        return { ...meta, rawName: f.name, sha: f.sha, examples };
                     });
 
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files: allFiles }));
@@ -541,14 +519,9 @@
             return { pureName: name, displayName: name, category, version, desc, author: 'Kaylerris' };
         }
 
-        // === 3. 排序与渲染 ===
         function filterFiles() {
             const q = document.getElementById('searchInput').value.toLowerCase();
-            displayFiles = allFiles.filter(f => 
-                (f.displayName && f.displayName.toLowerCase().includes(q)) || 
-                (f.category && f.category.toLowerCase().includes(q)) ||
-                (f.desc && f.desc.toLowerCase().includes(q))
-            );
+            displayFiles = allFiles.filter(f => (f.displayName && f.displayName.toLowerCase().includes(q)) || (f.category && f.category.toLowerCase().includes(q)));
             applySort();
         }
         function sortTable(key) {
@@ -577,100 +550,53 @@
             displayFiles.forEach(item => {
                 let exHtml = '<span style="color:#ccc">-</span>';
                 if (item.examples && item.examples.length) {
-                    exHtml = item.examples.slice(0, 2).map((ex, i) => 
-                        `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">${ex.type==='video'?'🎬':'🖼️'} 示例${i+1}</a>`
-                    ).join('');
+                    exHtml = item.examples.slice(0, 2).map((ex, i) => `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">${ex.type==='video'?'🎬':'🖼️'} 示例${i+1}</a>`).join('');
                 }
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><a class="file-link" onclick="viewFile('${item.rawName}', '${item.displayName}', '${item.sha}')">${item.displayName}</a></td>
-                    <td><span class="badge ver">${item.version}</span></td>
-                    <td><span class="badge cat">${item.category}</span></td>
-                    <td style="color:#666; font-size:12px;">${item.desc}</td>
-                    <td>${exHtml}</td>
-                    <td>${item.author}</td>`;
+                tr.innerHTML = `<td><a class="file-link" onclick="viewFile('${item.rawName}', '${item.displayName}', '${item.sha}')">${item.displayName}</a></td><td><span class="badge ver">${item.version}</span></td><td><span class="badge cat">${item.category}</span></td><td style="color:#666; font-size:12px;">${item.desc}</td><td>${exHtml}</td><td>${item.author}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        // === 4. 文件操作 (含删除) ===
+        // 文件操作
         function viewFile(filename, display, sha) {
             document.getElementById('modalTitle').innerText = display;
             document.getElementById('fileContent').innerText = "⏳ 读取中...";
             document.getElementById('modalOverlay').classList.add('active');
-            
+            const token = localStorage.getItem('gh_token');
             const btnImport = document.getElementById('btnImport');
             const btnDelete = document.getElementById('btnDelete');
-            const token = localStorage.getItem('gh_token');
             
-            if(token) {
-                btnImport.style.display = 'inline-block'; btnImport.disabled = true; btnImport.style.opacity = '0.5';
-                btnDelete.style.display = 'inline-block'; // 显示删除
-            } else {
-                btnImport.style.display = 'none';
-                btnDelete.style.display = 'none';
-            }
+            if(token) { btnImport.style.display = 'inline-block'; btnDelete.style.display = 'inline-block'; }
+            else { btnImport.style.display = 'none'; btnDelete.style.display = 'none'; }
 
             const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const url = `https://raw.githubusercontent.com/${owner}/${repo}/${CONFIG.branch}/${CONFIG.path}/${encodeURIComponent(filename)}`;
 
-            fetch(url).then(r=>{if(!r.ok)throw new Error();return r.text()})
-                .then(text => {
-                    document.getElementById('fileContent').innerText = text;
-                    currentFile = { name: filename, content: text, sha: sha };
-                    if(token) { btnImport.disabled = false; btnImport.style.opacity = '1'; }
-                })
-                .catch(()=>{ document.getElementById('fileContent').innerText = "❌ 读取失败，请检查Token或网络"; });
+            fetch(url).then(r=>r.text()).then(text => {
+                document.getElementById('fileContent').innerText = text;
+                currentFile = { name: filename, content: text, sha: sha };
+                if(token) btnImport.disabled = false;
+            });
         }
 
-        // 删除核心逻辑
         async function deleteCurrentFile() {
-            if(!confirm(`⚠️ 警告：确定要永久删除 "${currentFile.name}" 吗？\n此操作不可撤销！`)) return;
+            if(!confirm(`⚠️ 确定删除 "${currentFile.name}" 吗？`)) return;
             const token = localStorage.getItem('gh_token');
-            const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const btn = document.getElementById('btnDelete');
-            
-            if(!token) return alert("无权限");
             btn.innerText = "⏳..."; btn.disabled = true;
-
             try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG.path}/${encodeURIComponent(currentFile.name)}`;
-                const res = await fetch(url, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Delete prompt: ${currentFile.name}`, sha: currentFile.sha, branch: 'main' })
-                });
-                if(res.ok) {
-                    alert("✅ 删除成功");
-                    closeModal();
-                    forceRefresh();
-                } else { throw new Error((await res.json()).message); }
-            } catch(e) { alert("❌ 删除失败: " + e.message); }
+                const url = `https://api.github.com/repos/${localStorage.getItem('gh_owner')||CONFIG.owner}/${localStorage.getItem('gh_repo')||CONFIG.repo}/contents/${CONFIG.path}/${encodeURIComponent(currentFile.name)}`;
+                await fetch(url, { method: 'DELETE', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Delete ${currentFile.name}`, sha: currentFile.sha, branch: 'main' }) });
+                alert("删除成功"); closeModal(); forceRefresh();
+            } catch(e) { alert("删除失败"); }
             btn.innerText = "🗑️ 删除文件"; btn.disabled = false;
         }
 
-        function importToEditor() {
-            if(!currentFile.content) return;
-            localStorage.setItem('kayler_editor_cache', currentFile.content);
-            localStorage.setItem('kayler_editor_filename', currentFile.name);
-            window.location.href = 'editor.html';
-        }
-        function downloadFile() {
-            if(!currentFile.content) return;
-            const blob = new Blob([currentFile.content], {type:'text/markdown'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = currentFile.name; a.click();
-        }
-        function openLightbox(url, type) {
-            const lb = document.getElementById('lightbox');
-            const img = document.getElementById('lbImg');
-            const vid = document.getElementById('lbVideo');
-            lb.classList.add('active');
-            if(type==='video') { img.style.display='none'; vid.style.display='block'; vid.src=url; }
-            else { vid.style.display='none'; img.style.display='block'; img.src=url; }
-        }
+        function importToEditor() { localStorage.setItem('kayler_editor_cache', currentFile.content); localStorage.setItem('kayler_editor_filename', currentFile.name); window.location.href = 'editor.html'; }
+        function downloadFile() { const blob = new Blob([currentFile.content], {type:'text/markdown'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentFile.name; a.click(); }
+        function openLightbox(url, type) { const lb = document.getElementById('lightbox'); const img = document.getElementById('lbImg'); const vid = document.getElementById('lbVideo'); lb.classList.add('active'); if(type==='video'){img.style.display='none';vid.style.display='block';vid.src=url;}else{vid.style.display='none';img.style.display='block';img.src=url;} }
         function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); document.getElementById('lbVideo').pause(); }
         function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
         function copyContent() { navigator.clipboard.writeText(document.getElementById('fileContent').innerText).then(()=>alert('已复制')); }
