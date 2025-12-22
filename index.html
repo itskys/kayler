@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v3.0</title>
+    <title>Kayler文字卡片生成器 v2.2</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -26,7 +26,9 @@
             --footer-color: #999;
             --brand-brown: #8b5e3c;
             --brand-brown-hover: #6d4c41;
+            
             --base-font-size: 18px; 
+
             --font-heiti: "PingFang SC", "Microsoft YaHei", sans-serif;
             --font-songti: "Songti SC", "SimSun", serif;
             --font-noto-serif: "Noto Serif SC", serif;
@@ -72,7 +74,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             margin-bottom: 20px; 
             display: flex; flex-direction: column; gap: 12px;
-            width: 100%; max-width: 1200px; box-sizing: border-box; /* 宽度锁定 */
+            width: 100%; max-width: 1200px; box-sizing: border-box; /* 宽度与容器对齐 */
         }
 
         .tool-row { 
@@ -154,7 +156,7 @@
             font-size: 12px; color: #bbb; pointer-events: none;
         }
 
-        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px; }
+        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
         
         .btn-base {
             flex: 1; padding: 12px; border: none; border-radius: 8px;

@@ -5,39 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 画廊 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
+    
     <script src="layout.js?v=6.0"></script>
+
     <style>
-        :root { --bg-body: #f2f4f7; --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41; --layout-width: 94%; --layout-max-width: 1600px; }
-        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background-color: var(--bg-body); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: #333; }
+        :root {
+            --bg-body: #f2f4f7; --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            --layout-width: 94%; --layout-max-width: 1600px;
+        }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-body); margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; color: #333;
+        }
         
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* === 控制面板 (分行布局 v13.0) === */
+        /* === 控制面板 (Layout Fixed v12.5) === */
         .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
             display: flex; flex-direction: column; gap: 15px; align-items: center;
         }
 
-        /* 行1: 搜索框 (独立一行) */
+        /* 第一行：搜索框 (独立一行，避免挤压) */
         .search-row { width: 100%; max-width: 600px; position: relative; }
         .search-input {
             width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 50px;
             font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            height: 40px; box-sizing: border-box;
+            height: 42px; box-sizing: border-box;
         }
         .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15); }
-        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; font-size: 16px; }
 
-        /* 行2: 按钮 + 标签 */
+        /* 第二行：按钮 + 标签 (混合排列) */
         .tools-row {
             display: flex; flex-wrap: wrap; justify-content: center; align-items: center; 
             gap: 12px; width: 100%;
         }
 
-        .btn-group { display: flex; gap: 8px; flex-shrink: 0; }
+        .btn-group { display: flex; gap: 10px; flex-shrink: 0; }
         .btn-pill {
-            padding: 0 16px; height: 32px; border-radius: 50px; border: 1px solid #ddd;
+            padding: 0 18px; height: 36px; border-radius: 50px; border: 1px solid #ddd;
             background: white; color: #555; cursor: pointer; font-size: 13px;
             display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
         }
@@ -47,19 +58,19 @@
 
         /* 分割线 */
         .v-divider { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: none; }
-        @media (min-width: 600px) { .v-divider { display: block; } }
+        @media (min-width: 768px) { .v-divider { display: block; } }
 
         /* 标签云 */
-        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; align-items: center; }
         .filter-tag {
-            padding: 4px 12px; background: white; border: 1px solid #eee; border-radius: 15px;
+            padding: 0 12px; background: white; border: 1px solid #eee; border-radius: 18px;
             font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
-            height: 32px; display: flex; align-items: center; box-sizing: border-box;
+            height: 30px; display: flex; align-items: center; box-sizing: border-box;
         }
         .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
         .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
 
-        /* 画廊主体 */
+        /* 瀑布流 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
         .gallery-item {
             background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; break-inside: avoid;
@@ -77,8 +88,8 @@
         .page-btn.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
+        #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; }
         #upload-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 30px; font-size: 14px; z-index: 9999; display: none; }
 
         /* 模态框 */
@@ -102,7 +113,7 @@
 
         .btn-delete { position: absolute; top: 30px; left: 30px; background: rgba(255, 0, 0, 0.7); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; display: none; z-index: 2001; }
 
-        /* 上传弹窗 */
+        /* 配置/上传弹窗 */
         .modal-overlay-light { background: rgba(0,0,0,0.5); }
         .config-box { background: white; width: 400px; max-width: 90%; padding: 25px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .config-title { font-size: 18px; font-weight: bold; margin: 0; }
@@ -115,6 +126,7 @@
         .config-check-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
         .config-hidden-area { display: none; flex-direction: column; gap: 15px; padding: 15px; background: #fdfdfd; border: 1px dashed #ddd; border-radius: 8px; }
 
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media (max-width: 1600px) { .gallery-container { column-count: 4; } }
         @media (max-width: 1200px) { .gallery-container { column-count: 3; } }
         @media (max-width: 900px) { .gallery-container { column-count: 2; } }
@@ -161,7 +173,7 @@
     
     <div id="imageModal" class="modal preview-mode" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除</button>
+        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
         
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
@@ -218,6 +230,7 @@
             const token=localStorage.getItem('gh_token'), headers=token?{'Authorization':`token ${token}`}:{};
             const owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
             try {
+                // 确保标题更新
                 document.title = "AI 画廊 - Kayler";
                 const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, {headers});
                 if(!res.ok) throw new Error(await res.text());

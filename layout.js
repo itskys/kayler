@@ -1,4 +1,4 @@
-// === Kayler 全站核心脚本 v5.2 (修复导航名称) ===
+// === Kayler 全站核心脚本 v6.0 (最终定稿) ===
 
 document.addEventListener('DOMContentLoaded', () => {
     checkMagicLogin(); // 1. 检查魔法链接
@@ -21,7 +21,7 @@ function checkMagicLogin() {
                 localStorage.setItem('gh_owner', config.o || '');
                 localStorage.setItem('gh_repo', config.r || '');
                 alert(`🎉 欢迎回来！\n管理员身份验证成功。\n全站功能已解锁。`);
-                // 清理 URL
+                // 清理 URL，移除敏感参数
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.replaceState({path:newUrl}, '', newUrl);
                 // 广播登录成功事件
@@ -29,7 +29,6 @@ function checkMagicLogin() {
             }
         } catch (e) {
             console.error('Magic link error', e);
-            alert('❌ 链接无效');
         }
     }
 }
@@ -45,7 +44,7 @@ function injectStyles() {
             background: white !important; border-bottom: 1px solid #eee !important;
             height: 50px !important; width: 100% !important;
             display: flex !important; justify-content: center !important;
-            position: relative !important; z-index: 1000 !important;
+            position: relative !important; z-index: 10000 !important; /* 提高层级 */
             flex-shrink: 0 !important;
         }
         .global-nav-inner {
@@ -75,7 +74,7 @@ function injectStyles() {
         /* 全局设置弹窗 */
         #global-settings-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 99999; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center;
         }
         .gsm-content {
             background: white; padding: 30px; border-radius: 12px; width: 400px;
@@ -109,7 +108,7 @@ function injectStyles() {
 function injectHeader() {
     const existingNav = document.querySelector('nav.top-nav');
     
-    // 创建新的导航结构 (修改了此处名称)
+    // 创建新的导航结构 (此处已统一为 AI 画廊)
     const navHTML = `
         <div class="global-nav-inner">
             <a href="index.html" class="global-nav-link">🏠 卡片生成器</a>
