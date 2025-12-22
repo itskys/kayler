@@ -24,7 +24,7 @@
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* === 控制面板 (Layout Fixed v12.3) === */
+        /* === 控制面板 (Layout Fixed v12.4) === */
         .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
             display: flex; flex-direction: column; gap: 15px; align-items: center;
@@ -32,23 +32,26 @@
 
         /* 第一行：搜索 + 按钮组 */
         .top-tools {
-            display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; width: 100%;
+            display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; width: 100%;
         }
         
         .search-wrapper { 
-            position: relative; width: 320px; max-width: 100%; 
-            /* 修复：移除 flex:1，使用固定宽度避免与按钮挤压 */
+            position: relative; 
+            /* 关键修复：允许伸缩，但不小于200px，不大于500px */
+            flex: 1 1 200px; max-width: 500px;
         }
         .search-input {
             width: 100%; padding: 8px 15px 8px 35px; border: 1px solid #ddd; border-radius: 50px;
             font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            height: 38px; /* 稍微增高一点 */
+            height: 38px;
         }
         .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 10px rgba(139, 94, 60, 0.15); }
         .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 14px; }
 
         .btn-group { 
-            display: flex; gap: 10px; flex-shrink: 0; /* 修复：防止按钮被压缩 */
+            /* 关键修复：防止按钮被挤压 */
+            flex: 0 0 auto; 
+            display: flex; gap: 10px; 
         }
         .btn-pill {
             padding: 0 18px; height: 38px; border-radius: 50px; border: 1px solid #ddd;
@@ -96,7 +99,6 @@
         .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; z-index: 2001; }
         .modal.preview-mode img, .modal.preview-mode video { max-width: 90%; max-height: 75vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         
-        /* 底部标题区域 */
         .modal-footer-area { margin-top: 20px; text-align: center; color: #ddd; max-width: 80%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
         .modal-filename { font-size: 14px; font-family: monospace; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; user-select: text; display: flex; align-items: center; gap: 8px; }
         .copy-icon { cursor: pointer; opacity: 0.7; transition: 0.2s; font-size: 16px; }
@@ -125,7 +127,6 @@
         .config-check-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
         .config-hidden-area { display: none; flex-direction: column; gap: 15px; padding: 15px; background: #fdfdfd; border: 1px dashed #ddd; border-radius: 8px; }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media (max-width: 1600px) { .gallery-container { column-count: 4; } }
         @media (max-width: 1200px) { .gallery-container { column-count: 3; } }
         @media (max-width: 900px) { .gallery-container { column-count: 2; } }
@@ -155,7 +156,6 @@
                 <button class="btn-pill" onclick="openLocalSettings()"><span>⚙️ 设置</span></button>
             </div>
         </div>
-        
         <div class="tags-container" id="tagsContainer"></div>
     </div>
 
@@ -170,10 +170,8 @@
     <div id="imageModal" class="modal preview-mode" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
         <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
-        
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
-        
         <div class="modal-footer-area">
             <div class="modal-filename">
                 <span id="modalFilenameText">Filename.png</span>

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v2.0</title>
+    <title>Kayler文字卡片生成器 v2.2</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="layout.js"></script>
+    <script src="layout.js?v=5.1"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,40 +27,27 @@
             --brand-brown: #8b5e3c;
             --brand-brown-hover: #6d4c41;
             
-            /* 动态字号变量 */
             --base-font-size: 18px; 
 
-            /* 字体变量 */
             --font-heiti: "PingFang SC", "Microsoft YaHei", sans-serif;
             --font-songti: "Songti SC", "SimSun", serif;
-            --font-noto-serif: "Noto Serif SC", serif; /* 思源宋体 */
-            --font-kaiti: "KaiTi", "STKaiti", serif; /* 楷体 */
+            --font-noto-serif: "Noto Serif SC", serif;
+            --font-kaiti: "KaiTi", "STKaiti", serif;
             --font-handwriting: "Ma Shan Zheng", cursive; 
-            --font-xiaowei: "ZCOOL XiaoWei", serif; /* 文艺体 */
+            --font-xiaowei: "ZCOOL XiaoWei", serif;
         }
 
-        /* === 主题配置 (扩充版) === */
-        /* 1. 经典羊皮 */
+        /* === 主题配置 === */
         [data-theme="default"] { --paper-bg: #f9f7f1; --text-color: #2c2c2c; --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px); }
-        /* 2. 极简纯白 */
         [data-theme="white"] { --paper-bg: #ffffff; --text-color: #333333; --paper-texture: none; }
-        /* 3. 护眼绿 */
         [data-theme="green"] { --paper-bg: #f0f9eb; --text-color: #2b402b; --paper-texture: none; }
-        /* 4. 静谧蓝 */
         [data-theme="blue"] { --paper-bg: #f0f4f8; --text-color: #2c3e50; --paper-texture: none; }
-        /* 5. 复古牛皮 */
         [data-theme="kraft"] { --paper-bg: #e8dcc5; --text-color: #3e2b1d; --paper-texture: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjRThEQ0M1Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IixDOUNDOEYiIG9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4='); }
-        /* 6. 暗夜极客 */
         [data-theme="dark"] { --paper-bg: #1a1a1a; --text-color: #e0e0e0; --paper-texture: none; --shadow-color: rgba(0,0,0,0.5); --title-color: #fff; }
-        /* 7. 樱花粉 (新) */
         [data-theme="pink"] { --paper-bg: #fff0f5; --text-color: #5c3a45; --paper-texture: none; }
-        /* 8. 极简灰 (新) */
         [data-theme="grey"] { --paper-bg: #f5f5f5; --text-color: #333; --paper-texture: none; }
-        /* 9. 薄荷绿 (新) */
         [data-theme="mint"] { --paper-bg: #e0f2f1; --text-color: #004d40; --paper-texture: none; }
-        /* 10. 深海蓝 (新) */
         [data-theme="deepblue"] { --paper-bg: #263238; --text-color: #eceff1; --title-color: #fff; --paper-texture: none; --shadow-color: rgba(0,0,0,0.5); }
-
 
         body {
             font-family: var(--font-heiti);
@@ -69,8 +56,6 @@
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; color: #333;
         }
-
-        /* 顶部导航由 layout.js 注入 */
 
         header { text-align: center; width: 100%; max-width: 800px; margin-bottom: 25px; margin-top: 10px; }
         h1 { 
@@ -89,22 +74,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             margin-bottom: 30px; 
             display: flex; flex-direction: column; gap: 12px;
-            width: 100%; max-width: 1200px; box-sizing: border-box;
+            width: 100%; max-width: 1200px; box-sizing: border-box; /* 关键：固定最大宽 */
         }
 
         .tool-row { 
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;
         }
-        
         .tool-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        
-        .tool-label {
-            font-size: 13px; color: #999; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap;
-        }
-
+        .tool-label { font-size: 13px; color: #999; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
         .tool-divider { width: 100%; height: 1px; background: #f0f0f0; margin: 2px 0; }
         
-        /* 主题按钮 */
         .theme-btn {
             width: 24px; height: 24px; border-radius: 50%;
             border: 2px solid #f0f0f0; cursor: pointer;
@@ -113,7 +92,6 @@
         .theme-btn:hover { transform: scale(1.1); border-color: #ddd; }
         .theme-btn.active { border-color: var(--brand-brown); transform: scale(1.2); box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 2; }
         
-        /* 主题色值 */
         .bg-default { background: #f9f7f1; } .bg-white { background: #ffffff; border:1px solid #eee; }
         .bg-green { background: #f0f9eb; } .bg-blue { background: #f0f4f8; }
         .bg-kraft { background: #e8dcc5; } .bg-dark { background: #1a1a1a; }
@@ -133,28 +111,27 @@
             display: flex; align-items: center; gap: 5px;
         }
         .upload-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: #fafafa; }
-        .upload-btn.loading { opacity: 0.6; cursor: wait; }
         
         .slider-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
         input[type=range] { width: 80px; cursor: pointer; height: 4px; border-radius: 2px; accent-color: var(--brand-brown); }
 
-        /* === 主布局 === */
+        /* === 主布局 v2.2 (修复对齐) === */
         .container {
-            display: flex; gap: 50px; width: 100%; 
-            max-width: 1200px; 
+            display: flex; 
+            gap: 8px; /* 1. 极窄间距 2mm */
+            width: 100%; max-width: 1200px; /* 2. 宽度与顶部设置栏完全一致 */
             flex-wrap: wrap; justify-content: center; align-items: flex-start;
         }
 
         .input-area { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
 
+        /* Emoji 栏 (大量增加) */
         .emoji-bar {
-            display: flex; gap: 10px; padding: 0 5px; margin-bottom: 5px;
-            overflow-x: auto; scrollbar-width: none;
+            display: flex; gap: 8px; padding: 0 2px; margin-bottom: 5px;
+            flex-wrap: wrap; /* 允许换行 */
         }
-        .emoji-bar::-webkit-scrollbar { display: none; }
-        
         .emoji-item {
-            font-size: 18px; cursor: pointer; padding: 5px;
+            font-size: 18px; cursor: pointer; padding: 6px;
             border-radius: 6px; transition: background 0.2s; user-select: none;
         }
         .emoji-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
@@ -191,11 +168,7 @@
         .btn-download:hover { background-color: var(--brand-brown-hover); box-shadow: 0 6px 20px rgba(139, 94, 60, 0.3); }
         .btn-copy { background-color: #e3f2fd; color: #1565c0; }
         .btn-copy:hover { background-color: #bbdefb; }
-        
-        /* 管理员发布按钮 (特殊样式) */
-        .btn-publish { 
-            background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: none; /* 默认隐藏，JS鉴权后显示 */
-        }
+        .btn-publish { background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: none; }
         .btn-publish:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3); }
 
         .hint-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
@@ -204,7 +177,8 @@
         .preview-area { 
             flex: 1; min-width: 350px; 
             display: flex; flex-direction: column; gap: 30px;
-            align-items: center;
+            /* 3. 关键：右对齐 */
+            align-items: flex-end; 
         }
 
         .card-container {
@@ -249,14 +223,14 @@
 
         .paper-content {
             font-family: var(--active-font-family);
-            font-size: var(--base-font-size); /* 使用变量 */
+            font-size: var(--base-font-size);
             line-height: 1.75; text-align: justify;
             min-height: 200px; 
         }
 
         .paper-title {
             font-family: var(--active-font-family);
-            font-size: calc(var(--base-font-size) * 1.5); /* 标题随正文缩放 */
+            font-size: calc(var(--base-font-size) * 1.5);
             font-weight: bold; text-align: center;
             margin-bottom: 25px; color: var(--title-color); line-height: 1.3;
         }
@@ -284,67 +258,19 @@
             font-size: 12px; color: #ccc; font-weight: bold;
         }
 
-        /* 加载遮罩 (发布用) */
         #loading-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 30px; border-radius: 8px; font-size: 16px; z-index: 99999; display: none; }
 
         @media (max-width: 768px) {
-            .container { gap: 40px; }
+            .container { gap: 30px; flex-direction: column; }
             body { padding: 10px; }
-            h1 { font-size: 28px; }
-            .paper-card { padding: 40px 25px; }
-            .toolbar-wrapper { padding: 15px; width: 100%; }
-            .tool-row { justify-content: center; } 
-            .signature-input-container { width: 100%; }
-        }
-        /* === 📱 移动端适配 (index.html 专用) === */
-        @media (max-width: 768px) {
-            /* 1. 基础间距调整 */
-            body { padding: 10px; }
-            header { margin-top: 10px; margin-bottom: 20px; }
             h1 { font-size: 24px; }
-            .global-counter { font-size: 12px; }
-
-            /* 2. 工具栏：紧凑堆叠 */
-            .toolbar-wrapper {
-                padding: 15px;
-                gap: 15px;
-            }
-            .tool-row {
-                justify-content: flex-start; /* 左对齐 */
-                gap: 10px;
-            }
-            .tool-group {
-                width: 100%; /* 每个组占满一行 */
-                justify-content: space-between; /* 标签和控件两端对齐 */
-            }
-            /* 特殊处理：主题按钮组不需要两端对齐，保持紧凑 */
+            .paper-card { padding: 30px 20px; }
+            .toolbar-wrapper { padding: 15px; width: 100%; gap: 15px; }
+            .tool-row { justify-content: flex-start; gap: 10px; }
+            .tool-group { width: 100%; justify-content: space-between; }
             .tool-group:first-child { justify-content: flex-start; }
-
-            /* 3. 主容器：改为单列 */
-            .container {
-                gap: 30px;
-                flex-direction: column-reverse; /* 关键：把预览图(Preview)放到最上面，输入框放到下面？或者保持 column */
-                /* 这里建议用 column，输入在先，预览在后 */
-                flex-direction: column; 
-            }
-
-            /* 4. 输入区 & 预览区 */
-            .input-area, .preview-area {
-                width: 100%;
-                min-width: 0; /* 防止 flex 子元素溢出 */
-            }
-            
-            /* 5. 预览卡片自适应 */
+            .preview-area { align-items: center; width: 100%; } /* 手机端恢复居中 */
             .card-container { width: 100%; max-width: 100%; }
-            .paper-card { 
-                padding: 30px 20px; /* 减小纸张内边距 */
-            }
-            .paper-content { font-size: 16px; } /* 稍微减小字号 */
-            .paper-title { font-size: 22px; }
-            
-            /* 6. Emoji 栏优化 */
-            .emoji-bar { padding-bottom: 10px; }
-            .emoji-item { font-size: 20px; padding: 8px; }
         }
     </style>
 </head>
@@ -442,6 +368,26 @@
                 <span class="emoji-item" onclick="insertEmoji('🌟')">🌟</span>
                 <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
                 <span class="emoji-item" onclick="insertEmoji('☕')">☕</span>
+                <span class="emoji-item" onclick="insertEmoji('🎨')">🎨</span>
+                <span class="emoji-item" onclick="insertEmoji('🎹')">🎹</span>
+                <span class="emoji-item" onclick="insertEmoji('🎻')">🎻</span>
+                <span class="emoji-item" onclick="insertEmoji('🌈')">🌈</span>
+                <span class="emoji-item" onclick="insertEmoji('☀️')">☀️</span>
+                <span class="emoji-item" onclick="insertEmoji('🌊')">🌊</span>
+                <span class="emoji-item" onclick="insertEmoji('🍂')">🍂</span>
+                <span class="emoji-item" onclick="insertEmoji('🍁')">🍁</span>
+                <span class="emoji-item" onclick="insertEmoji('🍄')">🍄</span>
+                <span class="emoji-item" onclick="insertEmoji('🌺')">🌺</span>
+                <span class="emoji-item" onclick="insertEmoji('🌸')">🌸</span>
+                <span class="emoji-item" onclick="insertEmoji('🌼')">🌼</span>
+                <span class="emoji-item" onclick="insertEmoji('🌻')">🌻</span>
+                <span class="emoji-item" onclick="insertEmoji('🍀')">🍀</span>
+                <span class="emoji-item" onclick="insertEmoji('🏰')">🏰</span>
+                <span class="emoji-item" onclick="insertEmoji('🗽')">🗽</span>
+                <span class="emoji-item" onclick="insertEmoji('🗼')">🗼</span>
+                <span class="emoji-item" onclick="insertEmoji('✈️')">✈️</span>
+                <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span>
+                <span class="emoji-item" onclick="insertEmoji('🛸')">🛸</span>
             </div>
 
             <div class="textarea-wrapper">
@@ -488,7 +434,6 @@
         let currentFont = 'heiti';
         let currentSignature = 'Kaylerris';
 
-        // 1. 初始化 & 计数器
         const savedDraft = localStorage.getItem('kayler_draft');
         if (savedDraft) { inputText.value = savedDraft; }
         
@@ -496,7 +441,6 @@
         async function updateCounter() {
             let userCount = parseInt(localStorage.getItem('kayler_usage_count') || '0');
             let githubCount = 0;
-            // 获取画廊数量
             try {
                 const res = await fetch(`https://api.github.com/repos/itskys/kayler/contents/gallery`);
                 if(res.ok) {
@@ -507,24 +451,16 @@
             let total = BASE_COUNT + githubCount + userCount;
             counterDisplay.innerText = total.toLocaleString();
         }
-        function incrementCounter() {
-            let userCount = parseInt(localStorage.getItem('kayler_usage_count') || '0');
-            userCount++;
-            localStorage.setItem('kayler_usage_count', userCount);
-            updateCounter();
-        }
         updateCounter();
 
-        // 2. 权限检查
         function checkAdmin() {
             if(localStorage.getItem('gh_token')) {
-                btnPublish.style.display = 'flex'; // 显示发布按钮
+                btnPublish.style.display = 'flex';
             }
         }
         window.addEventListener('auth-updated', checkAdmin);
         checkAdmin();
 
-        // 3. 事件监听
         inputText.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
@@ -533,7 +469,6 @@
             renderCards(); 
         });
 
-        // 4. 设置函数
         function setFontFamily(font) {
             currentFont = font;
             let val = '';
@@ -578,7 +513,6 @@
             inputText.dispatchEvent(new Event('input'));
         }
 
-        // 5. 核心渲染
         function renderCards() {
             const rawText = inputText.value;
             if (!rawText.trim()) return;
@@ -626,7 +560,7 @@
                 if (index === 0) {
                     cardContent += `<div class="paper-title">${escapeHtml(mainTitle)}</div>`;
                 } else {
-                    const suffix = index + 1; // 简单数字后缀
+                    const suffix = index + 1; 
                     cardContent += `<div class="paper-title" style="margin-bottom:15px">${escapeHtml(mainTitle)}</div>`;
                     cardContent += `<div class="paper-subtitle">（续${suffix}）</div>`;
                 }
@@ -658,7 +592,6 @@
             previewContainer.innerHTML = html;
         }
 
-        // 6. 发布到画廊 (核心新功能)
         async function publishToGallery() {
             const token = localStorage.getItem('gh_token');
             const owner = localStorage.getItem('gh_owner');
@@ -673,24 +606,19 @@
             toast.style.display = 'block';
             
             try {
-                // 1. 生成图片 Blob
                 const card = document.getElementById('card-0');
                 const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null });
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                 
-                // 2. 转 Base64
                 const reader = new FileReader();
                 reader.readAsDataURL(blob);
                 reader.onloadend = async () => {
                     const base64Content = reader.result.split(',')[1];
-                    
-                    // 3. 生成文件名 (日期_标题.png)
                     const titleLine = inputText.value.split('\n')[0].trim().substring(0, 10).replace(/[\\/:*?"<>|]/g, "");
                     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
                     const filename = `${dateStr}_${titleLine}.png`;
                     const path = `gallery/${filename}`;
 
-                    // 4. 推送 GitHub
                     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
                     const res = await fetch(url, {
                         method: 'PUT',
@@ -720,7 +648,6 @@
             }
         }
 
-        // 辅助函数
         function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
         
         function handleBgUpload(input) {
