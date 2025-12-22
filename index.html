@@ -1,752 +1,696 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v3.2</title>
-    <link rel="icon" href="/favicon.png" type="image/png">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="layout.js?v=6.0"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-    
+    <title>Kayler AI 卡片生成器</title>
+    <script src="layout.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* === 全局变量 === */
+        /* ========================================
+        全局变量定义 (CSS Variables)
+        ========================================
+        */
         :root {
-            --bg-body: #f2f4f7; 
-            --paper-bg: #fdfbf7; 
-            --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px);
-            --text-color: #2c2c2c;
-            --title-color: #000;
-            --shadow-color: rgba(0,0,0,0.08);
-            --footer-color: #999;
-            --brand-brown: #8b5e3c;
-            --brand-brown-hover: #6d4c41;
-            --base-font-size: 18px; 
-            --font-heiti: "PingFang SC", "Microsoft YaHei", sans-serif;
-            --font-songti: "Songti SC", "SimSun", serif;
-            --font-noto-serif: "Noto Serif SC", serif;
-            --font-kaiti: "KaiTi", "STKaiti", serif;
-            --font-handwriting: "Ma Shan Zheng", cursive; 
-            --font-xiaowei: "ZCOOL XiaoWei", serif;
+            --primary-color: #2563eb;
+            /* 主色调 (蓝色) */
+            --bg-color: #f8fafc;
+            /* 页面背景色 (浅灰) */
+            --text-color: #1e293b;
+            /* 主要文字颜色 (深蓝灰) */
+            --border-color: #e2e8f0;
+            /* 边框颜色 (浅灰) */
+            --card-bg: #ffffff;
+            /* 卡片背景色 (纯白) */
+            --success-color: #10b981;
+            /* 成功提示色 (绿色) */
         }
 
-        /* === 主题配置 === */
-        [data-theme="default"] { --paper-bg: #f9f7f1; --text-color: #2c2c2c; --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px); }
-        [data-theme="white"] { --paper-bg: #ffffff; --text-color: #333333; --paper-texture: none; }
-        [data-theme="green"] { --paper-bg: #f0f9eb; --text-color: #2b402b; --paper-texture: none; }
-        [data-theme="blue"] { --paper-bg: #f0f4f8; --text-color: #2c3e50; --paper-texture: none; }
-        [data-theme="kraft"] { --paper-bg: #e8dcc5; --text-color: #3e2b1d; --paper-texture: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjRThEQ0M1Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IixDOUNDOEYiIG9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4='); }
-        [data-theme="dark"] { --paper-bg: #1a1a1a; --text-color: #e0e0e0; --paper-texture: none; --shadow-color: rgba(0,0,0,0.5); --title-color: #fff; }
-        [data-theme="pink"] { --paper-bg: #fff0f5; --text-color: #5c3a45; --paper-texture: none; }
-        [data-theme="grey"] { --paper-bg: #f5f5f5; --text-color: #333; --paper-texture: none; }
-        [data-theme="mint"] { --paper-bg: #e0f2f1; --text-color: #004d40; --paper-texture: none; }
-        [data-theme="deepblue"] { --paper-bg: #263238; --text-color: #eceff1; --title-color: #fff; --paper-texture: none; --shadow-color: rgba(0,0,0,0.5); }
+        /* ========================================
+        基础样式重置 (Reset & Base Styles)
+        ========================================
+        */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
-            font-family: var(--font-heiti);
-            background-color: var(--bg-body);
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: #333;
-        }
-
-        header { text-align: center; width: 100%; max-width: 800px; margin-bottom: 25px; margin-top: 10px; }
-        h1 { 
-            font-size: 32px; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px; color: #222; 
-            display: flex; align-items: center; justify-content: center;
-        }
-        
-        .global-counter {
-            font-size: 14px; color: #888; font-family: "PingFang SC", sans-serif;
-            font-weight: 500; letter-spacing: 0.5px;
-        }
-
-        /* === 工具栏区域 === */
-        .toolbar-wrapper {
-            background: white; padding: 15px 25px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            margin-bottom: 20px; 
-            display: flex; flex-direction: column; gap: 12px;
-            width: 100%; max-width: 1200px; box-sizing: border-box; /* 宽度锁定 */
-        }
-
-        .tool-row { 
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;
-        }
-        .tool-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .tool-label { font-size: 13px; color: #999; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-        .tool-divider { width: 100%; height: 1px; background: #f0f0f0; margin: 2px 0; }
-        
-        .theme-btn {
-            width: 24px; height: 24px; border-radius: 50%;
-            border: 2px solid #f0f0f0; cursor: pointer;
-            transition: all 0.2s; position: relative;
-        }
-        .theme-btn:hover { transform: scale(1.1); border-color: #ddd; }
-        .theme-btn.active { border-color: var(--brand-brown); transform: scale(1.2); box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 2; }
-        
-        .bg-default { background: #f9f7f1; } .bg-white { background: #ffffff; border:1px solid #eee; }
-        .bg-green { background: #f0f9eb; } .bg-blue { background: #f0f4f8; }
-        .bg-kraft { background: #e8dcc5; } .bg-dark { background: #1a1a1a; }
-        .bg-pink { background: #fff0f5; } .bg-grey { background: #f5f5f5; }
-        .bg-mint { background: #e0f2f1; } .bg-deepblue { background: #263238; }
-
-        .select-ui, .input-ui {
-            padding: 6px 10px; border-radius: 6px; background: #f9f9f9; border: 1px solid #eee;
-            font-size: 13px; color: #555; outline: none; transition: all 0.2s;
-        }
-        .select-ui:hover, .input-ui:hover { background: #fff; border-color: #ddd; }
-        .select-ui:focus, .input-ui:focus { border-color: var(--brand-brown); background: #fff; }
-
-        .upload-btn {
-            font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px dashed #ccc;
-            background: #fff; color: #666; cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .upload-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: #fafafa; }
-        
-        .slider-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
-        input[type=range] { width: 80px; cursor: pointer; height: 4px; border-radius: 2px; accent-color: var(--brand-brown); }
-
-        /* === 主布局 (关键优化) === */
-        .container {
-            display: flex; 
-            gap: 12px; /* 间距调整为 ~3mm */
-            width: 100%; max-width: 1200px; /* 宽度与工具栏一致 */
-            flex-wrap: wrap; justify-content: center; align-items: flex-start;
-        }
-
-        /* 左侧列 */
-        .input-area { 
-            flex: 1; min-width: 320px; 
-            display: flex; flex-direction: column; 
-            /* 移除 gap，改用 margin 控制垂直节奏，配合 JS 对齐 */
-        }
-
-        /* Emoji 栏 - 增加内容并允许换行 */
-        .emoji-bar {
-            display: flex; gap: 8px; padding: 0 2px; 
-            margin-bottom: 10px; /* 底部间距 */
-            flex-wrap: wrap; /* 允许换行填满 */
-            align-items: flex-end; 
-            box-sizing: border-box;
-        }
-        .emoji-item {
-            font-size: 18px; cursor: pointer; padding: 5px;
-            border-radius: 6px; transition: background 0.2s; user-select: none;
-        }
-        .emoji-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
-
-        .textarea-wrapper { position: relative; width: 100%; }
-        
-        textarea {
-            width: 100%; padding: 25px; padding-bottom: 40px;
-            border: none; border-radius: 12px;
-            font-size: 16px; line-height: 1.6;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            resize: none; overflow-y: hidden; outline: none;
-            min-height: 500px; font-family: inherit; background: #fff;
-            transition: box-shadow 0.3s; box-sizing: border-box;
-        }
-        textarea:focus { box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
-
-        .word-count {
-            position: absolute; bottom: 15px; right: 20px;
-            font-size: 12px; color: #bbb; pointer-events: none;
-        }
-
-        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px; }
-        
-        .btn-base {
-            flex: 1; padding: 12px; border: none; border-radius: 8px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s; display: flex; justify-content: center;
-            align-items: center; gap: 6px; min-width: 100px;
-        }
-        .btn-base:active { transform: scale(0.98); }
-
-        .btn-download { background-color: var(--brand-brown); color: #fff; box-shadow: 0 4px 15px rgba(139, 94, 60, 0.2); }
-        .btn-download:hover { background-color: var(--brand-brown-hover); box-shadow: 0 6px 20px rgba(139, 94, 60, 0.3); }
-        .btn-copy { background-color: #e3f2fd; color: #1565c0; }
-        .btn-copy:hover { background-color: #bbdefb; }
-        .btn-publish { background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: none; }
-        .btn-publish:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3); }
-
-        .hint-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
-
-        /* === 右侧列 (预览区) === */
-        .preview-area { 
-            flex: 1; min-width: 350px; 
-            display: flex; flex-direction: column; 
-            align-items: flex-end; /* 3. 强制右对齐 */
-        }
-        
-        /* 4. 预览区头部占位符 (用于与左侧对齐) */
-        .preview-header-spacer {
-            width: 100%; 
-            display: flex; align-items: flex-end; justify-content: flex-end;
-            color: #999; font-size: 12px; font-weight: bold; letter-spacing: 1px;
-            margin-bottom: 10px; /* 必须与 .emoji-bar margin-bottom 一致 */
-            box-sizing: border-box;
-            padding-bottom: 5px; /* 与 emoji item padding 近似 */
-            /* 高度将由 JS 动态设置 */
-        }
-
-        .card-container {
-            width: 100%; max-width: 480px; /* 限制卡片最大宽 */
-            display: flex; flex-direction: column; gap: 10px;
-        }
-
-        .paper-card {
-            width: 100%; 
-            background-color: var(--paper-bg);
-            background-image: var(--paper-texture);
-            background-size: 20px 20px;
-            padding: 60px 45px;
-            box-shadow: 20px 20px 60px var(--shadow-color);
-            border-radius: 6px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
             color: var(--text-color);
+            line-height: 1.6;
+            /* 为固定在顶部的导航栏留出空间 */
+            padding-top: 60px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ========================================
+        主布局容器 (Main Layout)
+        ========================================
+        */
+        .main-container {
+            flex: 1;
+            /* 占据除导航和页脚外的剩余空间 */
+            display: flex;
+            height: calc(100vh - 60px - 50px);
+            /* 计算高度：总高 - 导航栏 - 页脚 */
+            /* 左右栏之间的间距，缩小至 12px (约 3mm) */
+            gap: 12px;
+            padding: 20px;
+            max-width: 1400px;
+            /* 页面最大宽度 */
+            margin: 0 auto;
+            /* 居中显示 */
+            width: 100%;
+        }
+
+        /* ========================================
+        左侧编辑区 (Left Column - Editor)
+        ========================================
+        */
+        .left-column {
+            flex: 1;
+            /* 占据一半宽度 */
+            background: var(--card-bg);
+            border-radius: 16px;
+            /* 圆角 */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            /* 阴影 */
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            /* 内容过多时垂直滚动 */
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        /* 文本输入框和文本域样式 */
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
             transition: all 0.3s ease;
-            position: relative; 
-            overflow: hidden; 
-            box-sizing: border-box;
+            font-family: inherit;
         }
 
-        .card-bg-layer {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-position: top center; background-repeat: repeat-y; 
-            background-size: 100% auto; z-index: 0; pointer-events: none;
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
         }
 
-        .card-toolbar {
-            display: flex; justify-content: flex-end; gap: 10px;
-            padding: 0 5px; opacity: 0.8;
-        }
-        .mini-btn {
-            font-size: 12px; padding: 5px 10px; border-radius: 6px; border: none;
-            background: rgba(0,0,0,0.05); color: #666; cursor: pointer;
-            transition: all 0.2s; display: flex; align-items: center; gap: 4px;
-        }
-        .mini-btn:hover { background: #e3f2fd; color: #1565c0; }
-
-        .paper-content, .paper-footer, .paper-title, .paper-subtitle, .page-indicator {
-            position: relative; z-index: 1;
+        textarea {
+            resize: vertical;
+            /* 仅允许垂直拉伸 */
+            min-height: 100px;
         }
 
-        .paper-content {
-            font-family: var(--active-font-family);
-            font-size: var(--base-font-size);
-            line-height: 1.75; text-align: justify;
-            min-height: 200px; 
+        /* ========================================
+        右侧预览区 (Right Column - Preview)
+        ========================================
+        */
+        .right-column {
+            flex: 1;
+            /* 占据另一半宽度 */
+            /* [修改] 调整右侧栏内边距 
+               左右 padding 调整为 12px (约 3mm)，上下保持 0 和 20px
+            */
+            padding: 0 12px 20px 12px;
+            display: flex;
+            flex-direction: column;
+            /* 强制内容靠右对齐 */
+            align-items: flex-end;
         }
 
-        .paper-title {
-            font-family: var(--active-font-family);
-            font-size: calc(var(--base-font-size) * 1.5);
-            font-weight: bold; text-align: center;
-            margin-bottom: 25px; color: var(--title-color); line-height: 1.3;
-        }
-        .paper-subtitle {
-            font-family: var(--active-font-family);
-            font-size: calc(var(--base-font-size) * 1.2);
-            font-weight: bold; text-align: center;
-            margin-top: -15px; margin-bottom: 30px;
-            color: var(--title-color); opacity: 0.85; letter-spacing: 1px;
+        /* 占位标题栏：用于与左侧标题高度对齐 */
+        .preview-header-spacer {
+            width: 100%;
+            /* 初始高度，会被 JS 动态调整 */
+            min-height: 32px;
+            margin-bottom: 24px;
+            flex-shrink: 0;
         }
 
-        .paper-p { margin: 0; margin-top: 10pt; }
-        .indent-cn { text-indent: 2em; }
-        .indent-en { text-indent: 1.37cm; }
-
-        .paper-footer {
-            margin-top: 60px; text-align: right; font-size: 14px;
-            color: var(--footer-color); border-top: 1px solid rgba(0,0,0,0.06);
-            padding-top: 18px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        /* 预览区域包裹器 */
+        .preview-area-wrapper {
+            flex: 1;
+            /* 占据剩余高度 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /* 垂直居中 */
+            /* 确保包裹器占满宽度，以便内部卡片可以居中或靠右 */
+            width: 100%;
+            position: relative;
+            /* 为截图按钮定位做准备 */
+            /* 增加底部内边距，防止卡片贴底 */
+            padding-bottom: 40px;
         }
-        .paper-footer a { color: inherit; text-decoration: none; border-bottom: 1px dashed currentColor; font-weight: 600; }
 
-        .page-indicator {
-            position: absolute; top: -25px; left: 0;
-            font-size: 12px; color: #ccc; font-weight: bold;
+        /* ========================================
+        工具栏 (Toolbar - Emoji & Controls)
+        ========================================
+        */
+        /* [修改] 移除 flex 布局，让 Emoji 栏独占一行 */
+        .toolbar-container {
+            margin-bottom: 12px;
+            width: 100%;
         }
 
-        #loading-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 30px; border-radius: 8px; font-size: 16px; z-index: 99999; display: none; }
+        /* [新增] 控件行容器，用于放置主题和字体选择，置于 Emoji 下方 */
+        .style-controls-row {
+            display: flex;
+            justify-content: flex-end; /* 控件靠右对齐 */
+            margin-bottom: 16px;
+        }
 
-        @media (max-width: 768px) {
-            .container { gap: 30px; flex-direction: column; }
-            body { padding: 10px; }
-            h1 { font-size: 24px; }
-            .paper-card { padding: 30px 20px; }
-            .toolbar-wrapper { padding: 15px; width: 100%; gap: 15px; }
-            .tool-row { justify-content: flex-start; gap: 10px; }
-            .tool-group { width: 100%; justify-content: space-between; }
-            .tool-group:first-child { justify-content: flex-start; }
-            .preview-area { align-items: center; width: 100%; } /* 手机端恢复居中 */
-            .preview-header-spacer { display: none; } /* 手机端不需要强制对齐 */
-            .card-container { width: 100%; max-width: 100%; }
+
+        .emoji-bar {
+            /* 允许 Emoji 换行 */
+            flex-wrap: wrap;
+            display: flex;
+            gap: 8px;
+            padding: 4px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .emoji-btn {
+            font-size: 20px;
+            padding: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.1);
+        }
+
+        .emoji-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .style-controls {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .style-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-color);
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* ========================================
+        卡片样式 (Card Styles)
+        ========================================
+        */
+        /* 卡片整体容器 */
+        .card-container {
+            background: white;
+            border-radius: 24px;
+            /* 大圆角 */
+            padding: 40px;
+            /* 内部留白 */
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.04);
+            /* 丰富的阴影 */
+            /* [修改] 增加卡片最大宽度，使其更宽 */
+            max-width: 640px;
+            width: 100%;
+            /* 保证在小屏幕下自适应 */
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* 卡片顶部信息栏 */
+        .card-header-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .card-header-info span {
+            display: flex;
+            align-items: center;
+        }
+
+        .separator {
+            margin: 0 12px;
+            color: #cbd5e1;
+        }
+
+        /* 卡片标题 */
+        .card-title-preview {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 32px;
+            line-height: 1.3;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            /* 标题渐变色 */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 卡片主体内容 */
+        .card-body-preview {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #334155;
+            white-space: pre-wrap;
+            /* 保留换行和空格 */
+        }
+
+        /* 卡片底部署名 */
+        .card-footer-preview {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer-icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+
+        /* ========================================
+        卡片主题变体 (Card Themes)
+        ========================================
+        */
+        /* 深色主题 */
+        .card-theme-dark {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+
+        .card-theme-dark .card-title-preview {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-theme-dark .card-body-preview {
+            color: #cbd5e1;
+        }
+
+        .card-theme-dark .card-header-info,
+        .card-theme-dark .card-footer-preview {
+            color: #94a3b8;
+            border-color: #334155;
+        }
+
+        /* 蓝色主题 */
+        .card-theme-blue {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        }
+
+        .card-theme-blue .card-title-preview {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 绿色主题 */
+        .card-theme-green {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .card-theme-green .card-title-preview {
+            background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 紫色主题 */
+        .card-theme-purple {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+        }
+
+        .card-theme-purple .card-title-preview {
+            background: linear-gradient(135deg, #6b21a8 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+
+        /* ========================================
+        卡片字体变体 (Card Fonts)
+        ========================================
+        */
+        .font-serif .card-title-preview,
+        .font-serif .card-body-preview,
+        .font-serif .card-footer-preview {
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+
+        .font-mono .card-title-preview,
+        .font-mono .card-body-preview,
+        .font-mono .card-footer-preview {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        /* ========================================
+        其他组件 (Others)
+        ========================================
+        */
+        /* 截图下载按钮 */
+        .download-btn {
+            position: absolute;
+            /* 绝对定位 */
+            bottom: 0;
+            /* 靠下 */
+            right: 0;
+            /* 靠右 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            z-index: 10;
+            /* 确保在最上层 */
+        }
+
+        .download-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        /* 响应式设计：小屏幕适配 */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                /* 上下布局 */
+                height: auto;
+                /* 高度自适应 */
+            }
+
+            .left-column,
+            .right-column {
+                width: 100%;
+                /* 占满宽度 */
+            }
+
+            /* 小屏幕下隐藏占位符，因为不再需要左右对齐 */
+            .preview-header-spacer {
+                display: none;
+            }
+
+            .preview-area-wrapper {
+                padding: 40px 0;
+                align-items: center;
+                /* 小屏幕居中显示卡片 */
+            }
+
+            .card-container {
+                margin: 0 auto;
+                /* 居中 */
+            }
+
+            .download-btn {
+                position: static;
+                /* 取消绝对定位 */
+                width: 100%;
+                justify-content: center;
+                margin-top: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
-    
-    <div id="loading-toast">☁️ 正在发布到画廊...</div>
-
-    <header>
-        <h1>
-            <img src="/logo.png" alt="Logo" style="height: 40px; vertical-align: middle; margin-right: 10px; margin-top: -6px;">
-            Kayler文字卡片生成器
-        </h1>
-        <div class="global-counter" id="counterDisplay">
-            ✨ 已累计协助生成 <span id="totalCount">...</span> 张精致卡片
-        </div>
-    </header>
-
-    <div class="toolbar-wrapper">
-        <div class="tool-row">
-            <div class="tool-group">
-                <span class="tool-label">🎨 主题:</span>
-                <div class="theme-btn bg-default active" onclick="setTheme('default', this)" title="经典羊皮"></div>
-                <div class="theme-btn bg-white" onclick="setTheme('white', this)" title="极简纯白"></div>
-                <div class="theme-btn bg-pink" onclick="setTheme('pink', this)" title="樱花粉"></div>
-                <div class="theme-btn bg-green" onclick="setTheme('green', this)" title="护眼绿"></div>
-                <div class="theme-btn bg-mint" onclick="setTheme('mint', this)" title="薄荷绿"></div>
-                <div class="theme-btn bg-blue" onclick="setTheme('blue', this)" title="静谧蓝"></div>
-                <div class="theme-btn bg-grey" onclick="setTheme('grey', this)" title="极简灰"></div>
-                <div class="theme-btn bg-kraft" onclick="setTheme('kraft', this)" title="复古牛皮"></div>
-                <div class="theme-btn bg-deepblue" onclick="setTheme('deepblue', this)" title="深海蓝"></div>
-                <div class="theme-btn bg-dark" onclick="setTheme('dark', this)" title="暗夜极客"></div>
-            </div>
-
-            <div class="tool-group">
-                <input type="file" id="bgInput" accept="image/*" style="display: none;" onchange="handleBgUpload(this)">
-                <button id="uploadBtn" class="upload-btn" onclick="document.getElementById('bgInput').click()">
-                    <span>🖼️ 背景图</span>
-                </button>
-                <div class="slider-container">
-                    <span>透明度:</span>
-                    <input type="range" id="opacitySlider" min="0.05" max="0.8" step="0.05" value="0.15" oninput="updateOpacity(this.value)">
-                    <span id="opacityValue">15%</span>
+    <div class="main-container">
+        <div class="left-column">
+            <div class="input-group">
+                <label class="input-label">选择图标</label>
+                <div class="toolbar-container">
+                    <div class="emoji-bar" id="emojiBar">
+                        </div>
+                </div>
+                <div class="style-controls-row">
+                    <div class="style-controls">
+                        <select class="style-select" id="themeSelect">
+                            <option value="default">默认白</option>
+                            <option value="dark">深色模式</option>
+                            <option value="blue">科技蓝</option>
+                            <option value="green">清新绿</option>
+                            <option value="purple">优雅紫</option>
+                        </select>
+                        <select class="style-select" id="fontSelect">
+                            <option value="sans">无衬线体</option>
+                            <option value="serif">衬线体</option>
+                            <option value="mono">等宽字体</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="tool-divider"></div>
-
-        <div class="tool-row">
-            <div class="tool-group">
-                <span class="tool-label">🅰️ 字体:</span>
-                <select class="select-ui" onchange="setFontFamily(this.value)">
-                    <option value="heiti" selected>现代黑体</option>
-                    <option value="songti">文艺宋体</option>
-                    <option value="noto">思源宋体</option>
-                    <option value="kaiti">楷体</option>
-                    <option value="xiaowei">文艺体</option>
-                    <option value="handwriting">优雅手写</option>
-                </select>
-            </div>
-            
-            <div class="tool-group">
-                <span class="tool-label">📏 字号:</span>
-                <input type="range" min="14" max="24" value="18" oninput="setFontSize(this.value)" style="width:60px;">
-                <span id="fontSizeDisplay" style="font-size:12px; color:#888;">18px</span>
+            <div class="input-group">
+                <label class="input-label">卡片标题</label>
+                <input type="text" id="titleInput" placeholder="输入一个吸引人的标题..." value="Kayler AI 工具站">
             </div>
 
-            <div class="tool-group">
-                <span class="tool-label">✍️ 签名:</span>
-                <input type="text" class="input-ui" style="width:100px;" id="signatureInput" placeholder="Kaylerris" value="Kaylerris" oninput="updateSignature(this.value)">
+            <div class="input-group" style="flex: 1;">
+                <label class="input-label">正文内容</label>
+                <textarea id="contentInput"
+                    placeholder="在这里输入你想表达的核心观点、金句或是重要信息...">专注于提供高质量的 AI 工具与资源，帮助用户更高效地探索人工智能的世界。无论你是初学者还是专业人士，这里都有你所需的一切。</textarea>
             </div>
 
-            <div class="tool-group">
-                <span class="tool-label">📄 分页:</span>
-                <select id="splitMode" class="select-ui" onchange="renderCards()">
-                    <option value="count" selected>等分 X 张</option>
-                    <option value="single">单张长图</option>
-                    <option value="length">1k字/张</option>
-                </select>
-                <input type="number" id="splitCount" class="input-ui" style="width:40px; padding:6px;" value="2" min="2" max="10" onchange="renderCards()">
+            <div class="input-group">
+                <label class="input-label">底部署名</label>
+                <input type="text" id="footerInput" placeholder="例如：@你的名字" value="@Kayler AI">
             </div>
         </div>
-    </div>
 
-    <div class="container">
-        <div class="input-area">
-            <div class="emoji-bar" id="emojiBar">
-                <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
-                <span class="emoji-item" onclick="insertEmoji('✒️')">✒️</span>
-                <span class="emoji-item" onclick="insertEmoji('🌿')">🌿</span>
-                <span class="emoji-item" onclick="insertEmoji('💡')">💡</span>
-                <span class="emoji-item" onclick="insertEmoji('📖')">📖</span>
-                <span class="emoji-item" onclick="insertEmoji('💭')">💭</span>
-                <span class="emoji-item" onclick="insertEmoji('📌')">📌</span>
-                <span class="emoji-item" onclick="insertEmoji('🌟')">🌟</span>
-                <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
-                <span class="emoji-item" onclick="insertEmoji('☕')">☕</span>
-                <span class="emoji-item" onclick="insertEmoji('🎨')">🎨</span>
-                <span class="emoji-item" onclick="insertEmoji('🎹')">🎹</span>
-                <span class="emoji-item" onclick="insertEmoji('🎻')">🎻</span>
-                <span class="emoji-item" onclick="insertEmoji('🌈')">🌈</span>
-                <span class="emoji-item" onclick="insertEmoji('☀️')">☀️</span>
-                <span class="emoji-item" onclick="insertEmoji('🌊')">🌊</span>
-                <span class="emoji-item" onclick="insertEmoji('🍂')">🍂</span>
-                <span class="emoji-item" onclick="insertEmoji('🍁')">🍁</span>
-                <span class="emoji-item" onclick="insertEmoji('🍄')">🍄</span>
-                <span class="emoji-item" onclick="insertEmoji('🌺')">🌺</span>
-                <span class="emoji-item" onclick="insertEmoji('🌸')">🌸</span>
-                <span class="emoji-item" onclick="insertEmoji('🌼')">🌼</span>
-                <span class="emoji-item" onclick="insertEmoji('🌻')">🌻</span>
-                <span class="emoji-item" onclick="insertEmoji('🍀')">🍀</span>
-                <span class="emoji-item" onclick="insertEmoji('🏰')">🏰</span>
-                <span class="emoji-item" onclick="insertEmoji('🗽')">🗽</span>
-                <span class="emoji-item" onclick="insertEmoji('🗼')">🗼</span>
-                <span class="emoji-item" onclick="insertEmoji('✈️')">✈️</span>
-                <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span>
-                <span class="emoji-item" onclick="insertEmoji('🛸')">🛸</span>
-                <span class="emoji-item" onclick="insertEmoji('🍦')">🍦</span>
-                <span class="emoji-item" onclick="insertEmoji('🍰')">🍰</span>
-                <span class="emoji-item" onclick="insertEmoji('🍷')">🍷</span>
-                <span class="emoji-item" onclick="insertEmoji('🎶')">🎶</span>
-                <span class="emoji-item" onclick="insertEmoji('📢')">📢</span>
-                <span class="emoji-item" onclick="insertEmoji('🔔')">🔔</span>
-                <span class="emoji-item" onclick="insertEmoji('📅')">📅</span>
-                <span class="emoji-item" onclick="insertEmoji('📁')">📁</span>
-                <span class="emoji-item" onclick="insertEmoji('📝')">📝</span>
-                <span class="emoji-item" onclick="insertEmoji('✅')">✅</span>
-                <span class="emoji-item" onclick="insertEmoji('💻')">💻</span>
-            </div>
-
-            <div class="textarea-wrapper">
-                <textarea id="inputText" placeholder="在此粘贴文章...&#10;&#10;自动保存功能已启用，不用担心内容丢失。&#10;可以在上方工具栏修改 @署名。"></textarea>
-                <div id="wordCount" class="word-count">0 字</div>
-            </div>
-            
-            <div class="action-buttons">
-                <button class="btn-base btn-download" onclick="generateBatch('download')">
-                    <span>💾 批量下载</span>
-                </button>
-                <button id="btnCopy" class="btn-base btn-copy" onclick="generateBatch('copy')">
-                    <span>📋 复制第一张</span>
-                </button>
-                <button id="btnPublish" class="btn-base btn-publish" onclick="publishToGallery()">
-                    ☁️ 发布到画廊
-                </button>
-            </div>
-            
-            <p class="hint-text">
-                提示：右侧每张卡片下方均可单独复制或保存
-            </p>
-        </div>
-
-        <div class="preview-area" id="previewContainerWrapper">
-            <div class="preview-header-spacer" id="previewHeaderSpacer">👀 实时预览效果</div>
-            
-            <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;">
+        <div class="right-column">
+            <div class="preview-header-spacer"></div>
+            <div class="preview-area-wrapper" id="previewWrapper">
+                <div class="card-container" id="preview-card">
+                    <div class="card-header-info">
+                        <span id="cardDate">2024.03.21</span>
+                        <span class="separator">|</span>
+                        <span>INSIGHTS</span>
+                    </div>
+                    <div class="card-title-preview" id="cardTitle">Kayler AI 工具站</div>
+                    <div class="card-body-preview" id="cardContent">专注于提供高质量的 AI 工具与资源，帮助用户更高效地探索人工智能的世界。无论你是初学者还是专业人士，这里都有你所需的一切。</div>
+                    <div class="card-footer-preview">
+                        <span class="footer-icon" id="footerIcon">✨</span>
+                        <span id="cardFooter">@Kayler AI</span>
+                    </div>
                 </div>
+                <button class="download-btn" id="downloadBtn">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                    生成卡片图片
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        const inputText = document.getElementById('inputText');
-        const previewContainer = document.getElementById('previewContainer');
-        const wordCountEl = document.getElementById('wordCount');
-        const counterDisplay = document.getElementById('totalCount');
-        const opacityValueLabel = document.getElementById('opacityValue');
-        const fontSizeDisplay = document.getElementById('fontSizeDisplay');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const splitModeSelect = document.getElementById('splitMode');
-        const splitCountInput = document.getElementById('splitCount');
-        const btnPublish = document.getElementById('btnPublish');
-        const toast = document.getElementById('loading-toast');
+        // 定义 Emoji 列表
+        const emojis = [
+            '✨', '💡', '🚀', '🎯', '🔥', '⭐', '🌟', '📝', '📚', '🎨',
+            '🎬', '🎤', '🎧', '🎮', '🧩', '🎲', '♟️', '🎳', '🥊', '🏆',
+            '🥇', '🥈', '🥉', '🏅', '🎖️', '🎗️', '🎟️', '🎫', '🎺', '🎻',
+            '🪕', '🎸', '🎷', '🎹', '🎼', '🎧', '🎤', '🎬', '🎨', '🎭',
+            '🎪', '🎫', '🎟️', '🎗️', '🎖️', '🏅', '🥉', '🥈', '🥇', '🏆'
+        ];
 
-        // 对齐关键元素
+        // 获取 DOM 元素
         const emojiBar = document.getElementById('emojiBar');
-        const previewHeader = document.getElementById('previewHeaderSpacer');
+        const titleInput = document.getElementById('titleInput');
+        const contentInput = document.getElementById('contentInput');
+        const footerInput = document.getElementById('footerInput');
+        const themeSelect = document.getElementById('themeSelect');
+        const fontSelect = document.getElementById('fontSelect');
 
-        let customBgUrl = null;
-        let currentOpacity = 0.15; 
-        let currentFont = 'heiti';
-        let currentSignature = 'Kaylerris';
+        const cardTitle = document.getElementById('cardTitle');
+        const cardContent = document.getElementById('cardContent');
+        const cardFooter = document.getElementById('cardFooter');
+        const footerIcon = document.getElementById('footerIcon');
+        const previewCard = document.getElementById('preview-card');
+        const cardDate = document.getElementById('cardDate');
 
-        const savedDraft = localStorage.getItem('kayler_draft');
-        if (savedDraft) { inputText.value = savedDraft; }
-        
-        const BASE_COUNT = 12580; 
-        async function updateCounter() {
-            let userCount = parseInt(localStorage.getItem('kayler_usage_count') || '0');
-            let githubCount = 0;
-            try {
-                const res = await fetch(`https://api.github.com/repos/itskys/kayler/contents/gallery`);
-                if(res.ok) {
-                    const files = await res.json();
-                    githubCount = files.length * 10;
-                }
-            } catch(e) {}
-            let total = BASE_COUNT + githubCount + userCount;
-            counterDisplay.innerText = total.toLocaleString();
+        // 初始化函数
+        function init() {
+            renderEmojis();
+            setupEventListeners();
+            updateDate();
+            // 页面加载完成后，同步一次高度
+            setTimeout(syncHeaderHeights, 100);
         }
-        updateCounter();
 
-        function checkAdmin() {
-            if(localStorage.getItem('gh_token')) {
-                btnPublish.style.display = 'flex';
-            }
-        }
-        window.addEventListener('auth-updated', checkAdmin);
-        checkAdmin();
-
-        inputText.addEventListener('input', function() {
-            this.style.height = 'auto';
-            // 限制最大高度，防止撑破布局
-            this.style.height = Math.max(500, this.scrollHeight) + 'px'; 
-            wordCountEl.innerText = `${this.value.length} 字`;
-            localStorage.setItem('kayler_draft', this.value);
-            renderCards(); 
-        });
-
-        // === 自动对齐脚本 (Fix) ===
+        // 核心功能：同步左右两侧标题栏的高度
         function syncHeaderHeights() {
-            if(window.innerWidth > 768) {
-                const h = emojiBar.offsetHeight;
-                previewHeader.style.height = h + 'px';
-            } else {
-                previewHeader.style.height = 'auto';
+            // 获取左侧 Emoji 栏和其上方 Label 的总高度
+            const leftLabel = document.querySelector('.left-column .input-label'); // 获取第一个 label (选择图标)
+            const toolbarContainer = document.querySelector('.toolbar-container'); // 获取包含 Emoji 的容器
+            const styleControlsRow = document.querySelector('.style-controls-row'); // 获取包含控件的容器
+            // [修改] 
+            // 计算左侧顶部区域的总高度 = Label高度 + Label下边距 + Emoji容器高度 + Emoji容器下边距 + 控件行高度 + 控件行下边距
+            // 使用 offsetHeight 获取元素的实际渲染高度
+            const totalHeaderHeight =
+                leftLabel.offsetHeight + 8 + // Label 高度 + margin-bottom: 8px
+                toolbarContainer.offsetHeight + 12 + // Emoji 容器高度 + margin-bottom: 12px
+                styleControlsRow.offsetHeight + 16;  // 控件行高度 + margin-bottom: 16px
+
+            // 获取右侧的占位符元素
+            const rightSpacer = document.querySelector('.preview-header-spacer');
+
+            // 将计算出的高度赋值给右侧占位符
+            if (rightSpacer) {
+                // 减去右侧占位符自身的 margin-bottom (24px)，确保红线对齐
+                rightSpacer.style.height = (totalHeaderHeight - 24) + 'px';
             }
         }
-        window.addEventListener('resize', syncHeaderHeights);
-        window.addEventListener('load', syncHeaderHeights);
-        // 初始化运行一次
-        setTimeout(syncHeaderHeights, 100);
 
-        function setFontFamily(font) {
-            currentFont = font;
-            let val = '';
-            if (font === 'songti') val = 'var(--font-songti)';
-            else if (font === 'heiti') val = 'var(--font-heiti)';
-            else if (font === 'noto') val = 'var(--font-noto-serif)';
-            else if (font === 'kaiti') val = 'var(--font-kaiti)';
-            else if (font === 'xiaowei') val = 'var(--font-xiaowei)';
-            else if (font === 'handwriting') val = 'var(--font-handwriting)';
-            document.documentElement.style.setProperty('--active-font-family', val);
-        }
-        setFontFamily('heiti');
-
-        function setFontSize(val) {
-            document.documentElement.style.setProperty('--base-font-size', val + 'px');
-            fontSizeDisplay.innerText = val + 'px';
+        // 渲染 Emoji 按钮列表
+        function renderEmojis() {
+            emojis.forEach((emoji, index) => {
+                const btn = document.createElement('button');
+                btn.className = `emoji-btn ${index === 0 ? 'active' : ''}`; // 默认选中第一个
+                btn.textContent = emoji;
+                btn.onclick = () => selectEmoji(btn, emoji);
+                emojiBar.appendChild(btn);
+            });
         }
 
-        function updateSignature(val) {
-            currentSignature = val;
-            document.querySelectorAll('.signature-display').forEach(el => el.innerText = '@' + val);
+        // 切换选中的 Emoji
+        function selectEmoji(btn, emoji) {
+            document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            footerIcon.textContent = emoji;
         }
 
-        function setTheme(themeName, btnElement) {
-            document.documentElement.setAttribute('data-theme', themeName);
-            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
+        // 更新卡片上的日期
+        function updateDate() {
+            const now = new Date();
+            cardDate.textContent = now.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).replace(/\//g, '.');
         }
 
-        function updateOpacity(val) {
-            currentOpacity = val;
-            opacityValueLabel.innerText = Math.round(val * 100) + '%';
-            document.querySelectorAll('.card-bg-layer').forEach(layer => layer.style.opacity = currentOpacity);
-        }
+        // 设置事件监听器，实现实时预览
+        function setupEventListeners() {
+            // 监听输入框变化
+            titleInput.addEventListener('input', (e) => cardTitle.textContent = e.target.value || '卡片标题');
+            contentInput.addEventListener('input', (e) => cardContent.textContent = e.target.value || '卡片内容...');
+            footerInput.addEventListener('input', (e) => cardFooter.textContent = e.target.value || '@署名');
 
-        function insertEmoji(emoji) {
-            const start = inputText.selectionStart;
-            const end = inputText.selectionEnd;
-            const text = inputText.value;
-            inputText.value = text.substring(0, start) + emoji + text.substring(end);
-            inputText.focus();
-            inputText.dispatchEvent(new Event('input'));
-        }
-
-        function renderCards() {
-            const rawText = inputText.value;
-            if (!rawText.trim()) return;
-
-            const lines = rawText.split('\n');
-            let mainTitle = lines.length > 0 ? lines[0].trim() : "无标题";
-            let paragraphs = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) paragraphs.push(lines[i]);
-            }
-
-            const mode = splitModeSelect.value;
-            const splitCount = parseInt(document.getElementById('splitCount').value) || 2;
-            const totalChars = paragraphs.join('').length;
-            let charsPerPageTarget = 1000;
-
-            if (mode === 'count') {
-                document.getElementById('splitCount').style.display = 'inline-block';
-                charsPerPageTarget = Math.max(100, Math.ceil(totalChars / splitCount));
-            } else {
-                document.getElementById('splitCount').style.display = 'none';
-                if (mode === 'single') charsPerPageTarget = 9999999;
-                else if (mode === 'length') charsPerPageTarget = 1000;
-            }
-
-            let pages = [];
-            let currentPageContent = [];
-            let currentLength = 0;
-
-            paragraphs.forEach((p, index) => {
-                currentPageContent.push(p);
-                currentLength += p.length;
-                if (currentLength >= charsPerPageTarget && index < paragraphs.length - 1) {
-                    pages.push(currentPageContent);
-                    currentPageContent = [];
-                    currentLength = 0;
+            // 监听主题和字体切换
+            themeSelect.addEventListener('change', (e) => {
+                // 移除所有旧主题类名
+                previewCard.classList.remove('card-theme-dark', 'card-theme-blue', 'card-theme-green', 'card-theme-purple');
+                // 如果不是默认主题，添加新主题类名
+                if (e.target.value !== 'default') {
+                    previewCard.classList.add(`card-theme-${e.target.value}`);
                 }
             });
-            if (currentPageContent.length > 0) pages.push(currentPageContent);
-            if (pages.length === 0) pages.push([]);
 
-            let html = '';
-            pages.forEach((pageParas, index) => {
-                let cardContent = "";
-                if (index === 0) {
-                    cardContent += `<div class="paper-title">${escapeHtml(mainTitle)}</div>`;
-                } else {
-                    const suffix = index + 1; 
-                    cardContent += `<div class="paper-title" style="margin-bottom:15px">${escapeHtml(mainTitle)}</div>`;
-                    cardContent += `<div class="paper-subtitle">（续${suffix}）</div>`;
+            fontSelect.addEventListener('change', (e) => {
+                // 移除所有旧字体类名
+                previewCard.classList.remove('font-serif', 'font-mono');
+                // 如果不是默认字体，添加新字体类名
+                if (e.target.value !== 'sans') {
+                    previewCard.classList.add(`font-${e.target.value}`);
                 }
-                
-                pageParas.forEach(p => {
-                    const indentClass = /[\u4e00-\u9fa5]/.test(p) ? 'indent-cn' : 'indent-en';
-                    cardContent += `<div class="paper-p ${indentClass}">${escapeHtml(p)}</div>`;
-                });
-
-                let pageIndicator = pages.length > 1 ? `<div class="page-indicator">第 ${index+1} / ${pages.length} 页</div>` : '';
-                let bgStyle = customBgUrl ? `background-image: url('${customBgUrl}'); opacity: ${currentOpacity};` : `opacity: 0;`;
-
-                html += `
-                <div class="card-container">
-                    <div class="paper-card" id="card-${index}">
-                        ${pageIndicator}
-                        <div class="card-bg-layer" style="${bgStyle}"></div>
-                        <div class="paper-content">${cardContent}</div>
-                        <div class="paper-footer">
-                            Created by <span class="signature-display">@${escapeHtml(currentSignature)}</span> with <a href="https://x.aisai.cc/" target="_blank">x.aisai.cc</a>
-                        </div>
-                    </div>
-                    <div class="card-toolbar">
-                        <button class="mini-btn" onclick="downloadSingle(${index})">💾 保存</button>
-                        <button class="mini-btn" onclick="copySingle(${index}, this)">📋 复制</button>
-                    </div>
-                </div>`;
             });
-            previewContainer.innerHTML = html;
-        }
 
-        async function publishToGallery() {
-            const token = localStorage.getItem('gh_token');
-            const owner = localStorage.getItem('gh_owner');
-            const repo = localStorage.getItem('gh_repo');
-            
-            if(!token) { alert("Token 丢失，请重新登录"); return; }
-            if(!inputText.value.trim()) { alert("内容为空，无法生成"); return; }
+            // [修改] 监听窗口大小变化和 Emoji 栏的任何变化，重新同步高度
+            // 使用 ResizeObserver 监听 toolbar-container 的高度变化是更健壮的方法
+            const resizeObserver = new ResizeObserver(() => {
+                syncHeaderHeights();
+            });
+            resizeObserver.observe(document.querySelector('.toolbar-container'));
+            // 同时监听窗口 resize 作为后备
+            window.addEventListener('resize', syncHeaderHeights);
 
-            const confirmUpload = confirm("确定要将第一张卡片发布到「AI 图片展」吗？");
-            if(!confirmUpload) return;
 
-            toast.style.display = 'block';
-            
-            try {
-                const card = document.getElementById('card-0');
-                const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null });
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = async () => {
-                    const base64Content = reader.result.split(',')[1];
-                    const titleLine = inputText.value.split('\n')[0].trim().substring(0, 10).replace(/[\\/:*?"<>|]/g, "");
-                    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
-                    const filename = `${dateStr}_${titleLine}.png`;
-                    const path = `gallery/${filename}`;
+            // 截图下载功能
+            document.getElementById('downloadBtn').addEventListener('click', async () => {
+                const btn = document.getElementById('downloadBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✨ 生成中...'; // 更新按钮状态
+                btn.disabled = true;
 
-                    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-                    const res = await fetch(url, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Upload gallery: ${filename}`,
-                            content: base64Content,
-                            branch: 'main'
-                        })
+                try {
+                    // 使用 html2canvas 生成图片
+                    const canvas = await html2canvas(previewCard, {
+                        scale: 2, // 2倍清晰度
+                        backgroundColor: null, // 透明背景
+                        logging: false // 关闭日志
                     });
 
-                    if(res.ok) {
-                        alert("✅ 发布成功！\n图片已上传至画廊，稍后即可在 AI 图片展中看到。");
-                    } else {
-                        const err = await res.json();
-                        throw new Error(err.message);
-                    }
-                    toast.style.display = 'none';
-                };
-            } catch(e) {
-                console.error(e);
-                alert("发布失败: " + e.message);
-                toast.style.display = 'none';
-            }
-        }
-
-        function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-        
-        function handleBgUpload(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    customBgUrl = e.target.result;
-                    renderCards();
-                    uploadBtn.querySelector('span').innerText = "✅ 已设置";
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function downloadSingle(index) {
-            const card = document.getElementById(`card-${index}`);
-            html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `card_${index+1}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+                    // 创建下载链接
+                    const link = document.createElement('a');
+                    link.download = `kayler-card-${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (err) {
+                    console.error('生成失败:', err);
+                    alert('生成图片失败，请重试');
+                } finally {
+                    // 恢复按钮状态
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             });
         }
-        function copySingle(index, btn) {
-            const card = document.getElementById(`card-${index}`);
-            const originalText = btn.innerText;
-            btn.innerText = "⏳";
-            html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null }).then(canvas => {
-                canvas.toBlob(blob => {
-                    navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(() => {
-                        btn.innerText = "✅ 已复制";
-                        setTimeout(() => btn.innerText = originalText, 2000);
-                    });
-                });
-            });
-        }
-        async function generateBatch(action) {
-            const cards = document.querySelectorAll('.paper-card');
-            if(action === 'copy') { copySingle(0, document.getElementById('btnCopy')); return; }
-            for(let i=0; i<cards.length; i++) {
-                downloadSingle(i);
-                await new Promise(r => setTimeout(r, 500));
-            }
-        }
 
-        if(inputText.value.trim() === "") inputText.value = "欢迎使用 Kayler 文字卡片生成器！...";
-        inputText.dispatchEvent(new Event('input'));
+        // 启动初始化
+        init();
     </script>
 </body>
+
 </html>
