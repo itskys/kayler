@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v3.3 (修复版)</title>
+    <title>Kayler文字卡片生成器 v3.4</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     
     <style>
-        /* === 全局变量 (保持不变) === */
+        /* === 全局变量 === */
         :root {
             --bg-body: #f2f4f7; 
             --paper-bg: #fdfbf7; 
@@ -35,7 +35,7 @@
             --font-xiaowei: "ZCOOL XiaoWei", serif;
         }
 
-        /* === 主题配置 (保持不变) === */
+        /* === 主题配置 === */
         [data-theme="default"] { --paper-bg: #f9f7f1; --text-color: #2c2c2c; --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px); }
         [data-theme="white"] { --paper-bg: #ffffff; --text-color: #333333; --paper-texture: none; }
         [data-theme="green"] { --paper-bg: #f0f9eb; --text-color: #2b402b; --paper-texture: none; }
@@ -72,16 +72,16 @@
         .toolbar-wrapper {
             background: white; padding: 15px 25px; border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            margin-bottom: 12px; /* 减小间距 */
+            margin-bottom: 12px;
             display: flex; flex-direction: column; gap: 12px;
             width: 100%; max-width: 1200px; box-sizing: border-box;
         }
 
-        /* 2. Emoji 栏独立容器 (新) - 全宽显示 */
+        /* 2. Emoji 栏独立容器 - 全宽显示 */
         .emoji-wrapper {
             background: white; padding: 10px 20px; border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            margin-bottom: 12px; /* 与下方保持间距 */
+            margin-bottom: 12px;
             width: 100%; max-width: 1200px; box-sizing: border-box;
             display: flex; flex-wrap: wrap; align-items: center;
         }
@@ -117,16 +117,6 @@
             flex: 1; min-width: 350px; 
             display: flex; flex-direction: column; 
             align-items: flex-end; /* 强制右对齐 */
-        }
-
-        /* 预览区标题占位 (静态对齐) */
-        .preview-header-spacer {
-            width: 100%; 
-            display: flex; align-items: flex-end; justify-content: flex-end;
-            color: #999; font-size: 12px; font-weight: bold; letter-spacing: 1px;
-            margin-bottom: 10px; 
-            padding-bottom: 5px;
-            height: 30px; /* 给一个固定高度，稍微留白 */
         }
 
         /* 工具栏通用样式 */
@@ -186,7 +176,6 @@
 
         .card-container {
             width: 100%; 
-            /* [重要修改] 将卡片最大宽度增加，以便向左拉宽 */
             max-width: 680px; 
             display: flex; flex-direction: column; gap: 10px;
         }
@@ -238,7 +227,6 @@
             .tool-group { width: 100%; justify-content: space-between; }
             .tool-group:first-child { justify-content: flex-start; }
             .preview-area { align-items: center; width: 100%; }
-            .preview-header-spacer { display: none; }
             .card-container { width: 100%; max-width: 100%; }
         }
     </style>
@@ -395,8 +383,6 @@
         </div>
 
         <div class="preview-area" id="previewContainerWrapper">
-            <div class="preview-header-spacer" id="previewHeaderSpacer">👀 实时预览效果</div>
-            
             <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;">
                 </div>
         </div>
@@ -414,8 +400,6 @@
         const splitCountInput = document.getElementById('splitCount');
         const btnPublish = document.getElementById('btnPublish');
         const toast = document.getElementById('loading-toast');
-
-        // 已删除 syncHeaderHeights 逻辑，因 Emoji 栏已移出左侧，现在的对齐非常自然 (文本框顶部 vs 预览标题)
 
         let customBgUrl = null;
         let currentOpacity = 0.15; 
