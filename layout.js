@@ -1,4 +1,4 @@
-// === Kayler 全站核心脚本 v6.0 (UI统一 + 权限中心) ===
+// === Kayler 全站核心脚本 v5.2 (修复导航名称) ===
 
 document.addEventListener('DOMContentLoaded', () => {
     checkMagicLogin(); // 1. 检查魔法链接
@@ -21,11 +21,16 @@ function checkMagicLogin() {
                 localStorage.setItem('gh_owner', config.o || '');
                 localStorage.setItem('gh_repo', config.r || '');
                 alert(`🎉 欢迎回来！\n管理员身份验证成功。\n全站功能已解锁。`);
+                // 清理 URL
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.replaceState({path:newUrl}, '', newUrl);
+                // 广播登录成功事件
                 window.dispatchEvent(new Event('auth-updated'));
             }
-        } catch (e) { console.error('Magic link error', e); }
+        } catch (e) {
+            console.error('Magic link error', e);
+            alert('❌ 链接无效');
+        }
     }
 }
 
@@ -40,7 +45,8 @@ function injectStyles() {
             background: white !important; border-bottom: 1px solid #eee !important;
             height: 50px !important; width: 100% !important;
             display: flex !important; justify-content: center !important;
-            position: relative !important; z-index: 1000 !important; flex-shrink: 0 !important;
+            position: relative !important; z-index: 1000 !important;
+            flex-shrink: 0 !important;
         }
         .global-nav-inner {
             width: 94%; max-width: 1600px; display: flex; justify-content: flex-end; align-items: center; gap: 20px;
@@ -62,6 +68,7 @@ function injectStyles() {
             padding: 0 !important; height: 36px !important; display: flex !important; align-items: center !important; justify-content: center !important;
             font-size: 12px !important; border-top: 1px solid #ddd !important;
         }
+        
         .footer-admin-link { margin-left: 10px; color: #ccc; cursor: pointer; text-decoration: none; transition: 0.2s; }
         .footer-admin-link:hover { color: var(--brand-brown); text-decoration: underline; }
 
@@ -75,24 +82,34 @@ function injectStyles() {
             box-shadow: 0 10px 40px rgba(0,0,0,0.2); font-family: var(--font-stack); position: relative;
         }
         .gsm-close { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: #999; }
+        .gsm-close:hover { color: #333; }
         .gsm-field { margin-bottom: 15px; }
         .gsm-label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #555; }
         .gsm-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         .gsm-btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .gsm-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .gsm-btn-primary { background: #8b5e3c; color: white; margin-left: 10px; }
         .gsm-btn-magic { width: 100%; background: linear-gradient(135deg, #667eea, #764ba2); color: white; margin-top: 20px; }
         
+        /* 移动端适配 */
         @media (max-width: 768px) {
-            .global-nav-inner { justify-content: flex-start !important; overflow-x: auto !important; padding: 0 10px !important; gap: 15px !important; }
+            .global-nav-inner {
+                justify-content: flex-start !important; overflow-x: auto !important; white-space: nowrap !important;
+                padding: 0 10px !important; gap: 15px !important; width: 100% !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            .global-nav-inner::-webkit-scrollbar { display: none; }
             .global-nav-link { font-size: 14px !important; flex-shrink: 0 !important; }
         }
     `;
     document.head.appendChild(style);
 }
 
-// === 3. 注入导航栏 (核心修改：AI画廊) ===
+// === 3. 注入导航栏 ===
 function injectHeader() {
     const existingNav = document.querySelector('nav.top-nav');
+    
+    // 创建新的导航结构 (修改了此处名称)
     const navHTML = `
         <div class="global-nav-inner">
             <a href="index.html" class="global-nav-link">🏠 卡片生成器</a>
@@ -102,8 +119,11 @@ function injectHeader() {
             <a href="https://github.com/itskys" target="_blank" class="global-nav-link">📩 联系博主</a>
         </div>
     `;
-    if (existingNav) { existingNav.innerHTML = navHTML; existingNav.classList.add('global-top-nav'); } 
-    else {
+
+    if (existingNav) {
+        existingNav.innerHTML = navHTML;
+        existingNav.classList.add('global-top-nav'); 
+    } else {
         const nav = document.createElement('nav');
         nav.className = 'top-nav global-top-nav';
         nav.innerHTML = navHTML;
@@ -111,27 +131,38 @@ function injectHeader() {
     }
 }
 
-// === 4. 注入页脚 ===
+// === 4. 注入页脚 (含管理员入口) ===
 function injectFooter() {
     const existingFooter = document.querySelector('footer');
     const isEditor = window.location.pathname.includes('editor'); 
     const footerClass = isEditor ? 'global-footer compact' : 'global-footer';
+    
+    // 检查登录状态
     const isLogged = localStorage.getItem('gh_token');
     const adminText = isLogged ? "✅ 管理员已登录" : "⚙️ 管理员配置";
     
-    const footerContent = `<p>&copy; 2025 Kaylerris 保留所有权利.<a onclick="openGlobalSettings()" class="footer-admin-link" id="footerAdminLink">${adminText}</a></p>`;
+    const footerContent = `
+        <p>
+            &copy; 2025 Kaylerris 保留所有权利.
+            <a onclick="openGlobalSettings()" class="footer-admin-link" id="footerAdminLink">${adminText}</a>
+        </p>
+    `;
 
-    if (existingFooter) { existingFooter.className = footerClass; existingFooter.innerHTML = footerContent; } 
-    else {
+    if (existingFooter) {
+        existingFooter.className = footerClass;
+        existingFooter.innerHTML = footerContent;
+    } else {
         const footer = document.createElement('footer');
-        footer.className = footerClass; footer.innerHTML = footerContent;
+        footer.className = footerClass;
+        footer.innerHTML = footerContent;
         document.body.appendChild(footer);
     }
 }
 
-// === 5. 注入设置弹窗 ===
+// === 5. 注入设置弹窗 (全站通用) ===
 function injectAuthModal() {
     if (document.getElementById('global-settings-modal')) return;
+
     const modal = document.createElement('div');
     modal.id = 'global-settings-modal';
     modal.onclick = (e) => { if(e.target === modal) closeGlobalSettings(); };
@@ -139,58 +170,100 @@ function injectAuthModal() {
         <div class="gsm-content">
             <span class="gsm-close" onclick="closeGlobalSettings()">&times;</span>
             <h3 style="margin-top:0; color:#333;">⚙️ 全站配置</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:20px;">配置 GitHub Token 解锁高级功能。</p>
-            <div class="gsm-field"><label class="gsm-label">GitHub 用户名</label><input type="text" id="gsm-owner" class="gsm-input" placeholder="itskys"></div>
-            <div class="gsm-field"><label class="gsm-label">仓库名</label><input type="text" id="gsm-repo" class="gsm-input" placeholder="kayler"></div>
-            <div class="gsm-field"><label class="gsm-label">Token</label><input type="password" id="gsm-token" class="gsm-input" placeholder="********"></div>
+            <p style="font-size:12px; color:#666; margin-bottom:20px;">配置 GitHub Token 以解锁编辑器发布、画廊无限加载等功能。</p>
+            
+            <div class="gsm-field">
+                <label class="gsm-label">GitHub 用户名 (Owner)</label>
+                <input type="text" id="gsm-owner" class="gsm-input" placeholder="例如: itskys">
+            </div>
+            <div class="gsm-field">
+                <label class="gsm-label">仓库名 (Repo)</label>
+                <input type="text" id="gsm-repo" class="gsm-input" placeholder="例如: kayler">
+            </div>
+            <div class="gsm-field">
+                <label class="gsm-label">Token (需 repo 权限)</label>
+                <input type="password" id="gsm-token" class="gsm-input" placeholder="******** (留空不修改)">
+            </div>
+            
             <div style="text-align:right; border-bottom:1px solid #eee; padding-bottom:20px;">
                 <button onclick="closeGlobalSettings()" class="gsm-btn" style="background:#f5f5f5; color:#666;">取消</button>
                 <button onclick="saveGlobalSettings()" class="gsm-btn gsm-btn-primary">保存配置</button>
             </div>
-            <div style="margin-top:15px;"><button class="gsm-btn gsm-btn-magic" onclick="generateGlobalMagicLink()">⚡ 生成跨设备登录链接</button></div>
-        </div>`;
+
+            <div style="margin-top:15px;">
+                <button class="gsm-btn gsm-btn-magic" onclick="generateGlobalMagicLink()">⚡ 生成跨设备登录链接</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
 }
 
-// === 全局函数 ===
+// === 公共 API 供页面调用 ===
 window.openGlobalSettings = function() {
     document.getElementById('gsm-owner').value = localStorage.getItem('gh_owner') || 'itskys';
     document.getElementById('gsm-repo').value = localStorage.getItem('gh_repo') || 'kayler';
-    document.getElementById('gsm-token').value = '';
-    document.getElementById('gsm-token').placeholder = localStorage.getItem('gh_token') ? "******** (已配置)" : "ghp_...";
+    const token = localStorage.getItem('gh_token');
+    const tokenInput = document.getElementById('gsm-token');
+    if(token) { tokenInput.placeholder = "******** (已配置)"; tokenInput.value = ""; }
+    else { tokenInput.placeholder = "github_pat_..."; tokenInput.value = ""; }
     document.getElementById('global-settings-modal').style.display = 'flex';
 }
-window.closeGlobalSettings = function() { document.getElementById('global-settings-modal').style.display = 'none'; }
+
+window.closeGlobalSettings = function() {
+    document.getElementById('global-settings-modal').style.display = 'none';
+}
+
 window.saveGlobalSettings = function() {
     const owner = document.getElementById('gsm-owner').value.trim();
     const repo = document.getElementById('gsm-repo').value.trim();
     const token = document.getElementById('gsm-token').value.trim();
+    
     if(owner) localStorage.setItem('gh_owner', owner);
     if(repo) localStorage.setItem('gh_repo', repo);
+    // 仅当输入新Token时才保存
     if(token) localStorage.setItem('gh_token', token);
     
-    alert('✅ 配置已保存！');
+    alert('✅ 配置已保存！全站生效。');
     closeGlobalSettings();
+    
+    // 更新页脚状态
     const link = document.getElementById('footerAdminLink');
     if(link) link.innerText = "✅ 管理员已登录";
+
+    // 触发自定义事件，通知页面刷新状态
     window.dispatchEvent(new Event('auth-updated'));
+    
+    // 如果是画廊或提示词页，刷新数据
+    if(typeof fetchRepoData === 'function') fetchRepoData();
+    if(typeof checkAdminStatus === 'function') checkAdminStatus();
+    
+    // 刷新页面以确保所有状态同步
     window.location.reload();
 }
+
 window.generateGlobalMagicLink = function() {
     const o = document.getElementById('gsm-owner').value.trim() || localStorage.getItem('gh_owner');
     const r = document.getElementById('gsm-repo').value.trim() || localStorage.getItem('gh_repo');
     const t = document.getElementById('gsm-token').value.trim() || localStorage.getItem('gh_token');
+    
     if(!t) { alert("请先保存 Token！"); return; }
+    
     const config = { o, r, t };
     const encoded = encodeURIComponent(btoa(JSON.stringify(config)));
     const magicUrl = `${window.location.origin}/index.html?gh_key=${encoded}`;
-    navigator.clipboard.writeText(magicUrl).then(() => alert("🔗 链接已复制！"));
+    
+    navigator.clipboard.writeText(magicUrl).then(() => {
+        alert("🔗 链接已复制！\n发送到任意设备打开即可一键登录全站。");
+    });
 }
+
 function highlightCurrentNav() {
     const path = window.location.pathname;
     const links = document.querySelectorAll('.global-nav-link');
     links.forEach(link => {
         const href = link.getAttribute('href');
-        if (path.includes(href) || (path === '/' && href === 'index.html')) link.classList.add('active');
+        if (path.includes(href) || (path === '/' && href === 'index.html')) {
+            link.classList.add('active');
+        }
     });
 }

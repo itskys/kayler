@@ -6,7 +6,7 @@
     <title>AI 画廊 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
-    <script src="layout.js?v=5.1"></script>
+    <script src="layout.js?v=6.0"></script>
 
     <style>
         :root {
@@ -24,35 +24,29 @@
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* === 控制面板 (Layout Refined v12.5) === */
+        /* === 控制面板修复 === */
         .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
             display: flex; flex-direction: column; gap: 15px; align-items: center;
         }
 
-        /* 1. 独立搜索行 (彻底解决重叠) */
-        .search-row {
-            width: 100%; max-width: 600px; position: relative;
-        }
+        /* 第一行：搜索框 (独立一行，避免挤压) */
+        .search-row { width: 100%; max-width: 600px; position: relative; }
         .search-input {
             width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 50px;
             font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            height: 42px; /* 稍微加高，更显大气 */
-            box-sizing: border-box; /* 关键：防止padding撑大 */
+            height: 40px; box-sizing: border-box;
         }
         .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15); }
-        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; font-size: 16px; }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
 
-        /* 2. 混合工具行 (按钮 + 标签) */
+        /* 第二行：按钮 + 标签 (混合排列) */
         .tools-row {
             display: flex; flex-wrap: wrap; justify-content: center; align-items: center; 
             gap: 12px; width: 100%;
         }
 
-        /* 按钮组 */
-        .btn-group { 
-            display: flex; gap: 8px; flex-shrink: 0; /* 防止压缩 */
-        }
+        .btn-group { display: flex; gap: 10px; flex-shrink: 0; }
         .btn-pill {
             padding: 0 16px; height: 32px; border-radius: 50px; border: 1px solid #ddd;
             background: white; color: #555; cursor: pointer; font-size: 13px;
@@ -62,18 +56,19 @@
         .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
+        /* 分割线 */
+        .v-divider { width: 1px; height: 20px; background: #ddd; display: none; }
+        @media (min-width: 600px) { .v-divider { display: block; } }
+
         /* 标签云 */
-        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; align-items: center; }
+        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .filter-tag {
-            padding: 3px 10px; background: white; border: 1px solid #eee; border-radius: 15px;
-            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none; height: 32px; display: flex; align-items: center; /* 高度与按钮一致 */
+            padding: 4px 12px; background: white; border: 1px solid #eee; border-radius: 15px;
+            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
+            height: 32px; display: flex; align-items: center; box-sizing: border-box;
         }
         .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
         .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
-
-        /* 分割线 (可选，用于区分按钮和标签) */
-        .v-divider { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: none; }
-        @media (min-width: 768px) { .v-divider { display: block; } }
 
         /* 瀑布流 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
@@ -93,8 +88,8 @@
         .page-btn.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; }
+        #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
         #upload-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 30px; font-size: 14px; z-index: 9999; display: none; }
 
         /* 模态框 */
@@ -104,21 +99,13 @@
         .modal.preview-mode img, .modal.preview-mode video { max-width: 90%; max-height: 75vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         
         .modal-footer-area { margin-top: 20px; text-align: center; color: #ddd; max-width: 80%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-        .modal-filename { font-size: 14px; font-family: monospace; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; user-select: text; display: flex; align-items: center; gap: 8px; }
-        .copy-icon { cursor: pointer; opacity: 0.7; transition: 0.2s; font-size: 16px; }
+        .modal-filename { font-size: 14px; font-family: monospace; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; user-select: text; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .copy-icon { opacity: 0.7; transition: 0.2s; font-size: 16px; }
         .copy-icon:hover { opacity: 1; transform: scale(1.1); }
         
-        .prompt-link-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--brand-brown); color: white; text-decoration: none;
-            padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
-            transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        .prompt-link-btn:hover { background: var(--brand-brown-hover); transform: translateY(-2px); }
-
         .btn-delete { position: absolute; top: 30px; left: 30px; background: rgba(255, 0, 0, 0.7); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; display: none; z-index: 2001; }
 
-        /* 配置/上传弹窗 */
+        /* 上传弹窗 */
         .modal-overlay-light { background: rgba(0,0,0,0.5); }
         .config-box { background: white; width: 400px; max-width: 90%; padding: 25px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .config-title { font-size: 18px; font-weight: bold; margin: 0; }
@@ -177,15 +164,15 @@
     
     <div id="imageModal" class="modal preview-mode" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
+        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除</button>
         
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
         
         <div class="modal-footer-area">
-            <div class="modal-filename">
+            <div class="modal-filename" onclick="copyFilename()" title="点击复制">
                 <span id="modalFilenameText">Filename.png</span>
-                <span class="copy-icon" onclick="copyFilename()" title="复制文件名">📋</span>
+                <span class="copy-icon">📋</span>
             </div>
             <div id="promptLinkContainer"></div>
         </div>
@@ -205,16 +192,6 @@
         </div>
     </div>
 
-    <div id="settingsModal" class="modal modal-overlay-light" onclick="if(event.target===this) closeLocalSettings()">
-        <div class="config-box">
-            <h3 class="config-title">⚙️ 画廊配置</h3>
-            <div class="config-row"><span class="config-label">GitHub Token</span><input type="password" id="confToken" class="config-input"></div>
-            <div class="config-row"><span class="config-label">用户名</span><input type="text" id="confOwner" class="config-input"></div>
-            <div class="config-row"><span class="config-label">仓库名</span><input type="text" id="confRepo" class="config-input"></div>
-            <div class="config-actions"><button class="btn-cancel" onclick="closeLocalSettings()">取消</button><button class="btn-confirm" onclick="saveLocalSettings()">💾 保存并刷新</button></div>
-        </div>
-    </div>
-
     <script>
         const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'gallery', branch: 'main' };
         const ITEMS_PER_PAGE = 30;
@@ -222,264 +199,123 @@
 
         let allImages = [], filteredImages = [], currentPage = 1, pendingFiles = [], currentImgSHA = null, currentImgName = null, currentTag = 'all';
 
-        // DOM Elements
-        const galleryContainer = document.getElementById('galleryContainer');
-        const loadingState = document.getElementById('loadingState');
-        const pagination = document.getElementById('pagination');
-        const tagsContainer = document.getElementById('tagsContainer');
-        const searchInput = document.getElementById('searchInput');
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImg');
-        const modalVideo = document.getElementById('modalVideo');
-        const modalFilenameText = document.getElementById('modalFilenameText');
-        const promptLinkContainer = document.getElementById('promptLinkContainer');
-        const btnUpload = document.getElementById('btnUpload');
-        const btnDelete = document.getElementById('btnDelete');
-        const toast = document.getElementById('upload-toast');
-        const uploadModal = document.getElementById('uploadConfigModal');
-        const settingsModal = document.getElementById('settingsModal');
-
+        const el = (id) => document.getElementById(id); 
         function checkAdmin() {
-            if(localStorage.getItem('gh_token')) { btnUpload.style.display='inline-flex'; btnDelete.dataset.auth="true"; }
-            else { btnUpload.style.display='none'; btnDelete.style.display='none'; btnDelete.dataset.auth="false"; }
+            if(localStorage.getItem('gh_token')) { el('btnUpload').style.display='inline-flex'; el('btnDelete').dataset.auth="true"; }
+            else { el('btnUpload').style.display='none'; el('btnDelete').style.display='none'; el('btnDelete').dataset.auth="false"; }
         }
         window.addEventListener('auth-updated', checkAdmin);
 
         async function initGallery() {
-            loadingState.style.display = 'flex'; galleryContainer.innerHTML = ''; pagination.innerHTML = ''; tagsContainer.innerHTML = '';
-            const token = localStorage.getItem('gh_token');
-            const headers = token ? { 'Authorization': `token ${token}` } : {};
-            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
-
+            el('loadingState').style.display='block'; el('galleryContainer').innerHTML=''; el('pagination').innerHTML=''; el('tagsContainer').innerHTML='';
+            const token=localStorage.getItem('gh_token'), headers=token?{'Authorization':`token ${token}`}:{};
+            const owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
             try {
                 document.title = "AI 画廊 - Kayler";
-                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
-                const response = await fetch(url, { headers });
-                if (!response.ok) throw new Error((await response.text()));
-                
-                const files = await response.json();
-                const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4'];
-                allImages = files.filter(file => validExtensions.some(ext => file.name.toLowerCase().endsWith(ext)));
-                allImages.sort((a, b) => b.name.localeCompare(a.name)); 
-
-                if (allImages.length === 0) { loadingState.innerHTML = "暂无内容"; return; }
-                
-                generateTags();
-                filteredImages = [...allImages];
-                renderPage(1);
-                loadingState.style.display = 'none';
-            } catch (error) {
-                loadingState.innerHTML = `<span style="color:red">⚠️ 加载失败: ${error.message}</span><br><br><button class="btn-pill" onclick="initGallery()">重试</button>`;
-            }
+                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, {headers});
+                if(!res.ok) throw new Error(await res.text());
+                const files = await res.json();
+                allImages = files.filter(f=>/\.(jpg|jpeg|png|gif|webp|mp4)$/i.test(f.name)).sort((a,b)=>b.name.localeCompare(a.name));
+                if(allImages.length===0){ el('loadingState').innerText="暂无内容"; return; }
+                generateTags(); filteredImages=[...allImages]; renderPage(1); el('loadingState').style.display='none';
+            } catch(e){ el('loadingState').innerHTML=`<span style="color:red">加载失败: ${e.message}</span><br><button onclick="initGallery()">重试</button>`; }
         }
 
         function generateTags() {
-            const tagCounts = {};
-            allImages.forEach(img => {
-                const cleanName = img.name.replace(/^\d{14}_/, '');
-                const parts = cleanName.split(/_| /);
-                let tag = null;
-                for (let part of parts) {
-                    const lower = part.toLowerCase();
-                    if (lower.length > 2 && !lower.includes('.') && !TAG_BLOCKLIST.includes(lower) && isNaN(part)) {
-                        tag = part; break;
-                    }
-                }
-                if (tag) {
-                    tag = tag.charAt(0).toUpperCase() + tag.slice(1);
-                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                }
+            const counts={}; allImages.forEach(img=>{
+                const parts=img.name.replace(/^\d{14}_/,'').split(/_| /);
+                for(let p of parts){ if(p.length>2 && !TAG_BLOCKLIST.includes(p.toLowerCase()) && isNaN(p)){ 
+                    let t=p.charAt(0).toUpperCase()+p.slice(1); counts[t]=(counts[t]||0)+1; break; 
+                }}
             });
-            const minCount = allImages.length < 10 ? 1 : 2;
-            const sortedTags = Object.keys(tagCounts).filter(t => tagCounts[t] >= minCount).sort((a,b) => tagCounts[b] - tagCounts[a]).slice(0, 15);
-            let html = `<div class="filter-tag active" onclick="filterByTag('all', this)">全部 (${allImages.length})</div>`;
-            sortedTags.forEach(tag => { html += `<div class="filter-tag" onclick="filterByTag('${tag}', this)">${tag} (${tagCounts[tag]})</div>`; });
-            tagsContainer.innerHTML = html;
+            const sorted = Object.keys(counts).filter(t=>counts[t]>= (allImages.length<10?1:2)).sort((a,b)=>counts[b]-counts[a]).slice(0,15);
+            let html=`<div class="filter-tag active" onclick="filterTag('all',this)">全部</div>`;
+            sorted.forEach(t=>html+=`<div class="filter-tag" onclick="filterTag('${t}',this)">${t}</div>`);
+            el('tagsContainer').innerHTML=html;
         }
-
-        function filterByTag(tag, btnElement) {
-            currentTag = tag;
-            document.querySelectorAll('.filter-tag').forEach(el => el.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-            if (tag === 'all') { filteredImages = [...allImages]; } 
-            else { filteredImages = allImages.filter(img => img.name.toLowerCase().includes(tag.toLowerCase())); }
-            searchInput.value = ''; renderPage(1);
-        }
-
-        function handleSearch() {
-            const query = searchInput.value.toLowerCase();
-            document.querySelectorAll('.filter-tag').forEach(el => el.classList.remove('active'));
-            if (!query) { filterByTag('all', document.querySelector('.filter-tag')); return; }
-            filteredImages = allImages.filter(img => img.name.toLowerCase().includes(query));
+        function filterTag(t,btn){ 
+            document.querySelectorAll('.filter-tag').forEach(e=>e.classList.remove('active')); btn.classList.add('active');
+            filteredImages = t==='all' ? [...allImages] : allImages.filter(i=>i.name.toLowerCase().includes(t.toLowerCase()));
             renderPage(1);
         }
-
-        function renderPage(page) {
-            currentPage = page;
-            const start = (page - 1) * ITEMS_PER_PAGE;
-            const end = start + ITEMS_PER_PAGE;
-            renderImages(filteredImages.slice(start, end));
-            renderPagination();
-            if (page > 1) document.querySelector('header').scrollIntoView({ behavior: 'smooth' });
+        function handleSearch(){ 
+            const q=el('searchInput').value.toLowerCase();
+            filteredImages = allImages.filter(i=>i.name.toLowerCase().includes(q)); renderPage(1);
         }
-
-        function renderImages(images) {
-            galleryContainer.innerHTML = '';
-            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
-            if(images.length === 0) { galleryContainer.innerHTML = '<div style="text-align:center; color:#ccc; width:100%;">未找到匹配图片</div>'; return; }
-
-            images.forEach(img => {
-                const title = img.name.replace(/^\d{14}_/, "").replace(/\.[^/.]+$/, "").replace(/_/g, " "); 
-                const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
-                const item = document.createElement('div');
-                item.className = 'gallery-item';
-                let mediaTag = `<img src="${rawUrl}" alt="${title}" loading="lazy">`;
-                let type = 'image';
-                if(img.name.endsWith('.mp4')) {
-                    mediaTag = `<video src="${rawUrl}" muted autoplay loop style="width:100%; display:block;"></video>`;
-                    type = 'video';
-                }
-                item.onclick = () => openModal(rawUrl, title, type, img.sha, img.name);
-                item.innerHTML = `${mediaTag}<div class="item-info"><div class="item-title">${title}</div><div class="item-meta"><span>Kayler AI</span><span>📥 查看</span></div></div>`;
-                galleryContainer.appendChild(item);
+        function renderPage(p){
+            currentPage=p; const start=(p-1)*ITEMS_PER_PAGE, pageImgs=filteredImages.slice(start, start+ITEMS_PER_PAGE);
+            let html=''; const owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
+            if(pageImgs.length===0) html='<div style="text-align:center;width:100%;color:#ccc">无结果</div>';
+            pageImgs.forEach(img=>{
+                const title=img.name.replace(/^\d{14}_/,'').replace(/\.[^.]+$/,'').replace(/_/g,' ');
+                const url=`https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
+                const media = img.name.endsWith('.mp4') ? `<video src="${url}" muted autoplay loop style="width:100%;display:block;"></video>` : `<img src="${url}" loading="lazy">`;
+                html+=`<div class="gallery-item" onclick="openModal('${url}','${title}','${img.name.endsWith('.mp4')?'video':'image'}','${img.sha}','${img.name}')">${media}<div class="item-info"><div class="item-title">${title}</div></div></div>`;
             });
+            el('galleryContainer').innerHTML=html; renderPagination();
+        }
+        function renderPagination(){
+            const total=Math.ceil(filteredImages.length/ITEMS_PER_PAGE);
+            if(total<=1){ el('pagination').innerHTML=''; return; }
+            let html=`<button class="page-btn" onclick="renderPage(${currentPage-1})" ${currentPage===1?'disabled':''}>←</button>`;
+            for(let i=1;i<=total;i++){ if(i===1||i===total||(i>=currentPage-2 && i<=currentPage+2)) html+=`<button class="page-btn ${i===currentPage?'active':''}" onclick="renderPage(${i})">${i}</button>`; }
+            html+=`<button class="page-btn" onclick="renderPage(${currentPage+1})" ${currentPage===total?'disabled':''}>→</button>`;
+            el('pagination').innerHTML=html;
         }
 
-        function renderPagination() {
-            pagination.innerHTML = '';
-            const totalPages = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
-            if (totalPages <= 1) return;
-            const prevBtn = createPageBtn('←', () => renderPage(currentPage - 1));
-            prevBtn.disabled = currentPage === 1; pagination.appendChild(prevBtn);
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-                    const btn = createPageBtn(i, () => renderPage(i));
-                    if (i === currentPage) btn.classList.add('active');
-                    pagination.appendChild(btn);
-                } else if ((i === currentPage - 3 && currentPage > 4) || (i === currentPage + 3 && currentPage < totalPages - 3)) {
-                    const span = document.createElement('span'); span.innerText = '...'; span.style.color = '#ccc'; pagination.appendChild(span);
-                }
-            }
-            const nextBtn = createPageBtn('→', () => renderPage(currentPage + 1));
-            nextBtn.disabled = currentPage === totalPages; pagination.appendChild(nextBtn);
+        function openModal(src,cap,type,sha,name){
+            currentImgSHA=sha; currentImgName=name; el('modalFilenameText').innerText=name.replace(/^\d{14}_/,'');
+            if(el('btnDelete').dataset.auth==='true') { el('btnDelete').style.display='block'; el('btnDelete').disabled=false; el('btnDelete').innerText='🗑️ 删除'; }
+            el('imageModal').classList.add('active');
+            if(type==='video'){ el('modalImg').style.display='none'; el('modalVideo').style.display='block'; el('modalVideo').src=src; }
+            else { el('modalVideo').style.display='none'; el('modalImg').style.display='block'; el('modalImg').src=src; }
+            
+            const coreName = name.replace(/^\d{14}_/,'').split(/_| /).find(p=>p.length>1 && isNaN(p));
+            el('promptLinkContainer').innerHTML = coreName ? `<a href="promptmaster.html?search=${encodeURIComponent(coreName)}" target="_blank" class="prompt-link-btn">🔗 查看提示词</a>` : '';
         }
-
-        function createPageBtn(text, onClick) {
-            const btn = document.createElement('button'); btn.className = 'page-btn'; btn.innerText = text; btn.onclick = onClick; return btn;
-        }
-
-        function openModal(src, caption, type, sha, filename) {
-            currentImgSHA = sha; currentImgName = filename;
-            if (btnDelete.dataset.auth === "true") { btnDelete.style.display = "block"; btnDelete.innerText = "🗑️ 删除此图"; btnDelete.disabled = false; } 
-            else { btnDelete.style.display = "none"; }
-            
-            modal.classList.add('active');
-            if(type === 'video') { modalImg.style.display='none'; modalVideo.style.display='block'; modalVideo.src=src; modalVideo.play(); }
-            else { modalVideo.style.display='none'; modalVideo.pause(); modalImg.style.display='block'; modalImg.src=src; }
-            
-            const cleanName = filename.replace(/^\d{14}_/, '');
-            modalFilenameText.innerText = cleanName;
-            
-            const parts = cleanName.split(/_| /);
-            let coreName = null;
-            for(let p of parts) { if(p.length>1 && isNaN(p) && !TAG_BLOCKLIST.includes(p.toLowerCase())) { coreName = p; break; } }
-            
-            if(coreName) {
-                promptLinkContainer.innerHTML = `<a href="promptmaster.html?search=${encodeURIComponent(coreName)}" target="_blank" class="prompt-link-btn">🔗 所用提示词</a>`;
-            } else { promptLinkContainer.innerHTML = ''; }
-        }
-        function closeModal() { modal.classList.remove('active'); modalVideo.pause(); }
-        function copyFilename() { navigator.clipboard.writeText(modalFilenameText.innerText).then(()=>alert("文件名已复制")); }
-
-        async function deleteCurrentImage() {
-            if(!confirm(`确定要永久删除此图片吗？`)) return;
-            const token = localStorage.getItem('gh_token');
-            btnDelete.innerText = "⏳..."; btnDelete.disabled = true;
+        function closeModal(){ el('imageModal').classList.remove('active'); el('modalVideo').pause(); }
+        function copyFilename(){ navigator.clipboard.writeText(el('modalFilenameText').innerText).then(()=>alert('文件名已复制')); }
+        
+        async function deleteCurrentImage(){
+            if(!confirm('确定永久删除？')) return;
+            const token=localStorage.getItem('gh_token'), btn=el('btnDelete'); btn.innerText='⏳...'; btn.disabled=true;
             try {
-                const url = `https://api.github.com/repos/${localStorage.getItem('gh_owner')||REPO_CONFIG.owner}/${localStorage.getItem('gh_repo')||REPO_CONFIG.repo}/contents/${REPO_CONFIG.path}/${currentImgName}`;
-                await fetch(url, { method: 'DELETE', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Delete ${currentImgName}`, sha: currentImgSHA, branch: 'main' }) });
-                alert("✅ 删除成功"); closeModal(); setTimeout(initGallery, 1000); 
-            } catch(e) { alert("删除失败: " + e.message); btnDelete.disabled = false; }
+                const url=`https://api.github.com/repos/${localStorage.getItem('gh_owner')||REPO_CONFIG.owner}/${localStorage.getItem('gh_repo')||REPO_CONFIG.repo}/contents/${REPO_CONFIG.path}/${currentImgName}`;
+                await fetch(url, {method:'DELETE', headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({message:`Del ${currentImgName}`, sha:currentImgSHA, branch:'main'})});
+                alert('删除成功'); closeModal(); setTimeout(initGallery,1000);
+            } catch(e){ alert('失败:'+e.message); btn.disabled=false; }
         }
 
-        function openLocalSettings() {
-            document.getElementById('confToken').value = localStorage.getItem('gh_token') || '';
-            document.getElementById('confOwner').value = localStorage.getItem('gh_owner') || 'itskys';
-            document.getElementById('confRepo').value = localStorage.getItem('gh_repo') || 'kayler';
-            settingsModal.classList.add('active');
-        }
-        function closeLocalSettings() { settingsModal.classList.remove('active'); }
-        function saveLocalSettings() {
-            localStorage.setItem('gh_token', document.getElementById('confToken').value.trim());
-            localStorage.setItem('gh_owner', document.getElementById('confOwner').value.trim());
-            localStorage.setItem('gh_repo', document.getElementById('confRepo').value.trim());
-            closeLocalSettings(); checkAdmin(); initGallery();
-        }
+        // Functions reused from layout.js settings
+        function openLocalSettings(){ window.openGlobalSettings(); }
+        
+        function triggerUpload(){ el('imgUploadInput').click(); }
+        function prepareUpload(inp){ if(inp.files.length){ pendingFiles=Array.from(inp.files); el('fileCount').innerText=pendingFiles.length; el('uploadConfigModal').classList.add('active'); inp.value=''; } }
+        function closeUploadModal(){ el('uploadConfigModal').classList.remove('active'); }
+        function toggleExampleFields(){ el('exampleFields').style.display = el('isPromptExample').checked ? 'flex' : 'none'; updatePrev(); }
+        function updatePrev(){ const c=el('coreNameInput').value||'Name', v=el('verNameInput').value; el('filenamePreview').innerText=`2025..._${c}${v?`_${v}`:''}_orig.png`; }
+        el('coreNameInput').oninput=updatePrev; el('verNameInput').oninput=updatePrev;
 
-        function triggerUpload() { document.getElementById('imgUploadInput').click(); }
-        function prepareUpload(input) {
-            if(input.files.length===0) return;
-            pendingFiles = Array.from(input.files);
-            document.getElementById('fileCount').innerText = pendingFiles.length;
-            document.getElementById('isPromptExample').checked = false;
-            document.getElementById('coreNameInput').value = '';
-            document.getElementById('verNameInput').value = '';
-            toggleExampleFields();
-            uploadModal.classList.add('active'); input.value='';
-        }
-        function toggleExampleFields() {
-            const isChecked = document.getElementById('isPromptExample').checked;
-            document.getElementById('exampleFields').style.display = isChecked ? 'flex' : 'none';
-            updateFilenamePreview();
-        }
-        function updateFilenamePreview() {
-            const core = document.getElementById('coreNameInput').value || 'Name';
-            const ver = document.getElementById('verNameInput').value;
-            const verStr = ver ? `_${ver}` : '';
-            document.getElementById('filenamePreview').innerText = `2025..._${core}${verStr}_原名.png`;
-        }
-        document.getElementById('coreNameInput').addEventListener('input', updateFilenamePreview);
-        document.getElementById('verNameInput').addEventListener('input', updateFilenamePreview);
-        function closeUploadModal() { uploadModal.classList.remove('active'); }
-
-        async function confirmUpload() {
-            const isExample = document.getElementById('isPromptExample').checked;
-            const coreName = document.getElementById('coreNameInput').value.trim();
-            const verName = document.getElementById('verNameInput').value.trim();
-            if (isExample && !coreName) { alert("请输入核心名称"); return; }
-            closeUploadModal(); toast.style.display='block';
-            
-            const token = localStorage.getItem('gh_token');
-            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
-            const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
-            let success = 0;
-
-            const promises = pendingFiles.map(async (file) => {
+        async function confirmUpload(){
+            const isEx=el('isPromptExample').checked, cName=el('coreNameInput').value.trim(), vName=el('verNameInput').value.trim();
+            if(isEx && !cName){ alert('请输入核心名称'); return; }
+            closeUploadModal(); el('upload-toast').style.display='block';
+            const token=localStorage.getItem('gh_token'), owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
+            for(let f of pendingFiles){
                 try {
-                    const base64 = await new Promise(r => { const reader=new FileReader(); reader.onload=()=>r(reader.result.split(',')[1]); reader.readAsDataURL(file); });
-                    const ts = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                    const cleanName = file.name.replace(/\s+/g, '_');
-                    let filename = `${ts}_${cleanName}`;
-                    if (isExample) {
-                        const safeCore = coreName.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '');
-                        const verStr = verName ? `_${verName}` : '';
-                        filename = `${ts}_${safeCore}${verStr}_${cleanName}`;
-                    }
-                    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}/${filename}`;
-                    await fetch(url, { method: 'PUT', headers: {'Authorization':`token ${token}`,'Content-Type':'application/json'}, body: JSON.stringify({message:`Upload ${filename}`, content:base64, branch:'main'}) });
-                    success++;
-                } catch(e) { console.error(e); }
-            });
-
-            await Promise.all(promises);
-            toast.style.display='none';
-            if(success>0) { alert(`成功上传 ${success} 个文件`); setTimeout(initGallery, 1000); }
+                    const b64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=()=>r(rd.result.split(',')[1]); rd.readAsDataURL(f)});
+                    const ts=new Date().toISOString().replace(/[-:T.]/g,'').slice(0,14), clean=f.name.replace(/\s+/g,'_');
+                    const fname = isEx ? `${ts}_${cName.replace(/\W/g,'')}${vName?`_${vName}`:''}_${clean}` : `${ts}_${clean}`;
+                    await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}/${fname}`, {
+                        method:'PUT', headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+                        body:JSON.stringify({message:`Up ${fname}`, content:b64, branch:'main'})
+                    });
+                } catch(e){ console.error(e); }
+            }
+            el('upload-toast').style.display='none'; alert('上传完成'); setTimeout(initGallery,1000);
         }
 
-        checkAdmin();
-        initGallery();
+        checkAdmin(); initGallery();
     </script>
 </body>
 </html>
