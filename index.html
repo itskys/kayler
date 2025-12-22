@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v3.1</title>
+    <title>Kayler文字卡片生成器 v3.2</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="layout.js?v=6.0"></script>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     
     <style>
@@ -24,9 +26,7 @@
             --footer-color: #999;
             --brand-brown: #8b5e3c;
             --brand-brown-hover: #6d4c41;
-            
             --base-font-size: 18px; 
-
             --font-heiti: "PingFang SC", "Microsoft YaHei", sans-serif;
             --font-songti: "Songti SC", "SimSun", serif;
             --font-noto-serif: "Noto Serif SC", serif;
@@ -113,25 +113,31 @@
         .slider-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
         input[type=range] { width: 80px; cursor: pointer; height: 4px; border-radius: 2px; accent-color: var(--brand-brown); }
 
-        /* === 主布局 v3.1 (完美对齐) === */
+        /* === 主布局 (关键优化) === */
         .container {
             display: flex; 
-            gap: 12px; /* 间距 3mm (约12px) */
+            gap: 12px; /* 间距调整为 ~3mm */
             width: 100%; max-width: 1200px; /* 宽度与工具栏一致 */
             flex-wrap: wrap; justify-content: center; align-items: flex-start;
         }
 
-        .input-area { flex: 1; min-width: 320px; display: flex; flex-direction: column; }
+        /* 左侧列 */
+        .input-area { 
+            flex: 1; min-width: 320px; 
+            display: flex; flex-direction: column; 
+            /* 移除 gap，改用 margin 控制垂直节奏，配合 JS 对齐 */
+        }
 
         /* Emoji 栏 - 增加内容并允许换行 */
         .emoji-bar {
-            display: flex; gap: 8px; padding: 0 2px; margin-bottom: 10px;
+            display: flex; gap: 8px; padding: 0 2px; 
+            margin-bottom: 10px; /* 底部间距 */
             flex-wrap: wrap; /* 允许换行填满 */
-            align-items: flex-end; /* 底部对齐 */
-            min-height: 32px; /* 最小高度 */
+            align-items: flex-end; 
+            box-sizing: border-box;
         }
         .emoji-item {
-            font-size: 20px; cursor: pointer; padding: 4px;
+            font-size: 18px; cursor: pointer; padding: 5px;
             border-radius: 6px; transition: background 0.2s; user-select: none;
         }
         .emoji-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
@@ -173,26 +179,26 @@
 
         .hint-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
 
-        /* === 预览区优化 (右对齐) === */
+        /* === 右侧列 (预览区) === */
         .preview-area { 
             flex: 1; min-width: 350px; 
             display: flex; flex-direction: column; 
-            align-items: flex-end; /* 3. 强制内容右对齐 */
+            align-items: flex-end; /* 3. 强制右对齐 */
         }
         
-        /* 4. 隐形平衡梁：高度与Emoji栏保持一致，强制对齐 */
+        /* 4. 预览区头部占位符 (用于与左侧对齐) */
         .preview-header-spacer {
             width: 100%; 
             display: flex; align-items: flex-end; justify-content: flex-end;
             color: #999; font-size: 12px; font-weight: bold; letter-spacing: 1px;
-            /* 关键属性：Margin bottom 必须与 emoji-bar 一致 */
-            margin-bottom: 10px; 
-            min-height: 32px; /* 最小高度与Emoji栏一致 */
-            padding-bottom: 5px; /* 与 emoji padding 对应 */
+            margin-bottom: 10px; /* 必须与 .emoji-bar margin-bottom 一致 */
+            box-sizing: border-box;
+            padding-bottom: 5px; /* 与 emoji item padding 近似 */
+            /* 高度将由 JS 动态设置 */
         }
 
         .card-container {
-            width: 100%; max-width: 480px;
+            width: 100%; max-width: 480px; /* 限制卡片最大宽 */
             display: flex; flex-direction: column; gap: 10px;
         }
 
@@ -281,7 +287,7 @@
             .tool-group { width: 100%; justify-content: space-between; }
             .tool-group:first-child { justify-content: flex-start; }
             .preview-area { align-items: center; width: 100%; } /* 手机端恢复居中 */
-            .preview-header-spacer { display: none; }
+            .preview-header-spacer { display: none; } /* 手机端不需要强制对齐 */
             .card-container { width: 100%; max-width: 100%; }
         }
     </style>
@@ -369,7 +375,7 @@
 
     <div class="container">
         <div class="input-area">
-            <div class="emoji-bar">
+            <div class="emoji-bar" id="emojiBar">
                 <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
                 <span class="emoji-item" onclick="insertEmoji('✒️')">✒️</span>
                 <span class="emoji-item" onclick="insertEmoji('🌿')">🌿</span>
@@ -436,9 +442,10 @@
         </div>
 
         <div class="preview-area" id="previewContainerWrapper">
-            <div class="preview-header-spacer">👀 实时预览效果</div>
+            <div class="preview-header-spacer" id="previewHeaderSpacer">👀 实时预览效果</div>
             
-            <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;"></div>
+            <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;">
+                </div>
         </div>
     </div>
 
@@ -454,6 +461,10 @@
         const splitCountInput = document.getElementById('splitCount');
         const btnPublish = document.getElementById('btnPublish');
         const toast = document.getElementById('loading-toast');
+
+        // 对齐关键元素
+        const emojiBar = document.getElementById('emojiBar');
+        const previewHeader = document.getElementById('previewHeaderSpacer');
 
         let customBgUrl = null;
         let currentOpacity = 0.15; 
@@ -489,12 +500,26 @@
 
         inputText.addEventListener('input', function() {
             this.style.height = 'auto';
-            // 保持高度自适应
+            // 限制最大高度，防止撑破布局
             this.style.height = Math.max(500, this.scrollHeight) + 'px'; 
             wordCountEl.innerText = `${this.value.length} 字`;
             localStorage.setItem('kayler_draft', this.value);
             renderCards(); 
         });
+
+        // === 自动对齐脚本 (Fix) ===
+        function syncHeaderHeights() {
+            if(window.innerWidth > 768) {
+                const h = emojiBar.offsetHeight;
+                previewHeader.style.height = h + 'px';
+            } else {
+                previewHeader.style.height = 'auto';
+            }
+        }
+        window.addEventListener('resize', syncHeaderHeights);
+        window.addEventListener('load', syncHeaderHeights);
+        // 初始化运行一次
+        setTimeout(syncHeaderHeights, 100);
 
         function setFontFamily(font) {
             currentFont = font;
