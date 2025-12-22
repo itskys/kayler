@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v3.4</title>
+    <title>Kayler文字卡片生成器 v3.5</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -229,6 +229,20 @@
             .preview-area { align-items: center; width: 100%; }
             .card-container { width: 100%; max-width: 100%; }
         }
+
+        /* === 小红书模式专用样式 === */
+        .xhs-title-style {
+            font-weight: 900 !important;
+            color: #333 !important;
+        }
+        .xhs-tag-style {
+            margin-top: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #1c4c96; /* 小红书话题蓝 */
+            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -298,6 +312,11 @@
             <div class="tool-group">
                 <span class="tool-label">✍️ 签名:</span>
                 <input type="text" class="input-ui" style="width:100px;" id="signatureInput" placeholder="Kaylerris" value="Kaylerris" oninput="updateSignature(this.value)">
+            </div>
+
+            <div class="tool-group" style="margin-left: 5px;">
+                <input type="checkbox" id="xhsStyleToggle" onchange="renderCards()" style="accent-color: #ff2442; cursor: pointer; margin-right: 4px;">
+                <label for="xhsStyleToggle" class="tool-label" style="cursor: pointer; color: #333;">📕 小红书风</label>
             </div>
 
             <div class="tool-group">
@@ -485,12 +504,22 @@
             inputText.dispatchEvent(new Event('input'));
         }
 
+        // 修改后的核心渲染函数：支持小红书风格
         function renderCards() {
             const rawText = inputText.value;
             if (!rawText.trim()) return;
 
+            // 1. 获取小红书开关状态
+            const isXhsMode = document.getElementById('xhsStyleToggle') && document.getElementById('xhsStyleToggle').checked;
+
             const lines = rawText.split('\n');
             let mainTitle = lines.length > 0 ? lines[0].trim() : "无标题";
+            
+            // 2. 小红书模式：标题装饰
+            if (isXhsMode) {
+                mainTitle = `✨ ${mainTitle} ✨`;
+            }
+
             let paragraphs = [];
             for (let i = 1; i < lines.length; i++) {
                 if (lines[i].trim()) paragraphs.push(lines[i]);
@@ -527,20 +556,45 @@
             if (pages.length === 0) pages.push([]);
 
             let html = '';
+            
+            // 小红书模式使用的装饰符号 (固定顺序以防输入时闪烁)
+            const xhsBullets = ['👉', '✅', '🔸', '📝', '💡']; 
+            const xhsTags = ['#干货分享', '#日常', '#笔记', '#生活记录', '#实用'];
+
             pages.forEach((pageParas, index) => {
                 let cardContent = "";
+                
+                // 3. 渲染标题 (添加特定样式类)
+                const titleClass = isXhsMode ? "paper-title xhs-title-style" : "paper-title";
+                
                 if (index === 0) {
-                    cardContent += `<div class="paper-title">${escapeHtml(mainTitle)}</div>`;
+                    cardContent += `<div class="${titleClass}">${escapeHtml(mainTitle)}</div>`;
                 } else {
                     const suffix = index + 1; 
-                    cardContent += `<div class="paper-title" style="margin-bottom:15px">${escapeHtml(mainTitle)}</div>`;
+                    cardContent += `<div class="${titleClass}" style="margin-bottom:15px">${escapeHtml(mainTitle)}</div>`;
                     cardContent += `<div class="paper-subtitle">（续${suffix}）</div>`;
                 }
                 
-                pageParas.forEach(p => {
+                // 4. 渲染段落 (小红书模式加Emoji)
+                pageParas.forEach((p, pIndex) => {
+                    let text = escapeHtml(p);
+                    // 如果开启小红书模式，给每段加个Emoji
+                    if (isXhsMode) {
+                        const bullet = xhsBullets[pIndex % xhsBullets.length];
+                        text = `${bullet} ${text}`;
+                    }
+                    
                     const indentClass = /[\u4e00-\u9fa5]/.test(p) ? 'indent-cn' : 'indent-en';
-                    cardContent += `<div class="paper-p ${indentClass}">${escapeHtml(p)}</div>`;
+                    // 小红书模式通常不需要首行缩进，这里可以根据喜好去掉 indentClass
+                    cardContent += `<div class="paper-p ${indentClass}">${text}</div>`;
                 });
+
+                // 5. 小红书模式：在最后一张卡片底部添加标签
+                if (isXhsMode && index === pages.length - 1) {
+                    // 随机取3个标签
+                    const randomTags = xhsTags.sort(() => 0.5 - Math.random()).slice(0, 3).join(' ');
+                    cardContent += `<div class="xhs-tag-style">${randomTags}</div>`;
+                }
 
                 let pageIndicator = pages.length > 1 ? `<div class="page-indicator">第 ${index+1} / ${pages.length} 页</div>` : '';
                 let bgStyle = customBgUrl ? `background-image: url('${customBgUrl}'); opacity: ${currentOpacity};` : `opacity: 0;`;
