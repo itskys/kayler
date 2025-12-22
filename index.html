@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="description" content="Kayler文字卡片生成器 - 智能分页、长图控制。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kayler文字卡片生成器 v2.2</title>
+    <title>Kayler文字卡片生成器 v3.1</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="layout.js?v=6.0"></script>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     
     <style>
@@ -74,7 +72,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             margin-bottom: 20px; 
             display: flex; flex-direction: column; gap: 12px;
-            width: 100%; max-width: 1200px; box-sizing: border-box; /* 宽度与容器对齐 */
+            width: 100%; max-width: 1200px; box-sizing: border-box; /* 宽度锁定 */
         }
 
         .tool-row { 
@@ -115,25 +113,25 @@
         .slider-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
         input[type=range] { width: 80px; cursor: pointer; height: 4px; border-radius: 2px; accent-color: var(--brand-brown); }
 
-        /* === 主布局 (关键优化) === */
+        /* === 主布局 v3.1 (完美对齐) === */
         .container {
             display: flex; 
-            gap: 10px; /* 间距缩小至 2mm 左右 */
-            width: 100%; max-width: 1200px; /* 与工具栏对齐 */
+            gap: 12px; /* 间距 3mm (约12px) */
+            width: 100%; max-width: 1200px; /* 宽度与工具栏一致 */
             flex-wrap: wrap; justify-content: center; align-items: flex-start;
         }
 
-        .input-area { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        .input-area { flex: 1; min-width: 320px; display: flex; flex-direction: column; }
 
-        /* Emoji 栏优化：自动换行 */
+        /* Emoji 栏 - 增加内容并允许换行 */
         .emoji-bar {
-            display: flex; gap: 8px; padding: 0 2px; margin-bottom: 0;
-            flex-wrap: wrap; /* 允许换行 */
-            align-items: center;
-            min-height: 40px; /* 确保有高度 */
+            display: flex; gap: 8px; padding: 0 2px; margin-bottom: 10px;
+            flex-wrap: wrap; /* 允许换行填满 */
+            align-items: flex-end; /* 底部对齐 */
+            min-height: 32px; /* 最小高度 */
         }
         .emoji-item {
-            font-size: 18px; cursor: pointer; padding: 5px;
+            font-size: 20px; cursor: pointer; padding: 4px;
             border-radius: 6px; transition: background 0.2s; user-select: none;
         }
         .emoji-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
@@ -156,7 +154,7 @@
             font-size: 12px; color: #bbb; pointer-events: none;
         }
 
-        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px; }
         
         .btn-base {
             flex: 1; padding: 12px; border: none; border-radius: 8px;
@@ -178,16 +176,19 @@
         /* === 预览区优化 (右对齐) === */
         .preview-area { 
             flex: 1; min-width: 350px; 
-            display: flex; flex-direction: column; gap: 15px;
-            align-items: flex-end; /* 强制内容右对齐 */
+            display: flex; flex-direction: column; 
+            align-items: flex-end; /* 3. 强制内容右对齐 */
         }
         
-        /* 占位标题：用于平衡左右高度，实现水平对齐 */
-        .preview-header {
-            width: 100%; height: 40px; /* 与 Emoji 栏 min-height 一致 */
+        /* 4. 隐形平衡梁：高度与Emoji栏保持一致，强制对齐 */
+        .preview-header-spacer {
+            width: 100%; 
             display: flex; align-items: flex-end; justify-content: flex-end;
             color: #999; font-size: 12px; font-weight: bold; letter-spacing: 1px;
-            padding-bottom: 5px; box-sizing: border-box;
+            /* 关键属性：Margin bottom 必须与 emoji-bar 一致 */
+            margin-bottom: 10px; 
+            min-height: 32px; /* 最小高度与Emoji栏一致 */
+            padding-bottom: 5px; /* 与 emoji padding 对应 */
         }
 
         .card-container {
@@ -279,9 +280,9 @@
             .tool-row { justify-content: flex-start; gap: 10px; }
             .tool-group { width: 100%; justify-content: space-between; }
             .tool-group:first-child { justify-content: flex-start; }
-            .preview-area { align-items: center; width: 100%; }
+            .preview-area { align-items: center; width: 100%; } /* 手机端恢复居中 */
+            .preview-header-spacer { display: none; }
             .card-container { width: 100%; max-width: 100%; }
-            .preview-header { display: none; } /* 手机端隐藏占位符 */
         }
     </style>
 </head>
@@ -399,6 +400,17 @@
                 <span class="emoji-item" onclick="insertEmoji('✈️')">✈️</span>
                 <span class="emoji-item" onclick="insertEmoji('🚀')">🚀</span>
                 <span class="emoji-item" onclick="insertEmoji('🛸')">🛸</span>
+                <span class="emoji-item" onclick="insertEmoji('🍦')">🍦</span>
+                <span class="emoji-item" onclick="insertEmoji('🍰')">🍰</span>
+                <span class="emoji-item" onclick="insertEmoji('🍷')">🍷</span>
+                <span class="emoji-item" onclick="insertEmoji('🎶')">🎶</span>
+                <span class="emoji-item" onclick="insertEmoji('📢')">📢</span>
+                <span class="emoji-item" onclick="insertEmoji('🔔')">🔔</span>
+                <span class="emoji-item" onclick="insertEmoji('📅')">📅</span>
+                <span class="emoji-item" onclick="insertEmoji('📁')">📁</span>
+                <span class="emoji-item" onclick="insertEmoji('📝')">📝</span>
+                <span class="emoji-item" onclick="insertEmoji('✅')">✅</span>
+                <span class="emoji-item" onclick="insertEmoji('💻')">💻</span>
             </div>
 
             <div class="textarea-wrapper">
@@ -424,10 +436,9 @@
         </div>
 
         <div class="preview-area" id="previewContainerWrapper">
-            <div class="preview-header">👀 实时预览</div>
+            <div class="preview-header-spacer">👀 实时预览效果</div>
             
-            <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;">
-                </div>
+            <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;"></div>
         </div>
     </div>
 
@@ -478,7 +489,7 @@
 
         inputText.addEventListener('input', function() {
             this.style.height = 'auto';
-            // 限制最大高度，防止撑破布局，改为 css min-height + resize
+            // 保持高度自适应
             this.style.height = Math.max(500, this.scrollHeight) + 'px'; 
             wordCountEl.innerText = `${this.value.length} 字`;
             localStorage.setItem('kayler_draft', this.value);
