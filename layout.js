@@ -108,7 +108,7 @@ function injectStyles() {
 function injectHeader() {
     const existingNav = document.querySelector('nav.top-nav');
     
-    // 创建新的导航结构 (此处已统一为 AI 画廊)
+    // 创建新的导航结构
     const navHTML = `
         <div class="global-nav-inner">
             <a href="index.html" class="global-nav-link">🏠 卡片生成器</a>
