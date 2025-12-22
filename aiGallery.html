@@ -24,28 +24,34 @@
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* === 控制面板 (Layout Refined v12.2) === */
+        /* === 控制面板 (Layout Fixed v12.3) === */
         .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
-            display: flex; flex-direction: column; gap: 12px;
+            display: flex; flex-direction: column; gap: 15px; align-items: center;
         }
 
         /* 第一行：搜索 + 按钮组 */
         .top-tools {
-            display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;
+            display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; width: 100%;
         }
-        .search-wrapper { position: relative; flex: 1; max-width: 400px; min-width: 200px; }
+        
+        .search-wrapper { 
+            position: relative; width: 320px; max-width: 100%; 
+            /* 修复：移除 flex:1，使用固定宽度避免与按钮挤压 */
+        }
         .search-input {
             width: 100%; padding: 8px 15px 8px 35px; border: 1px solid #ddd; border-radius: 50px;
             font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            height: 36px;
+            height: 38px; /* 稍微增高一点 */
         }
         .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 10px rgba(139, 94, 60, 0.15); }
         .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 14px; }
 
-        .btn-group { display: flex; gap: 8px; }
+        .btn-group { 
+            display: flex; gap: 10px; flex-shrink: 0; /* 修复：防止按钮被压缩 */
+        }
         .btn-pill {
-            padding: 0 16px; height: 36px; border-radius: 50px; border: 1px solid #ddd;
+            padding: 0 18px; height: 38px; border-radius: 50px; border: 1px solid #ddd;
             background: white; color: #555; cursor: pointer; font-size: 13px;
             display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
         }
@@ -56,7 +62,7 @@
         /* 第二行：标签云 */
         .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .filter-tag {
-            padding: 3px 10px; background: white; border: 1px solid #eee; border-radius: 15px;
+            padding: 4px 12px; background: white; border: 1px solid #eee; border-radius: 15px;
             font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
         }
         .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
@@ -90,7 +96,7 @@
         .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; z-index: 2001; }
         .modal.preview-mode img, .modal.preview-mode video { max-width: 90%; max-height: 75vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         
-        /* 底部标题区域 (v12.2) */
+        /* 底部标题区域 */
         .modal-footer-area { margin-top: 20px; text-align: center; color: #ddd; max-width: 80%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
         .modal-filename { font-size: 14px; font-family: monospace; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; user-select: text; display: flex; align-items: center; gap: 8px; }
         .copy-icon { cursor: pointer; opacity: 0.7; transition: 0.2s; font-size: 16px; }
@@ -143,7 +149,9 @@
             <div class="btn-group">
                 <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新</span></button>
                 <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="prepareUpload(this)">
-                <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()"><span>☁️ 上传</span></button>
+                <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()">
+                    <span>☁️ 上传</span>
+                </button>
                 <button class="btn-pill" onclick="openLocalSettings()"><span>⚙️ 设置</span></button>
             </div>
         </div>
@@ -363,27 +371,19 @@
             if(type === 'video') { modalImg.style.display='none'; modalVideo.style.display='block'; modalVideo.src=src; modalVideo.play(); }
             else { modalVideo.style.display='none'; modalVideo.pause(); modalImg.style.display='block'; modalImg.src=src; }
             
-            // 设置文件名显示
             const cleanName = filename.replace(/^\d{14}_/, '');
             modalFilenameText.innerText = cleanName;
             
-            // 生成提示词跳转链接
             const parts = cleanName.split(/_| /);
             let coreName = null;
-            // 简单的查找逻辑：第一个不是纯数字且长度>1的词
-            for(let p of parts) { if(p.length>1 && isNaN(p)) { coreName = p; break; } }
+            for(let p of parts) { if(p.length>1 && isNaN(p) && !TAG_BLOCKLIST.includes(p.toLowerCase())) { coreName = p; break; } }
             
             if(coreName) {
                 promptLinkContainer.innerHTML = `<a href="promptmaster.html?search=${encodeURIComponent(coreName)}" target="_blank" class="prompt-link-btn">🔗 所用提示词</a>`;
-            } else {
-                promptLinkContainer.innerHTML = '';
-            }
+            } else { promptLinkContainer.innerHTML = ''; }
         }
         function closeModal() { modal.classList.remove('active'); modalVideo.pause(); }
-        
-        function copyFilename() {
-            navigator.clipboard.writeText(modalFilenameText.innerText).then(()=>alert("文件名已复制"));
-        }
+        function copyFilename() { navigator.clipboard.writeText(modalFilenameText.innerText).then(()=>alert("文件名已复制")); }
 
         async function deleteCurrentImage() {
             if(!confirm(`确定要永久删除此图片吗？`)) return;
