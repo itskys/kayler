@@ -13,6 +13,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script src="layout.js?v=6.0"></script>
+
+    <style>
+        /* PDF 导出时的临时容器样式 */
+        #pdf-stage { 
+            display: none; 
+            background: white; 
+            color: black; 
+        }
+
+        /* 导出模式：强制解除页面的 Flex 布局和滚动锁定，确保长图能完整渲染 */
+        body.export-mode { 
+            overflow: visible !important; 
+            height: auto !important; 
+            background: white !important; 
+            display: block !important; 
+        }
+
+        /* 导出时隐藏界面无关元素 (双重保险，防止截取到按钮) */
+        body.export-mode .main-wrapper, 
+        body.export-mode .global-top-nav,
+        body.export-mode .global-footer {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -66,16 +90,17 @@
         </div>
     </div>
 
+    <div id="pdf-stage"></div>
+
     <script src="editor.js?v=6.2"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // A. 启动 editor.js 里的核心逻辑
             if (window.initEditor) {
                 window.initEditor();
             }
 
-            // B. 处理从 PromptMaster 导入的数据 (这部分逻辑必须在 HTML 里，因为它涉及页面间传值)
+            // 数据恢复逻辑
             const editorEl = document.getElementById('editor');
             const nameEl = document.getElementById('file-name-input');
             const importedContent = localStorage.getItem('kayler_editor_cache');
@@ -83,25 +108,18 @@
             
             if (editorEl) {
                 if (importedName) {
-                    // 场景：从 PromptMaster 导入文件
                     editorEl.value = importedContent || "";
                     if (nameEl) nameEl.value = importedName;
-                    
-                    // 导入后清除文件名标记，防止下次刷新还是这个文件
                     localStorage.removeItem('kayler_editor_filename'); 
                 } else if (importedContent) {
-                    // 场景：恢复上次未写完的草稿
                     editorEl.value = importedContent;
                 } else {
-                    // 场景：全新打开
                     editorEl.value = "# 欢迎使用 Kayler 编辑器\n\n请在上方修改文件名，并在设置中配置 Token 以启用发布功能。";
                 }
 
-                // 触发一次预览更新 (调用 editor.js 暴露的方法)
                 if (window.updatePreview) {
                     window.updatePreview();
                 } else {
-                    // 兜底：如果 JS 加载慢了，手动触发 input 事件
                     editorEl.dispatchEvent(new Event('input'));
                 }
             }

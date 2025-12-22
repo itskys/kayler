@@ -115,7 +115,7 @@ function injectHeader() {
             <a href="editor.html" class="global-nav-link">📝 在线编辑器</a>
             <a href="promptmaster.html" class="global-nav-link">💡 提示词管理器</a>
             <a href="aiGallery.html" class="global-nav-link">🖼️ AI 画廊</a>
-            <a href="https://github.com/itskys" target="_blank" class="global-nav-link">📩 联系博主</a>
+            <a href="contact.html" class="global-nav-link">📩 联系博主</a>
         </div>
     `;
 
