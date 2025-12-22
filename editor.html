@@ -15,30 +15,13 @@
     <script src="layout.js?v=6.0"></script>
 
     <style>
-        /* PDF 导出时的临时容器样式 */
-        #pdf-stage { 
-            display: none; 
-            background: white; 
-            color: black; 
-        }
-
-        /* 导出模式：强制解除页面的 Flex 布局和滚动锁定，确保长图能完整渲染 */
-        body.export-mode { 
-            overflow: visible !important; 
-            height: auto !important; 
-            background: white !important; 
-            display: block !important; 
-        }
-
-        /* 导出时隐藏界面无关元素 (双重保险，防止截取到按钮) */
-        body.export-mode .main-wrapper, 
-        body.export-mode .global-top-nav,
-        body.export-mode .global-footer {
-            display: none !important;
-        }
+        #pdf-stage { display: none; background: white; color: black; }
+        /* 导出时强制去掉 padding，确保内容完整 */
+        body.export-mode { overflow: visible !important; height: auto !important; background: white !important; display: block !important; padding: 0 !important; } 
+        body.export-mode .main-wrapper, body.export-mode .global-top-nav, body.export-mode .global-footer { display: none !important; }
     </style>
 </head>
-<body>
+<body style="padding: 20px; box-sizing: border-box; min-height: 100vh; background-color: #f2f4f7;">
 
     <div class="main-wrapper">
         
@@ -52,19 +35,15 @@
                 <button id="btn-setting" class="btn btn-setting" title="GitHub 配置">
                     <i class="fa-solid fa-gear"></i>
                 </button>
-                
                 <button id="btn-save" class="btn btn-save" disabled title="需在设置中配置 Token">
                     <i class="fa-solid fa-cloud-arrow-up"></i> 发布
                 </button>
-                
                 <button id="btn-pdf" class="btn btn-pdf" title="导出为 PDF">
                     <i class="fa-solid fa-file-pdf"></i> PDF
                 </button>
-                
                 <button id="btn-md" class="btn btn-md" title="下载 .md 文件">
                     <i class="fa-solid fa-download"></i> .md
                 </button>
-                
                 <button id="btn-long-img" class="btn btn-long" title="生成分享长图">
                     <i class="fa-solid fa-image"></i> 转长图
                 </button>
@@ -75,7 +54,14 @@
             <div class="panel">
                 <div class="panel-header">
                     <span><i class="fa-brands fa-markdown"></i> Markdown 源码</span>
-                    <span id="btn-copy-code" class="copy-btn">复制源码</span>
+                    <div style="display: flex; gap: 15px;">
+                        <span id="btn-clear-editor" class="copy-btn" style="color: #e53935;" title="清空内容">
+                            <i class="fa-solid fa-trash-can"></i> 清空
+                        </span>
+                        <span id="btn-copy-code" class="copy-btn">
+                            <i class="fa-solid fa-copy"></i> 复制源码
+                        </span>
+                    </div>
                 </div>
                 <textarea id="editor" class="editor-area" placeholder="# 开始写作...&#10;&#10;支持 Markdown 语法，实时预览。"></textarea>
             </div>
@@ -83,7 +69,9 @@
             <div class="panel">
                 <div class="panel-header">
                     <span><i class="fa-solid fa-eye"></i> 实时预览</span>
-                    <span id="btn-copy-text" class="copy-btn">复制文本</span>
+                    <span id="btn-copy-text" class="copy-btn">
+                        <i class="fa-solid fa-copy"></i> 复制文本
+                    </span>
                 </div>
                 <div id="preview" class="preview-area markdown-body"></div>
             </div>
@@ -96,13 +84,28 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // 初始化编辑器核心功能
             if (window.initEditor) {
                 window.initEditor();
             }
 
-            // 数据恢复逻辑
             const editorEl = document.getElementById('editor');
             const nameEl = document.getElementById('file-name-input');
+
+            // 【修改点3】添加“清空”按钮的功能逻辑
+            const btnClear = document.getElementById('btn-clear-editor');
+            if (btnClear && editorEl) {
+                btnClear.addEventListener('click', () => {
+                    if (editorEl.value.trim() === '') return; // 已经是空的就不提示
+                    if (confirm('⚠️ 确定要清空编辑器中的所有内容吗？此操作无法撤销。')) {
+                        editorEl.value = '';
+                        // 手动触发 input 事件以更新预览区
+                        editorEl.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+
+            // 数据恢复逻辑 (保留原逻辑)
             const importedContent = localStorage.getItem('kayler_editor_cache');
             const importedName = localStorage.getItem('kayler_editor_filename');
             
@@ -114,9 +117,11 @@
                 } else if (importedContent) {
                     editorEl.value = importedContent;
                 } else {
+                    // 默认欢迎语
                     editorEl.value = "# 欢迎使用 Kayler 编辑器\n\n请在上方修改文件名，并在设置中配置 Token 以启用发布功能。";
                 }
 
+                // 触发首次预览更新
                 if (window.updatePreview) {
                     window.updatePreview();
                 } else {
