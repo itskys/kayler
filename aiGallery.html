@@ -5,32 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 画廊 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
-    
     <script src="layout.js?v=6.0"></script>
-
     <style>
-        :root {
-            --bg-body: #f2f4f7; --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --layout-width: 94%; --layout-max-width: 1600px;
-        }
-        body {
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-            background-color: var(--bg-body); margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: #333;
-        }
+        :root { --bg-body: #f2f4f7; --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41; --layout-width: 94%; --layout-max-width: 1600px; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background-color: var(--bg-body); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: #333; }
         
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* === 控制面板修复 === */
+        /* === 控制面板 (分行布局 v13.0) === */
         .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
             display: flex; flex-direction: column; gap: 15px; align-items: center;
         }
 
-        /* 第一行：搜索框 (独立一行，避免挤压) */
+        /* 行1: 搜索框 (独立一行) */
         .search-row { width: 100%; max-width: 600px; position: relative; }
         .search-input {
             width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 50px;
@@ -40,13 +29,13 @@
         .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15); }
         .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
 
-        /* 第二行：按钮 + 标签 (混合排列) */
+        /* 行2: 按钮 + 标签 */
         .tools-row {
             display: flex; flex-wrap: wrap; justify-content: center; align-items: center; 
             gap: 12px; width: 100%;
         }
 
-        .btn-group { display: flex; gap: 10px; flex-shrink: 0; }
+        .btn-group { display: flex; gap: 8px; flex-shrink: 0; }
         .btn-pill {
             padding: 0 16px; height: 32px; border-radius: 50px; border: 1px solid #ddd;
             background: white; color: #555; cursor: pointer; font-size: 13px;
@@ -57,7 +46,7 @@
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
         /* 分割线 */
-        .v-divider { width: 1px; height: 20px; background: #ddd; display: none; }
+        .v-divider { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: none; }
         @media (min-width: 600px) { .v-divider { display: block; } }
 
         /* 标签云 */
@@ -70,7 +59,7 @@
         .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
         .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
 
-        /* 瀑布流 */
+        /* 画廊主体 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
         .gallery-item {
             background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; break-inside: avoid;
@@ -103,6 +92,14 @@
         .copy-icon { opacity: 0.7; transition: 0.2s; font-size: 16px; }
         .copy-icon:hover { opacity: 1; transform: scale(1.1); }
         
+        .prompt-link-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--brand-brown); color: white; text-decoration: none;
+            padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
+            transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .prompt-link-btn:hover { background: var(--brand-brown-hover); transform: translateY(-2px); }
+
         .btn-delete { position: absolute; top: 30px; left: 30px; background: rgba(255, 0, 0, 0.7); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; display: none; z-index: 2001; }
 
         /* 上传弹窗 */
@@ -189,6 +186,16 @@
                 <div style="font-size:11px; color:#999;">预览: <span id="filenamePreview">...</span></div>
             </div>
             <div class="config-actions"><button class="btn-cancel" onclick="closeUploadModal()">取消</button><button class="btn-confirm" onclick="confirmUpload()">开始上传</button></div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal modal-overlay-light" onclick="if(event.target===this) closeLocalSettings()">
+        <div class="config-box">
+            <h3 class="config-title">⚙️ 画廊配置</h3>
+            <div class="config-row"><span class="config-label">GitHub Token</span><input type="password" id="confToken" class="config-input" placeholder="GitHub Token"></div>
+            <div class="config-row"><span class="config-label">用户名</span><input type="text" id="confOwner" class="config-input" placeholder="Owner"></div>
+            <div class="config-row"><span class="config-label">仓库名</span><input type="text" id="confRepo" class="config-input" placeholder="Repo"></div>
+            <div class="config-actions"><button class="btn-cancel" onclick="closeLocalSettings()">取消</button><button class="btn-confirm" onclick="saveLocalSettings()">💾 保存并刷新</button></div>
         </div>
     </div>
 
