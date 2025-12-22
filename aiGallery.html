@@ -24,37 +24,37 @@
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* === 控制面板 (Layout Fixed v12.4) === */
+        /* === 控制面板 (Layout Refined v12.5) === */
         .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
             display: flex; flex-direction: column; gap: 15px; align-items: center;
         }
 
-        /* 第一行：搜索 + 按钮组 */
-        .top-tools {
-            display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; width: 100%;
-        }
-        
-        .search-wrapper { 
-            position: relative; 
-            /* 关键修复：允许伸缩，但不小于200px，不大于500px */
-            flex: 1 1 200px; max-width: 500px;
+        /* 1. 独立搜索行 (彻底解决重叠) */
+        .search-row {
+            width: 100%; max-width: 600px; position: relative;
         }
         .search-input {
-            width: 100%; padding: 8px 15px 8px 35px; border: 1px solid #ddd; border-radius: 50px;
-            font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            height: 38px;
+            width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 50px;
+            font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            height: 42px; /* 稍微加高，更显大气 */
+            box-sizing: border-box; /* 关键：防止padding撑大 */
         }
-        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 10px rgba(139, 94, 60, 0.15); }
-        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 14px; }
+        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15); }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; font-size: 16px; }
 
+        /* 2. 混合工具行 (按钮 + 标签) */
+        .tools-row {
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center; 
+            gap: 12px; width: 100%;
+        }
+
+        /* 按钮组 */
         .btn-group { 
-            /* 关键修复：防止按钮被挤压 */
-            flex: 0 0 auto; 
-            display: flex; gap: 10px; 
+            display: flex; gap: 8px; flex-shrink: 0; /* 防止压缩 */
         }
         .btn-pill {
-            padding: 0 18px; height: 38px; border-radius: 50px; border: 1px solid #ddd;
+            padding: 0 16px; height: 32px; border-radius: 50px; border: 1px solid #ddd;
             background: white; color: #555; cursor: pointer; font-size: 13px;
             display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
         }
@@ -62,14 +62,18 @@
         .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
-        /* 第二行：标签云 */
-        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        /* 标签云 */
+        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; align-items: center; }
         .filter-tag {
-            padding: 4px 12px; background: white; border: 1px solid #eee; border-radius: 15px;
-            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
+            padding: 3px 10px; background: white; border: 1px solid #eee; border-radius: 15px;
+            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none; height: 32px; display: flex; align-items: center; /* 高度与按钮一致 */
         }
         .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
         .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
+
+        /* 分割线 (可选，用于区分按钮和标签) */
+        .v-divider { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: none; }
+        @media (min-width: 768px) { .v-divider { display: block; } }
 
         /* 瀑布流 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
@@ -142,11 +146,12 @@
     </header>
 
     <div class="control-panel">
-        <div class="top-tools">
-            <div class="search-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="searchInput" placeholder="搜索图片..." oninput="handleSearch()">
-            </div>
+        <div class="search-row">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索图片..." oninput="handleSearch()">
+        </div>
+        
+        <div class="tools-row">
             <div class="btn-group">
                 <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新</span></button>
                 <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="prepareUpload(this)">
@@ -155,8 +160,11 @@
                 </button>
                 <button class="btn-pill" onclick="openLocalSettings()"><span>⚙️ 设置</span></button>
             </div>
+            
+            <div class="v-divider"></div>
+            
+            <div class="tags-container" id="tagsContainer"></div>
         </div>
-        <div class="tags-container" id="tagsContainer"></div>
     </div>
 
     <div id="loadingState">
@@ -170,8 +178,10 @@
     <div id="imageModal" class="modal preview-mode" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
         <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
+        
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
+        
         <div class="modal-footer-area">
             <div class="modal-filename">
                 <span id="modalFilenameText">Filename.png</span>
