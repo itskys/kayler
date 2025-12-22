@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>在线 Markdown 编辑器 - Kayler</title>
-    <link rel="icon" href="/favicon.png" type="image/png">
     
+    <title>在线 Markdown 编辑器 - Kayler | 实时预览与PDF导出</title>
+    <meta name="description" content="Kayler 在线 Markdown 编辑器，支持实时预览、代码高亮、一键导出 PDF、生成长图。无广告，支持 GitHub 图床，专为写作者设计的极简工具。">
+    <meta name="keywords" content="Markdown编辑器, 在线Markdown, 实时预览, 导出PDF, Markdown转长图, Kayler Editor">
+    <meta name="author" content="Kaylerris">
+    
+    <meta property="og:title" content="在线 Markdown 编辑器 - Kayler">
+    <meta property="og:description" content="极简、高效的在线写作工具。支持实时预览、一键导出PDF与长图。">
+    <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
+    <meta property="og:url" content="https://x.aisai.cc/editor.html">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="editor.css">
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <script src="layout.js?v=6.0"></script>
+    <script src="layout.js?v=6.1"></script>
+    </head>
 
-    <style>
-        #pdf-stage { display: none; background: white; color: black; }
-        /* 导出时强制去掉 padding，确保内容完整 */
-        body.export-mode { overflow: visible !important; height: auto !important; background: white !important; display: block !important; padding: 0 !important; } 
-        body.export-mode .main-wrapper, body.export-mode .global-top-nav, body.export-mode .global-footer { display: none !important; }
-    </style>
-</head>
 <body style="padding: 20px; box-sizing: border-box; min-height: 100vh; background-color: #f2f4f7;">
 
     <div class="main-wrapper">
@@ -92,20 +95,19 @@
             const editorEl = document.getElementById('editor');
             const nameEl = document.getElementById('file-name-input');
 
-            // 【修改点3】添加“清空”按钮的功能逻辑
+            // 清空按钮逻辑
             const btnClear = document.getElementById('btn-clear-editor');
             if (btnClear && editorEl) {
                 btnClear.addEventListener('click', () => {
-                    if (editorEl.value.trim() === '') return; // 已经是空的就不提示
+                    if (editorEl.value.trim() === '') return;
                     if (confirm('⚠️ 确定要清空编辑器中的所有内容吗？此操作无法撤销。')) {
                         editorEl.value = '';
-                        // 手动触发 input 事件以更新预览区
                         editorEl.dispatchEvent(new Event('input'));
                     }
                 });
             }
 
-            // 数据恢复逻辑 (保留原逻辑)
+            // 数据恢复逻辑
             const importedContent = localStorage.getItem('kayler_editor_cache');
             const importedName = localStorage.getItem('kayler_editor_filename');
             

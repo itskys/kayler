@@ -154,3 +154,23 @@ body, html {
     .panel { min-height: 50vh; }
     .action-group { display: none; }
 }
+/* editor.css 的最末尾添加 */
+
+/* --- PDF Export Mode (关键修复) --- */
+/* 当 JS 添加此当类时，强制解除页面的 Flex 锁定，允许 html2pdf 截取完整高度 */
+body.export-mode {
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+    padding: 0 !important;
+    background: white !important;
+}
+
+/* 导出时隐藏界面上不需要的元素 */
+body.export-mode .main-wrapper, 
+body.export-mode .global-top-nav, 
+body.export-mode .global-footer,
+body.export-mode .editor-toolbar-header,
+body.export-mode #global-settings-modal {
+    display: none !important;
+}
