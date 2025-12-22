@@ -6,293 +6,108 @@
     <title>在线 Markdown 编辑器 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="editor.css">
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="layout.js?v=5.2"></script>
     
-    <style>
-        :root { --brand-brown: #8b5e3c; --bg-body: #f2f4f7; --layout-width: 94%; --layout-max-width: 1600px; }
-        * { box-sizing: border-box; }
-        body { margin: 0; height: 100vh; display: flex; flex-direction: column; font-family: "PingFang SC", sans-serif; background: var(--bg-body); color: #333; overflow: hidden; }
-        
-        /* === 工具栏 === */
-        .toolbar-container {
-            width: var(--layout-width); max-width: var(--layout-max-width); margin: 20px auto;
-            background: white; padding: 12px 20px; border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
-        }
-        .toolbar-left { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 32px; }
-        .app-title { font-size: 18px; font-weight: 800; color: #333; }
-        /* 优化输入框样式，增加宽度 */
-        .filename-input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; width: 300px; font-size: 14px; outline: none; transition: 0.2s; }
-        .filename-input:focus { border-color: var(--brand-brown); width: 400px; }
-        
-        .btn-group { display: flex; gap: 10px; }
-        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-primary { background: #333; color: white; }
-        .btn-success { background: #ccc; color: white; cursor: not-allowed; } 
-        .btn-success.active { background: #2e7d32; cursor: pointer; }
-        .btn-magic { background: var(--brand-brown); color: white; }
-        .btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
-
-        /* === 命名规范向导 (v9.0新增) === */
-        .naming-guide-bar {
-            width: var(--layout-width); max-width: var(--layout-max-width); margin: 0 auto 15px;
-            background: #f9f9f9; border: 1px dashed #ccc; border-radius: 8px;
-            padding: 10px 20px; font-size: 12px; color: #666; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; flex-shrink: 0;
-        }
-        .naming-guide-bar strong { color: #333; }
-        .naming-guide-bar code { background: #eee; padding: 2px 5px; border-radius: 3px; color: #c7254e; font-family: monospace; }
-
-        /* === 编辑区域 === */
-        .editor-wrapper {
-            flex: 1; width: var(--layout-width); max-width: var(--layout-max-width); margin: 0 auto 20px;
-            display: flex; gap: 0; background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
-        }
-        
-        /* 左右面板 */
-        .panel { width: 50%; display: flex; flex-direction: column; position: relative; }
-        .panel-left { border-right: 1px solid #eee; }
-        
-        /* 面板标题栏 */
-        .panel-header {
-            height: 40px; background: #fafafa; border-bottom: 1px solid #eee;
-            display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
-            font-size: 12px; color: #666; font-weight: 600; flex-shrink: 0;
-        }
-        
-        /* 编辑框 */
-        #editor {
-            flex: 1; width: 100%; border: none; resize: none; outline: none;
-            padding: 20px; font-family: "Menlo", monospace; font-size: 15px; line-height: 1.7;
-            overflow-y: auto; color: #333;
-        }
-        #editor::placeholder { color: #ccc; }
-
-        /* 预览框 */
-        #preview {
-            flex: 1; width: 100%; padding: 20px 30px; overflow-y: auto; background: #fff;
-        }
-        /* Markdown 样式 */
-        .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
-        .markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 20px; margin-top: 20px; }
-        .markdown-body pre { background: #f6f8fa; padding: 15px; border-radius: 6px; overflow-x: auto; }
-        .markdown-body img { max-width: 100%; border-radius: 4px; }
-
-        /* PDF 导出专用 */
-        #pdf-stage { display: none; width: 800px; background: white; padding: 40px; color: black; }
-        
-        /* 导出模式 */
-        body.export-mode { overflow: visible !important; height: auto !important; background: white !important; display: block !important; }
-        #loading-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 30px; border-radius: 8px; z-index: 9999; display: none; }
-        
-        /* 响应式适配 */
-        @media (max-width: 768px) {
-            .editor-wrapper { flex-direction: column; }
-            .panel { width: 100%; height: 50%; }
-            .filename-input { width: 150px; } /* 手机上改窄 */
-            
-            /* 手机端工具栏适配 */
-            .toolbar-container {
-                padding: 10px 15px; flex-direction: column; gap: 10px; width: 100%; margin: 0; border-radius: 0;
-            }
-            .toolbar-left, .btn-group { width: 100%; justify-content: space-between; }
-            .btn-group { overflow-x: auto; padding-bottom: 5px; }
-            .logo-img { height: 24px; }
-            .app-title { font-size: 16px; }
-            .naming-guide-bar { width: 100%; border-radius: 0; margin-bottom: 0; border-left: none; border-right: none; }
-        }
-    </style>
+    <script src="layout.js?v=6.0"></script>
 </head>
 <body>
 
-    <div id="loading-toast">处理中...</div>
-
-    <div class="toolbar-container">
-        <div class="toolbar-left">
-            <img src="/logo.png" class="logo-img">
-            <span class="app-title">在线编辑器</span>
-            <input type="text" id="filenameInput" class="filename-input" value="新文档.md" placeholder="分类_名称_版本_描述.md">
-        </div>
-        <div class="btn-group">
-            <button class="btn" style="background:#f0f0f0; color:#333;" onclick="openGlobalSettings()">⚙️</button>
-            <button id="btnPublish" class="btn btn-success" onclick="pushToGitHub()" disabled title="需管理员权限">☁️ 保存并发布</button>
-            <button class="btn btn-primary" onclick="exportPDF()">PDF</button>
-            <button class="btn btn-primary" onclick="downloadMD()">.md</button>
-            <button class="btn btn-magic" onclick="toCard()">长图</button>
-        </div>
-    </div>
-
-    <div class="naming-guide-bar">
-        <strong>📌 命名规范:</strong>
-        <span><code>分类_名称_版本_描述.md</code> (例: <code>风格_赛博朋克_v1.0_红蓝.md</code>)</span>
-        <span style="border-left:1px solid #ddd; padding-left:15px; margin-left:5px;">⚠️ 只有符合此格式，才能自动关联画廊中的示例图片。</span>
-    </div>
-
-    <div class="editor-wrapper">
-        <div class="panel panel-left">
-            <div class="panel-header">
-                <span>Markdown 源码</span>
-                <span style="font-weight:normal; cursor:pointer;" onclick="copyText(editor.value)">📋 复制</span>
+    <div class="main-wrapper">
+        <div class="editor-toolbar-header">
+            <div class="page-title">
+                <i class="fa-solid fa-pen-nib" style="color: #666;"></i>
+                <input type="text" id="file-name-input" class="title-input" value="新文档.md" placeholder="文件名 (例如: doc.md)">
             </div>
-            <textarea id="editor" placeholder="# 在此输入内容..."></textarea>
-        </div>
-        <div class="panel">
-            <div class="panel-header">
-                <span>实时预览</span>
+            
+            <div class="action-group">
+                <button id="btn-setting" class="btn btn-setting" title="GitHub 配置">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                
+                <button id="btn-save" class="btn btn-save" disabled title="需在设置中配置 Token">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 发布
+                </button>
+                
+                <button id="btn-pdf" class="btn btn-pdf" title="导出为 PDF">
+                    <i class="fa-solid fa-file-pdf"></i> PDF
+                </button>
+                
+                <button id="btn-md" class="btn btn-md" title="下载 .md 文件">
+                    <i class="fa-solid fa-download"></i> .md
+                </button>
+                
+                <button id="btn-long-img" class="btn btn-long" title="生成分享长图">
+                    <i class="fa-solid fa-image"></i> 转长图
+                </button>
             </div>
-            <div id="preview" class="markdown-body"></div>
+        </div>
+
+        <div class="editor-container">
+            <div class="panel">
+                <div class="panel-header">
+                    <span><i class="fa-brands fa-markdown"></i> Markdown 源码</span>
+                    <span id="btn-copy-code" class="copy-btn">复制源码</span>
+                </div>
+                <textarea id="editor" class="editor-area" placeholder="# 开始写作...&#10;&#10;支持 Markdown 语法，实时预览。"></textarea>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span><i class="fa-solid fa-eye"></i> 实时预览</span>
+                    <span id="btn-copy-text" class="copy-btn">复制文本</span>
+                </div>
+                <div id="preview" class="preview-area markdown-body"></div>
+            </div>
         </div>
     </div>
 
-    <div id="pdf-stage"></div>
-
+    <script src="editor.js?v=6.2"></script>
+    
     <script>
-        const editor = document.getElementById('editor');
-        const preview = document.getElementById('preview');
-        const filenameInput = document.getElementById('filenameInput');
-        const btnPublish = document.getElementById('btnPublish');
-        const toast = document.getElementById('loading-toast');
+        document.addEventListener('DOMContentLoaded', () => {
+            // 调用 editor.js 中的初始化函数，绑定按钮事件
+            if (window.initEditor) {
+                window.initEditor();
+            }
 
-        // === 1. 初始化 ===
-        function init() {
-            // 检查是否有从 PromptMaster 导入的数据
+            // === 关键：保留旧版的数据恢复逻辑 ===
+            // 检查 LocalStorage 是否有缓存，或者是否有从 PromptMaster 导入的文件
+            const editorEl = document.getElementById('editor');
+            const nameEl = document.getElementById('file-name-input');
             const importedContent = localStorage.getItem('kayler_editor_cache');
             const importedName = localStorage.getItem('kayler_editor_filename');
             
-            if (importedName) {
-                // 如果有文件名缓存，说明是导入操作
-                editor.value = importedContent || "";
-                filenameInput.value = importedName;
-                // 用完即焚 (可选，这里先注释掉以便刷新页面还在)
-                // localStorage.removeItem('kayler_editor_filename'); 
-            } else if (importedContent) {
-                // 普通缓存恢复
-                editor.value = importedContent;
-            } else {
-                // 默认内容
-                editor.value = "# 欢迎使用 Kayler 编辑器\n\n请在上方修改文件名，务必遵守命名规范。";
-            }
-            
-            updatePreview();
-            checkAdmin();
-        }
+            if (editorEl) {
+                if (importedName) {
+                    // 情况 A: 从 PromptMaster 导入 (优先级最高)
+                    editorEl.value = importedContent || "";
+                    if (nameEl) nameEl.value = importedName;
+                    
+                    // 导入后清除文件名标记，防止下次刷新还是这个文件
+                    localStorage.removeItem('kayler_editor_filename'); 
+                    console.log("📂 已加载导入的文件:", importedName);
+                } else if (importedContent) {
+                    // 情况 B: 普通缓存恢复
+                    editorEl.value = importedContent;
+                } else {
+                    // 情况 C: 默认欢迎语
+                    editorEl.value = "# 欢迎使用 Kayler 编辑器\n\n请在上方修改文件名，并在设置中配置 Token 以启用发布功能。";
+                }
 
-        // === 2. 基础逻辑 ===
-        editor.addEventListener('input', () => {
-            updatePreview();
-            localStorage.setItem('kayler_editor_cache', editor.value);
-            
-            // 智能文件名推断 (v9.0 升级：自动匹配规范格式)
-            if(filenameInput.value === '新文档.md') {
-                const m = editor.value.match(/^#\s+(.*)$/m);
-                if(m) {
-                    // 自动生成模板: Base_标题_v1.0_描述.md
-                    const safeTitle = m[1].trim().replace(/\s+/g, '_');
-                    filenameInput.value = `Base_${safeTitle}_v1.0_描述.md`;
+                // 触发一次预览更新 (调用 editor.js 暴露的方法)
+                if (window.updatePreview) {
+                    window.updatePreview();
+                } else {
+                    // 兜底：如果 JS 加载慢了，手动触发 input 事件
+                    editorEl.dispatchEvent(new Event('input'));
                 }
             }
         });
-
-        function updatePreview() {
-            preview.innerHTML = marked.parse(editor.value);
-        }
-
-        // === 3. 功能按钮 ===
-        function downloadMD() {
-            const blob = new Blob([editor.value], {type:'text/markdown'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = filenameInput.value;
-            a.click();
-        }
-
-        function toCard() {
-            if(!editor.value.trim()) return;
-            localStorage.setItem('kayler_draft', preview.innerText); // 传纯文本给卡片
-            window.location.href = 'index.html';
-        }
-
-        function exportPDF() {
-            toast.style.display = 'block';
-            const stage = document.getElementById('pdf-stage');
-            const author = prompt("输入署名:", "Kaylerris") || "Guest";
-            
-            stage.innerHTML = `
-                <div style="text-align:center; border-bottom:2px solid #333; margin-bottom:20px; padding-bottom:10px; font-size:24px; font-weight:bold;">Kayler在线文档</div>
-                <div class="markdown-body">${marked.parse(editor.value)}</div>
-                <div style="margin-top:50px; text-align:center; border-top:1px solid #333; padding-top:10px; font-style:italic;">Created by @${author} with x.aisai.cc</div>
-            `;
-
-            // UI 交换
-            document.querySelector('.toolbar-container').style.display = 'none';
-            document.querySelector('.naming-guide-bar').style.display = 'none'; // 隐藏向导
-            document.querySelector('.editor-wrapper').style.display = 'none';
-            stage.style.display = 'block';
-            document.body.classList.add('export-mode');
-            window.scrollTo(0,0);
-
-            const opt = { margin: 15, filename: filenameInput.value.replace('.md','.pdf'), image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-
-            setTimeout(() => {
-                html2pdf().set(opt).from(stage).save().then(() => {
-                    location.reload(); // 刷新恢复最稳妥
-                });
-            }, 500);
-        }
-
-        // === 4. 发布逻辑 ===
-        function checkAdmin() {
-            if(localStorage.getItem('gh_token')) {
-                btnPublish.disabled = false;
-                btnPublish.classList.add('active');
-            }
-        }
-        window.addEventListener('auth-updated', checkAdmin);
-
-        async function pushToGitHub() {
-            const token = localStorage.getItem('gh_token');
-            const owner = localStorage.getItem('gh_owner') || 'itskys';
-            const repo = localStorage.getItem('gh_repo') || 'kayler';
-            const path = 'prompt/' + filenameInput.value;
-            
-            if(!token) { alert("请先配置 Token"); openGlobalSettings(); return; }
-            
-            // v9.0 校验逻辑：检查是否包含版本号
-            if(!filenameInput.value.includes('_v')) {
-                if(!confirm("⚠️ 警告：文件名似乎不包含版本号 (v1.0)，这会导致无法自动关联示例图片。\n\n建议格式：分类_名称_v1.0_描述.md\n\n确定要继续发布吗？")) return;
-            }
-
-            btnPublish.innerHTML = "⏳...";
-            try {
-                // Check
-                let sha = null;
-                const check = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, { headers: {'Authorization': `token ${token}`} });
-                if(check.ok) {
-                    if(!confirm("文件已存在，覆盖吗？")) throw new Error("取消");
-                    sha = (await check.json()).sha;
-                }
-
-                // Upload
-                const content = btoa(unescape(encodeURIComponent(editor.value)));
-                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Update ${path}`, content: content, sha: sha, branch: 'main' })
-                });
-
-                if(res.ok) alert("✅ 发布成功！");
-                else throw new Error((await res.json()).message);
-            } catch(e) { if(e.message!=='取消') alert("失败: "+e.message); }
-            
-            btnPublish.innerHTML = "☁️ 保存并发布";
-        }
-
-        function copyText(txt) { navigator.clipboard.writeText(txt).then(()=>alert('已复制')); }
-
-        init();
     </script>
 </body>
 </html>
