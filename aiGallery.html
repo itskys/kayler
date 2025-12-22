@@ -21,54 +21,58 @@
             min-height: 100vh; color: #333;
         }
         
-        /* 标题 */
         header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
         h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
         
-        /* 筛选区 */
-        .filter-area {
+        /* === 控制面板 (Layout Refined v12.2) === */
+        .control-panel {
             width: 100%; max-width: 1000px; margin-bottom: 20px;
-            display: flex; flex-direction: column; align-items: center; gap: 15px;
+            display: flex; flex-direction: column; gap: 12px;
         }
-        .search-wrapper { position: relative; width: 100%; max-width: 500px; }
+
+        /* 第一行：搜索 + 按钮组 */
+        .top-tools {
+            display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;
+        }
+        .search-wrapper { position: relative; flex: 1; max-width: 400px; min-width: 200px; }
         .search-input {
-            width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 50px;
-            font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            width: 100%; padding: 8px 15px 8px 35px; border: 1px solid #ddd; border-radius: 50px;
+            font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            height: 36px;
         }
-        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15); }
-        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 10px rgba(139, 94, 60, 0.15); }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 14px; }
 
-        /* 标签云 (优化版) */
-        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-        .filter-tag {
-            padding: 4px 12px; background: white; border: 1px solid #eee; border-radius: 20px;
-            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
-        }
-        .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); transform: translateY(-2px); }
-        .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
-
-        /* 操作栏 */
-        .action-bar { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 8px; }
         .btn-pill {
-            padding: 6px 16px; border-radius: 50px; border: 1px solid #ddd;
-            background: white; color: #666; cursor: pointer; font-size: 13px;
-            display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+            padding: 0 16px; height: 36px; border-radius: 50px; border: 1px solid #ddd;
+            background: white; color: #555; cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
         }
         .btn-pill:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
         .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
         .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
 
-        /* 瀑布流布局 (修复显示问题) */
+        /* 第二行：标签云 */
+        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .filter-tag {
+            padding: 3px 10px; background: white; border: 1px solid #eee; border-radius: 15px;
+            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
+        }
+        .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
+        .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
+
+        /* 瀑布流 */
         .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
         .gallery-item {
             background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; break-inside: avoid;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s, box-shadow 0.3s; 
-            cursor: zoom-in; position: relative; /* 移除 opacity 动画以防显示异常 */
+            cursor: zoom-in; position: relative; 
         }
         .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         .gallery-item img { width: 100%; height: auto; display: block; background: #eee; min-height: 150px; }
-        .item-info { padding: 12px 15px; border-top: 1px solid #f5f5f5; }
-        .item-title { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-info { padding: 10px 12px; border-top: 1px solid #f5f5f5; }
+        .item-title { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-meta { font-size: 11px; color: #bbb; display: flex; justify-content: space-between; }
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 30px 0; }
@@ -81,11 +85,25 @@
         #upload-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 30px; font-size: 14px; z-index: 9999; display: none; }
 
         /* 模态框 */
-        .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
+        .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
         .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; z-index: 2001; }
-        .modal.preview-mode img, .modal.preview-mode video { max-width: 90%; max-height: 80vh; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .modal-caption { color: #ccc; margin-top: 20px; font-size: 16px; }
+        .modal.preview-mode img, .modal.preview-mode video { max-width: 90%; max-height: 75vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        
+        /* 底部标题区域 (v12.2) */
+        .modal-footer-area { margin-top: 20px; text-align: center; color: #ddd; max-width: 80%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+        .modal-filename { font-size: 14px; font-family: monospace; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; user-select: text; display: flex; align-items: center; gap: 8px; }
+        .copy-icon { cursor: pointer; opacity: 0.7; transition: 0.2s; font-size: 16px; }
+        .copy-icon:hover { opacity: 1; transform: scale(1.1); }
+        
+        .prompt-link-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--brand-brown); color: white; text-decoration: none;
+            padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
+            transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .prompt-link-btn:hover { background: var(--brand-brown-hover); transform: translateY(-2px); }
+
         .btn-delete { position: absolute; top: 30px; left: 30px; background: rgba(255, 0, 0, 0.7); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; display: none; z-index: 2001; }
 
         /* 配置/上传弹窗 */
@@ -116,19 +134,21 @@
         <h1><img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">AI 画廊</h1>
     </header>
 
-    <div class="filter-area">
-        <div class="search-wrapper">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="搜索图片..." oninput="handleSearch()">
+    <div class="control-panel">
+        <div class="top-tools">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索图片..." oninput="handleSearch()">
+            </div>
+            <div class="btn-group">
+                <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新</span></button>
+                <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="prepareUpload(this)">
+                <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()"><span>☁️ 上传</span></button>
+                <button class="btn-pill" onclick="openLocalSettings()"><span>⚙️ 设置</span></button>
+            </div>
         </div>
+        
         <div class="tags-container" id="tagsContainer"></div>
-    </div>
-
-    <div class="action-bar">
-        <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新</span></button>
-        <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="prepareUpload(this)">
-        <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()"><span>☁️ 上传 (Admin)</span></button>
-        <button class="btn-pill" onclick="openLocalSettings()"><span>⚙️ 设置</span></button>
     </div>
 
     <div id="loadingState">
@@ -142,9 +162,17 @@
     <div id="imageModal" class="modal preview-mode" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
         <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
+        
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
-        <div class="modal-caption" id="modalCaption"></div>
+        
+        <div class="modal-footer-area">
+            <div class="modal-filename">
+                <span id="modalFilenameText">Filename.png</span>
+                <span class="copy-icon" onclick="copyFilename()" title="复制文件名">📋</span>
+            </div>
+            <div id="promptLinkContainer"></div>
+        </div>
     </div>
 
     <div id="uploadConfigModal" class="modal modal-overlay-light">
@@ -174,8 +202,6 @@
     <script>
         const REPO_CONFIG = { owner: 'itskys', repo: 'kayler', path: 'gallery', branch: 'main' };
         const ITEMS_PER_PAGE = 30;
-        
-        // 标签黑名单：过滤掉无意义的系统生成词
         const TAG_BLOCKLIST = ['texttoimage', 'image', 'img', 'pic', 'picture', 'upload', 'unknown', 'v1', 'v2', 'v3', 'v4', 'final', 'test', 'demo', 'untitled'];
 
         let allImages = [], filteredImages = [], currentPage = 1, pendingFiles = [], currentImgSHA = null, currentImgName = null, currentTag = 'all';
@@ -189,7 +215,8 @@
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImg');
         const modalVideo = document.getElementById('modalVideo');
-        const modalCaption = document.getElementById('modalCaption');
+        const modalFilenameText = document.getElementById('modalFilenameText');
+        const promptLinkContainer = document.getElementById('promptLinkContainer');
         const btnUpload = document.getElementById('btnUpload');
         const btnDelete = document.getElementById('btnDelete');
         const toast = document.getElementById('upload-toast');
@@ -210,6 +237,7 @@
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
 
             try {
+                document.title = "AI 画廊 - Kayler";
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`;
                 const response = await fetch(url, { headers });
                 if (!response.ok) throw new Error((await response.text()));
@@ -230,44 +258,27 @@
             }
         }
 
-        // === 智能标签生成 (v12.1 核心) ===
         function generateTags() {
             const tagCounts = {};
             allImages.forEach(img => {
-                // 去除时间戳前缀 (14位数字+下划线)
                 const cleanName = img.name.replace(/^\d{14}_/, '');
-                // 分割文件名
                 const parts = cleanName.split(/_| /);
-                
-                // 寻找第一个有效标签
                 let tag = null;
                 for (let part of parts) {
                     const lower = part.toLowerCase();
-                    // 过滤：长度<2，包含点号(后缀)，在黑名单中，或者是纯数字
                     if (lower.length > 2 && !lower.includes('.') && !TAG_BLOCKLIST.includes(lower) && isNaN(part)) {
-                        tag = part;
-                        break; // 找到第一个有效词即停止
+                        tag = part; break;
                     }
                 }
-
                 if (tag) {
-                    // 首字母大写美化
                     tag = tag.charAt(0).toUpperCase() + tag.slice(1);
                     tagCounts[tag] = (tagCounts[tag] || 0) + 1;
                 }
             });
-
-            // 频率过滤：只显示出现2次以上的标签 (若总图少于10张则不限制)
             const minCount = allImages.length < 10 ? 1 : 2;
-            const sortedTags = Object.keys(tagCounts)
-                .filter(t => tagCounts[t] >= minCount)
-                .sort((a,b) => tagCounts[b] - tagCounts[a])
-                .slice(0, 15); // 最多显示15个
-            
+            const sortedTags = Object.keys(tagCounts).filter(t => tagCounts[t] >= minCount).sort((a,b) => tagCounts[b] - tagCounts[a]).slice(0, 15);
             let html = `<div class="filter-tag active" onclick="filterByTag('all', this)">全部 (${allImages.length})</div>`;
-            sortedTags.forEach(tag => {
-                html += `<div class="filter-tag" onclick="filterByTag('${tag}', this)">${tag} (${tagCounts[tag]})</div>`;
-            });
+            sortedTags.forEach(tag => { html += `<div class="filter-tag" onclick="filterByTag('${tag}', this)">${tag} (${tagCounts[tag]})</div>`; });
             tagsContainer.innerHTML = html;
         }
 
@@ -275,11 +286,9 @@
             currentTag = tag;
             document.querySelectorAll('.filter-tag').forEach(el => el.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
-            
             if (tag === 'all') { filteredImages = [...allImages]; } 
             else { filteredImages = allImages.filter(img => img.name.toLowerCase().includes(tag.toLowerCase())); }
-            searchInput.value = '';
-            renderPage(1);
+            searchInput.value = ''; renderPage(1);
         }
 
         function handleSearch() {
@@ -303,7 +312,6 @@
             galleryContainer.innerHTML = '';
             const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
-            
             if(images.length === 0) { galleryContainer.innerHTML = '<div style="text-align:center; color:#ccc; width:100%;">未找到匹配图片</div>'; return; }
 
             images.forEach(img => {
@@ -311,14 +319,12 @@
                 const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
                 const item = document.createElement('div');
                 item.className = 'gallery-item';
-                
                 let mediaTag = `<img src="${rawUrl}" alt="${title}" loading="lazy">`;
                 let type = 'image';
                 if(img.name.endsWith('.mp4')) {
                     mediaTag = `<video src="${rawUrl}" muted autoplay loop style="width:100%; display:block;"></video>`;
                     type = 'video';
                 }
-
                 item.onclick = () => openModal(rawUrl, title, type, img.sha, img.name);
                 item.innerHTML = `${mediaTag}<div class="item-info"><div class="item-title">${title}</div><div class="item-meta"><span>Kayler AI</span><span>📥 查看</span></div></div>`;
                 galleryContainer.appendChild(item);
@@ -349,14 +355,35 @@
         }
 
         function openModal(src, caption, type, sha, filename) {
-            modalCaption.innerText = caption; currentImgSHA = sha; currentImgName = filename;
+            currentImgSHA = sha; currentImgName = filename;
             if (btnDelete.dataset.auth === "true") { btnDelete.style.display = "block"; btnDelete.innerText = "🗑️ 删除此图"; btnDelete.disabled = false; } 
             else { btnDelete.style.display = "none"; }
+            
             modal.classList.add('active');
             if(type === 'video') { modalImg.style.display='none'; modalVideo.style.display='block'; modalVideo.src=src; modalVideo.play(); }
             else { modalVideo.style.display='none'; modalVideo.pause(); modalImg.style.display='block'; modalImg.src=src; }
+            
+            // 设置文件名显示
+            const cleanName = filename.replace(/^\d{14}_/, '');
+            modalFilenameText.innerText = cleanName;
+            
+            // 生成提示词跳转链接
+            const parts = cleanName.split(/_| /);
+            let coreName = null;
+            // 简单的查找逻辑：第一个不是纯数字且长度>1的词
+            for(let p of parts) { if(p.length>1 && isNaN(p)) { coreName = p; break; } }
+            
+            if(coreName) {
+                promptLinkContainer.innerHTML = `<a href="promptmaster.html?search=${encodeURIComponent(coreName)}" target="_blank" class="prompt-link-btn">🔗 所用提示词</a>`;
+            } else {
+                promptLinkContainer.innerHTML = '';
+            }
         }
         function closeModal() { modal.classList.remove('active'); modalVideo.pause(); }
+        
+        function copyFilename() {
+            navigator.clipboard.writeText(modalFilenameText.innerText).then(()=>alert("文件名已复制"));
+        }
 
         async function deleteCurrentImage() {
             if(!confirm(`确定要永久删除此图片吗？`)) return;
