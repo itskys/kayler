@@ -7,7 +7,20 @@ document.addEventListener('DOMContentLoaded', () => {
     injectFooter();    // 4. 注入页脚
     injectAuthModal(); // 5. 注入设置弹窗
     highlightCurrentNav();
-    if (window.i18n) window.i18n.init(); // 6. 初始化多语言 (最后执行以覆盖注入的元素)
+    if (window.i18n) {
+        window.i18n.init();
+        // Sync nav selector
+        const navSel = document.getElementById('nav-lang-select');
+        if (navSel) navSel.value = window.i18n.currentLang;
+    }
+
+    // Listen for external updates
+    window.addEventListener('lang-changed', () => {
+        if (window.i18n) {
+            const navSel = document.getElementById('nav-lang-select');
+            if (navSel) navSel.value = window.i18n.currentLang;
+        }
+    });
 });
 
 // === 1. 魔法链接自动登录 ===
@@ -56,6 +69,12 @@ function injectStyles() {
             display: flex !important; align-items: center !important; gap: 5px !important; transition: 0.2s !important; font-family: var(--font-stack) !important;
         }
         .global-nav-link:hover, .global-nav-link.active { color: var(--brand-brown) !important; }
+        
+        .nav-lang-select {
+            border: 1px solid #eee; border-radius: 12px; padding: 4px 8px; font-size: 13px; color: #555;
+            background: #f9f9f9; cursor: pointer; margin-left: 10px; outline: none; transition: 0.2s;
+        }
+        .nav-lang-select:hover { background: #fff; border-color: #ccc; }
 
         /* 页脚样式 */
         .global-footer {
@@ -117,6 +136,13 @@ function injectHeader() {
             <a href="promptmaster.html" class="global-nav-link" data-i18n="nav_prompt">💡 提示词管理器</a>
             <a href="aiGallery.html" class="global-nav-link" data-i18n="nav_gallery">🖼️ AI 画廊</a>
             <a href="contact.html" class="global-nav-link" data-i18n="nav_contact">📩 联系博主</a>
+            <select id="nav-lang-select" class="nav-lang-select" onchange="i18n.setLanguage(this.value)">
+                <option value="zh">🇨🇳 中文</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+            </select>
         </div>
     `;
 
