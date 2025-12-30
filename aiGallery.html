@@ -1,164 +1,583 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 画廊 - Kayler</title>
     <link rel="icon" href="/favicon.png" type="image/png">
-    
+
+    <link rel="icon" href="/favicon.png" type="image/png">
+
+    <script src="i18n.js?v=1.0"></script>
     <script src="layout.js?v=6.0"></script>
 
     <style>
         :root {
-            --bg-body: #f2f4f7; --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --layout-width: 94%; --layout-max-width: 1600px;
+            --bg-body: #f2f4f7;
+            --brand-brown: #8b5e3c;
+            --brand-brown-hover: #6d4c41;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --layout-width: 94%;
+            --layout-max-width: 1600px;
         }
+
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-            background-color: var(--bg-body); margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: #333;
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
         }
-        
-        header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
-        h1 { font-size: 28px; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; color: #2c2c2c; }
-        
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c2c2c;
+        }
+
         /* === 控制面板 (Layout Fixed v12.5) === */
         .control-panel {
-            width: 100%; max-width: 1000px; margin-bottom: 20px;
-            display: flex; flex-direction: column; gap: 15px; align-items: center;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
         }
 
         /* 第一行：搜索框 (独立一行，避免挤压) */
-        .search-row { width: 100%; max-width: 600px; position: relative; }
-        .search-input {
-            width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 50px;
-            font-size: 14px; outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            height: 42px; box-sizing: border-box;
+        .search-row {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
         }
-        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15); }
-        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; font-size: 16px; }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            height: 42px;
+            box-sizing: border-box;
+        }
+
+        .search-input:focus {
+            border-color: var(--brand-brown);
+            box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+        }
 
         /* 第二行：按钮 + 标签 (混合排列) */
         .tools-row {
-            display: flex; flex-wrap: wrap; justify-content: center; align-items: center; 
-            gap: 12px; width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
         }
 
-        .btn-group { display: flex; gap: 10px; flex-shrink: 0; }
-        .btn-pill {
-            padding: 0 18px; height: 36px; border-radius: 50px; border: 1px solid #ddd;
-            background: white; color: #555; cursor: pointer; font-size: 13px;
-            display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
         }
-        .btn-pill:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
-        .btn-upload { background: var(--brand-brown); color: white; border-color: var(--brand-brown); display: none; }
-        .btn-upload:hover { background: var(--brand-brown-hover); color: white; }
+
+        .btn-pill {
+            padding: 0 18px;
+            height: 36px;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #555;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-pill:hover {
+            border-color: var(--brand-brown);
+            color: var(--brand-brown);
+        }
+
+        .btn-upload {
+            background: var(--brand-brown);
+            color: white;
+            border-color: var(--brand-brown);
+            display: none;
+        }
+
+        .btn-upload:hover {
+            background: var(--brand-brown-hover);
+            color: white;
+        }
 
         /* 分割线 */
-        .v-divider { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: none; }
-        @media (min-width: 768px) { .v-divider { display: block; } }
+        .v-divider {
+            width: 1px;
+            height: 20px;
+            background: #ddd;
+            margin: 0 5px;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .v-divider {
+                display: block;
+            }
+        }
 
         /* 标签云 */
-        .tags-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; align-items: center; }
-        .filter-tag {
-            padding: 0 12px; background: white; border: 1px solid #eee; border-radius: 18px;
-            font-size: 12px; color: #666; cursor: pointer; transition: 0.2s; user-select: none;
-            height: 30px; display: flex; align-items: center; box-sizing: border-box;
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            align-items: center;
         }
-        .filter-tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
-        .filter-tag.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
+
+        .filter-tag {
+            padding: 0 12px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 18px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            transition: 0.2s;
+            user-select: none;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .filter-tag:hover {
+            border-color: var(--brand-brown);
+            color: var(--brand-brown);
+        }
+
+        .filter-tag.active {
+            background: var(--brand-brown);
+            color: white;
+            border-color: var(--brand-brown);
+        }
 
         /* 瀑布流 */
-        .gallery-container { column-count: 5; column-gap: 20px; width: var(--layout-width); max-width: var(--layout-max-width); min-height: 600px; }
-        .gallery-item {
-            background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; break-inside: avoid;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s, box-shadow 0.3s; 
-            cursor: zoom-in; position: relative; 
+        .gallery-container {
+            column-count: 5;
+            column-gap: 20px;
+            width: var(--layout-width);
+            max-width: var(--layout-max-width);
+            min-height: 600px;
         }
-        .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .gallery-item img { width: 100%; height: auto; display: block; background: #eee; min-height: 150px; }
-        .item-info { padding: 10px 12px; border-top: 1px solid #f5f5f5; }
-        .item-title { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-meta { font-size: 11px; color: #bbb; display: flex; justify-content: space-between; }
 
-        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 30px 0; }
-        .page-btn { padding: 6px 12px; border: 1px solid #ddd; background: white; color: #555; border-radius: 6px; cursor: pointer; font-size: 13px; min-width: 32px; }
-        .page-btn.active { background: var(--brand-brown); color: white; border-color: var(--brand-brown); }
-        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .gallery-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            break-inside: avoid;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: zoom-in;
+            position: relative;
+        }
 
-        #loadingState { width: 100%; text-align: center; color: #999; margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid var(--brand-brown); border-radius: 50%; animation: spin 1s linear infinite; }
-        #upload-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 30px; font-size: 14px; z-index: 9999; display: none; }
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #eee;
+            min-height: 150px;
+        }
+
+        .item-info {
+            padding: 10px 12px;
+            border-top: 1px solid #f5f5f5;
+        }
+
+        .item-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-meta {
+            font-size: 11px;
+            color: #bbb;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin: 30px 0;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #555;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            min-width: 32px;
+        }
+
+        .page-btn.active {
+            background: var(--brand-brown);
+            color: white;
+            border-color: var(--brand-brown);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #loadingState {
+            width: 100%;
+            text-align: center;
+            color: #999;
+            margin-top: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #eee;
+            border-top: 3px solid var(--brand-brown);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        #upload-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 9999;
+            display: none;
+        }
 
         /* 模态框 */
-        .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
-        .modal.active { display: flex; }
-        .close-modal { position: absolute; top: 30px; right: 30px; color: white; font-size: 40px; cursor: pointer; z-index: 2001; }
-        .modal.preview-mode img, .modal.preview-mode video { max-width: 90%; max-height: 75vh; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        
-        .modal-footer-area { margin-top: 20px; text-align: center; color: #ddd; max-width: 80%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-        .modal-filename { font-size: 14px; font-family: monospace; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; user-select: text; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .copy-icon { opacity: 0.7; transition: 0.2s; font-size: 16px; }
-        .copy-icon:hover { opacity: 1; transform: scale(1.1); }
-        
-        .prompt-link-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--brand-brown); color: white; text-decoration: none;
-            padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
-            transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
         }
-        .prompt-link-btn:hover { background: var(--brand-brown-hover); transform: translateY(-2px); }
 
-        .btn-delete { position: absolute; top: 30px; left: 30px; background: rgba(255, 0, 0, 0.7); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; display: none; z-index: 2001; }
+        .modal.active {
+            display: flex;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 2001;
+        }
+
+        .modal.preview-mode img,
+        .modal.preview-mode video {
+            max-width: 90%;
+            max-height: 75vh;
+            border-radius: 4px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-footer-area {
+            margin-top: 20px;
+            text-align: center;
+            color: #ddd;
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .modal-filename {
+            font-size: 14px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 4px;
+            user-select: text;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .copy-icon {
+            opacity: 0.7;
+            transition: 0.2s;
+            font-size: 16px;
+        }
+
+        .copy-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .prompt-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--brand-brown);
+            color: white;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .prompt-link-btn:hover {
+            background: var(--brand-brown-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: none;
+            z-index: 2001;
+        }
 
         /* 配置/上传弹窗 */
-        .modal-overlay-light { background: rgba(0,0,0,0.5); }
-        .config-box { background: white; width: 400px; max-width: 90%; padding: 25px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .config-title { font-size: 18px; font-weight: bold; margin: 0; }
-        .config-row { display: flex; flex-direction: column; gap: 5px; }
-        .config-label { font-size: 12px; font-weight: bold; color: #666; }
-        .config-input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; background: #fafafa; }
-        .config-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-        .btn-cancel { padding: 8px 16px; background: #eee; border: none; border-radius: 6px; cursor: pointer; }
-        .btn-confirm { padding: 8px 20px; background: var(--brand-brown); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .config-check-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
-        .config-hidden-area { display: none; flex-direction: column; gap: 15px; padding: 15px; background: #fdfdfd; border: 1px dashed #ddd; border-radius: 8px; }
+        .modal-overlay-light {
+            background: rgba(0, 0, 0, 0.5);
+        }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @media (max-width: 1600px) { .gallery-container { column-count: 4; } }
-        @media (max-width: 1200px) { .gallery-container { column-count: 3; } }
-        @media (max-width: 900px) { .gallery-container { column-count: 2; } }
-        @media (max-width: 600px) { .gallery-container { column-count: 1; } }
+        .config-box {
+            background: white;
+            width: 400px;
+            max-width: 90%;
+            padding: 25px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .config-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .config-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .config-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .config-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background: #fafafa;
+        }
+
+        .config-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-cancel {
+            padding: 8px 16px;
+            background: #eee;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-confirm {
+            padding: 8px 20px;
+            background: var(--brand-brown);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .config-check-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .config-hidden-area {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            background: #fdfdfd;
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 1600px) {
+            .gallery-container {
+                column-count: 4;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .gallery-container {
+                column-count: 3;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .gallery-container {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .gallery-container {
+                column-count: 1;
+            }
+        }
     </style>
 </head>
+
 <body>
-    
+
     <div id="upload-toast">⏳ 正在上传...</div>
 
     <header>
-        <h1><img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;">AI 画廊</h1>
+        <h1><img src="/logo.png" alt="Logo" style="height: 36px; vertical-align: middle; margin-right: 8px;"><span
+                data-i18n="gallery_title">AI 画廊</span></h1>
     </header>
 
     <div class="control-panel">
         <div class="search-row">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="搜索图片..." oninput="handleSearch()">
+            <input type="text" class="search-input" id="searchInput" data-i18n="search_gallery_placeholder"
+                placeholder="搜索图片..." oninput="handleSearch()">
         </div>
-        
+
         <div class="tools-row">
             <div class="btn-group">
-                <button class="btn-pill" onclick="initGallery()"><span>🔄 刷新</span></button>
-                <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;" onchange="prepareUpload(this)">
+                <button class="btn-pill" onclick="initGallery()"><span data-i18n="btn_refresh">🔄 刷新</span></button>
+                <input type="file" id="imgUploadInput" accept="image/*,video/mp4" multiple style="display:none;"
+                    onchange="prepareUpload(this)">
                 <button id="btnUpload" class="btn-pill btn-upload" onclick="triggerUpload()">
-                    <span>☁️ 上传</span>
+                    <span data-i18n="btn_upload">☁️ 上传</span>
                 </button>
-                <button class="btn-pill" onclick="openLocalSettings()"><span>⚙️ 设置</span></button>
+                <button class="btn-pill" onclick="openLocalSettings()"><span data-i18n="btn_settings">⚙️
+                        设置</span></button>
             </div>
-            
+
             <div class="v-divider"></div>
-            
+
             <div class="tags-container" id="tagsContainer"></div>
         </div>
     </div>
@@ -170,14 +589,15 @@
 
     <div class="gallery-container" id="galleryContainer"></div>
     <div class="pagination" id="pagination"></div>
-    
+
     <div id="imageModal" class="modal preview-mode" onclick="if(event.target === this) closeModal()">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()">🗑️ 删除此图</button>
-        
+        <button id="btnDelete" class="btn-delete" onclick="deleteCurrentImage()" data-i18n="modal_delete_img">🗑️
+            删除此图</button>
+
         <img id="modalImg" src="" style="display:none;">
         <video id="modalVideo" src="" controls style="display:none;"></video>
-        
+
         <div class="modal-footer-area">
             <div class="modal-filename" onclick="copyFilename()" title="点击复制">
                 <span id="modalFilenameText">Filename.png</span>
@@ -189,25 +609,50 @@
 
     <div id="uploadConfigModal" class="modal modal-overlay-light">
         <div class="config-box">
-            <h3 class="config-title">📤 上传图片</h3>
-            <p style="margin:0; font-size:13px; color:#666;">已选 <span id="fileCount" style="font-weight:bold;">0</span> 个文件</p>
-            <label class="config-check-label"><input type="checkbox" id="isPromptExample" onchange="toggleExampleFields()"><span>🔗 设为提示词示例</span></label>
+            <h3 class="config-title" data-i18n="modal_upload_title">📤 上传图片</h3>
+            <p style="margin:0; font-size:13px; color:#666;">
+                <span data-i18n="lbl_selected">已选</span>
+                <span id="fileCount" style="font-weight:bold;">0</span>
+                <span data-i18n="lbl_file_count">个文件</span>
+            </p>
+            <label class="config-check-label">
+                <input type="checkbox" id="isPromptExample" onchange="toggleExampleFields()">
+                <span data-i18n="lbl_is_example">🔗 设为提示词示例</span>
+            </label>
             <div id="exampleFields" class="config-hidden-area">
-                <div class="config-row"><span class="config-label">核心名称 <span style="color:red">*</span></span><input type="text" id="coreNameInput" class="config-input" placeholder="例: Cyberpunk"></div>
-                <div class="config-row"><span class="config-label">版本号 (可选)</span><input type="text" id="verNameInput" class="config-input" placeholder="例: v2.0"></div>
+                <div class="config-row">
+                    <span class="config-label"><span data-i18n="lbl_core_name">核心名称</span> <span
+                            style="color:red">*</span></span>
+                    <input type="text" id="coreNameInput" class="config-input" placeholder="例: Cyberpunk">
+                </div>
+                <div class="config-row">
+                    <span class="config-label" data-i18n="lbl_ver_name">版本号 (可选)</span>
+                    <input type="text" id="verNameInput" class="config-input" placeholder="例: v2.0">
+                </div>
                 <div style="font-size:11px; color:#999;">预览: <span id="filenamePreview">...</span></div>
             </div>
-            <div class="config-actions"><button class="btn-cancel" onclick="closeUploadModal()">取消</button><button class="btn-confirm" onclick="confirmUpload()">开始上传</button></div>
+            <div class="config-actions">
+                <button class="btn-cancel" onclick="closeUploadModal()" data-i18n="settings_btn_cancel">取消</button>
+                <button class="btn-confirm" onclick="confirmUpload()" data-i18n="btn_start_upload">开始上传</button>
+            </div>
         </div>
     </div>
 
     <div id="settingsModal" class="modal modal-overlay-light" onclick="if(event.target===this) closeLocalSettings()">
         <div class="config-box">
-            <h3 class="config-title">⚙️ 画廊配置</h3>
-            <div class="config-row"><span class="config-label">GitHub Token</span><input type="password" id="confToken" class="config-input" placeholder="GitHub Token"></div>
-            <div class="config-row"><span class="config-label">用户名</span><input type="text" id="confOwner" class="config-input" placeholder="Owner"></div>
-            <div class="config-row"><span class="config-label">仓库名</span><input type="text" id="confRepo" class="config-input" placeholder="Repo"></div>
-            <div class="config-actions"><button class="btn-cancel" onclick="closeLocalSettings()">取消</button><button class="btn-confirm" onclick="saveLocalSettings()">💾 保存并刷新</button></div>
+            <h3 class="config-title" data-i18n="settings_title">⚙️ 画廊配置</h3>
+            <div class="config-row"><span class="config-label" data-i18n="settings_label_token">GitHub
+                    Token</span><input type="password" id="confToken" class="config-input" placeholder="GitHub Token">
+            </div>
+            <div class="config-row"><span class="config-label" data-i18n="settings_label_owner">用户名</span><input
+                    type="text" id="confOwner" class="config-input" placeholder="Owner"></div>
+            <div class="config-row"><span class="config-label" data-i18n="settings_label_repo">仓库名</span><input
+                    type="text" id="confRepo" class="config-input" placeholder="Repo"></div>
+            <div class="config-actions">
+                <button class="btn-cancel" onclick="closeLocalSettings()" data-i18n="settings_btn_cancel">取消</button>
+                <button class="btn-confirm" onclick="saveLocalSettings()" data-i18n="settings_btn_save">💾
+                    保存并刷新</button>
+            </div>
         </div>
     </div>
 
@@ -218,124 +663,131 @@
 
         let allImages = [], filteredImages = [], currentPage = 1, pendingFiles = [], currentImgSHA = null, currentImgName = null, currentTag = 'all';
 
-        const el = (id) => document.getElementById(id); 
+        const el = (id) => document.getElementById(id);
         function checkAdmin() {
-            if(localStorage.getItem('gh_token')) { el('btnUpload').style.display='inline-flex'; el('btnDelete').dataset.auth="true"; }
-            else { el('btnUpload').style.display='none'; el('btnDelete').style.display='none'; el('btnDelete').dataset.auth="false"; }
+            if (localStorage.getItem('gh_token')) { el('btnUpload').style.display = 'inline-flex'; el('btnDelete').dataset.auth = "true"; }
+            else { el('btnUpload').style.display = 'none'; el('btnDelete').style.display = 'none'; el('btnDelete').dataset.auth = "false"; }
         }
         window.addEventListener('auth-updated', checkAdmin);
 
         async function initGallery() {
-            el('loadingState').style.display='block'; el('galleryContainer').innerHTML=''; el('pagination').innerHTML=''; el('tagsContainer').innerHTML='';
-            const token=localStorage.getItem('gh_token'), headers=token?{'Authorization':`token ${token}`}:{};
-            const owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
+            el('loadingState').style.display = 'block'; el('galleryContainer').innerHTML = ''; el('pagination').innerHTML = ''; el('tagsContainer').innerHTML = '';
+            const token = localStorage.getItem('gh_token'), headers = token ? { 'Authorization': `token ${token}` } : {};
+            const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner, repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
             try {
                 // 确保标题更新
                 document.title = "AI 画廊 - Kayler";
-                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, {headers});
-                if(!res.ok) throw new Error(await res.text());
+                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, { headers });
+                if (!res.ok) throw new Error(await res.text());
                 const files = await res.json();
-                allImages = files.filter(f=>/\.(jpg|jpeg|png|gif|webp|mp4)$/i.test(f.name)).sort((a,b)=>b.name.localeCompare(a.name));
-                if(allImages.length===0){ el('loadingState').innerText="暂无内容"; return; }
-                generateTags(); filteredImages=[...allImages]; renderPage(1); el('loadingState').style.display='none';
-            } catch(e){ el('loadingState').innerHTML=`<span style="color:red">加载失败: ${e.message}</span><br><button onclick="initGallery()">重试</button>`; }
+                allImages = files.filter(f => /\.(jpg|jpeg|png|gif|webp|mp4)$/i.test(f.name)).sort((a, b) => b.name.localeCompare(a.name));
+                if (allImages.length === 0) { el('loadingState').innerText = "暂无内容"; return; }
+                generateTags(); filteredImages = [...allImages]; renderPage(1); el('loadingState').style.display = 'none';
+            } catch (e) { el('loadingState').innerHTML = `<span style="color:red">加载失败: ${e.message}</span><br><button onclick="initGallery()">重试</button>`; }
         }
 
         function generateTags() {
-            const counts={}; allImages.forEach(img=>{
-                const parts=img.name.replace(/^\d{14}_/,'').split(/_| /);
-                for(let p of parts){ if(p.length>2 && !TAG_BLOCKLIST.includes(p.toLowerCase()) && isNaN(p)){ 
-                    let t=p.charAt(0).toUpperCase()+p.slice(1); counts[t]=(counts[t]||0)+1; break; 
-                }}
+            const counts = {}; allImages.forEach(img => {
+                const parts = img.name.replace(/^\d{14}_/, '').split(/_| /);
+                for (let p of parts) {
+                    if (p.length > 2 && !TAG_BLOCKLIST.includes(p.toLowerCase()) && isNaN(p)) {
+                        let t = p.charAt(0).toUpperCase() + p.slice(1); counts[t] = (counts[t] || 0) + 1; break;
+                    }
+                }
             });
-            const sorted = Object.keys(counts).filter(t=>counts[t]>= (allImages.length<10?1:2)).sort((a,b)=>counts[b]-counts[a]).slice(0,15);
-            let html=`<div class="filter-tag active" onclick="filterTag('all',this)">全部</div>`;
-            sorted.forEach(t=>html+=`<div class="filter-tag" onclick="filterTag('${t}',this)">${t}</div>`);
-            el('tagsContainer').innerHTML=html;
+            const sorted = Object.keys(counts).filter(t => counts[t] >= (allImages.length < 10 ? 1 : 2)).sort((a, b) => counts[b] - counts[a]).slice(0, 15);
+            const allText = window.i18n ? window.i18n.t('tag_all') : "全部";
+            let html = `<div class="filter-tag active" onclick="filterTag('all',this)">${allText}</div>`;
+            sorted.forEach(t => html += `<div class="filter-tag" onclick="filterTag('${t}',this)">${t}</div>`);
+            el('tagsContainer').innerHTML = html;
         }
-        function filterTag(t,btn){ 
-            document.querySelectorAll('.filter-tag').forEach(e=>e.classList.remove('active')); btn.classList.add('active');
-            filteredImages = t==='all' ? [...allImages] : allImages.filter(i=>i.name.toLowerCase().includes(t.toLowerCase()));
+        function filterTag(t, btn) {
+            document.querySelectorAll('.filter-tag').forEach(e => e.classList.remove('active')); btn.classList.add('active');
+            filteredImages = t === 'all' ? [...allImages] : allImages.filter(i => i.name.toLowerCase().includes(t.toLowerCase()));
             renderPage(1);
         }
-        function handleSearch(){ 
-            const q=el('searchInput').value.toLowerCase();
-            filteredImages = allImages.filter(i=>i.name.toLowerCase().includes(q)); renderPage(1);
+        function handleSearch() {
+            const q = el('searchInput').value.toLowerCase();
+            filteredImages = allImages.filter(i => i.name.toLowerCase().includes(q)); renderPage(1);
         }
-        function renderPage(p){
-            currentPage=p; const start=(p-1)*ITEMS_PER_PAGE, pageImgs=filteredImages.slice(start, start+ITEMS_PER_PAGE);
-            let html=''; const owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
-            if(pageImgs.length===0) html='<div style="text-align:center;width:100%;color:#ccc">无结果</div>';
-            pageImgs.forEach(img=>{
-                const title=img.name.replace(/^\d{14}_/,'').replace(/\.[^.]+$/,'').replace(/_/g,' ');
-                const url=`https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
+        function renderPage(p) {
+            currentPage = p; const start = (p - 1) * ITEMS_PER_PAGE, pageImgs = filteredImages.slice(start, start + ITEMS_PER_PAGE);
+            let html = ''; const owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner, repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
+            if (pageImgs.length === 0) html = '<div style="text-align:center;width:100%;color:#ccc">无结果</div>';
+            pageImgs.forEach(img => {
+                const title = img.name.replace(/^\d{14}_/, '').replace(/\.[^.]+$/, '').replace(/_/g, ' ');
+                const url = `https://raw.githubusercontent.com/${owner}/${repo}/${REPO_CONFIG.branch}/${REPO_CONFIG.path}/${encodeURIComponent(img.name)}`;
                 const media = img.name.endsWith('.mp4') ? `<video src="${url}" muted autoplay loop style="width:100%;display:block;"></video>` : `<img src="${url}" loading="lazy">`;
-                html+=`<div class="gallery-item" onclick="openModal('${url}','${title}','${img.name.endsWith('.mp4')?'video':'image'}','${img.sha}','${img.name}')">${media}<div class="item-info"><div class="item-title">${title}</div></div></div>`;
+                html += `<div class="gallery-item" onclick="openModal('${url}','${title}','${img.name.endsWith('.mp4') ? 'video' : 'image'}','${img.sha}','${img.name}')">${media}<div class="item-info"><div class="item-title">${title}</div></div></div>`;
             });
-            el('galleryContainer').innerHTML=html; renderPagination();
+            el('galleryContainer').innerHTML = html; renderPagination();
         }
-        function renderPagination(){
-            const total=Math.ceil(filteredImages.length/ITEMS_PER_PAGE);
-            if(total<=1){ el('pagination').innerHTML=''; return; }
-            let html=`<button class="page-btn" onclick="renderPage(${currentPage-1})" ${currentPage===1?'disabled':''}>←</button>`;
-            for(let i=1;i<=total;i++){ if(i===1||i===total||(i>=currentPage-2 && i<=currentPage+2)) html+=`<button class="page-btn ${i===currentPage?'active':''}" onclick="renderPage(${i})">${i}</button>`; }
-            html+=`<button class="page-btn" onclick="renderPage(${currentPage+1})" ${currentPage===total?'disabled':''}>→</button>`;
-            el('pagination').innerHTML=html;
+        function renderPagination() {
+            const total = Math.ceil(filteredImages.length / ITEMS_PER_PAGE);
+            if (total <= 1) { el('pagination').innerHTML = ''; return; }
+            let html = `<button class="page-btn" onclick="renderPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>←</button>`;
+            for (let i = 1; i <= total; i++) { if (i === 1 || i === total || (i >= currentPage - 2 && i <= currentPage + 2)) html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="renderPage(${i})">${i}</button>`; }
+            html += `<button class="page-btn" onclick="renderPage(${currentPage + 1})" ${currentPage === total ? 'disabled' : ''}>→</button>`;
+            el('pagination').innerHTML = html;
         }
 
-        function openModal(src,cap,type,sha,name){
-            currentImgSHA=sha; currentImgName=name; el('modalFilenameText').innerText=name.replace(/^\d{14}_/,'');
-            if(el('btnDelete').dataset.auth==='true') { el('btnDelete').style.display='block'; el('btnDelete').disabled=false; el('btnDelete').innerText='🗑️ 删除'; }
+        function openModal(src, cap, type, sha, name) {
+            currentImgSHA = sha; currentImgName = name; el('modalFilenameText').innerText = name.replace(/^\d{14}_/, '');
+            if (el('btnDelete').dataset.auth === 'true') { el('btnDelete').style.display = 'block'; el('btnDelete').disabled = false; el('btnDelete').innerText = '🗑️ 删除'; }
             el('imageModal').classList.add('active');
-            if(type==='video'){ el('modalImg').style.display='none'; el('modalVideo').style.display='block'; el('modalVideo').src=src; }
-            else { el('modalVideo').style.display='none'; el('modalImg').style.display='block'; el('modalImg').src=src; }
-            
-            const coreName = name.replace(/^\d{14}_/,'').split(/_| /).find(p=>p.length>1 && isNaN(p));
+            if (type === 'video') { el('modalImg').style.display = 'none'; el('modalVideo').style.display = 'block'; el('modalVideo').src = src; }
+            else { el('modalVideo').style.display = 'none'; el('modalImg').style.display = 'block'; el('modalImg').src = src; }
+
+            const coreName = name.replace(/^\d{14}_/, '').split(/_| /).find(p => p.length > 1 && isNaN(p));
             el('promptLinkContainer').innerHTML = coreName ? `<a href="promptmaster.html?search=${encodeURIComponent(coreName)}" target="_blank" class="prompt-link-btn">🔗 查看提示词</a>` : '';
         }
-        function closeModal(){ el('imageModal').classList.remove('active'); el('modalVideo').pause(); }
-        function copyFilename(){ navigator.clipboard.writeText(el('modalFilenameText').innerText).then(()=>alert('文件名已复制')); }
-        
-        async function deleteCurrentImage(){
-            if(!confirm('确定永久删除？')) return;
-            const token=localStorage.getItem('gh_token'), btn=el('btnDelete'); btn.innerText='⏳...'; btn.disabled=true;
+        function closeModal() { el('imageModal').classList.remove('active'); el('modalVideo').pause(); }
+        function copyFilename() { navigator.clipboard.writeText(el('modalFilenameText').innerText).then(() => alert(window.i18n ? window.i18n.t('alert_filename_copied') : '文件名已复制')); }
+
+        async function deleteCurrentImage() {
+            if (!confirm(window.i18n ? window.i18n.t('confirm_delete') : '确定永久删除？')) return;
+            const token = localStorage.getItem('gh_token'), btn = el('btnDelete'); btn.innerText = '⏳...'; btn.disabled = true;
             try {
-                const url=`https://api.github.com/repos/${localStorage.getItem('gh_owner')||REPO_CONFIG.owner}/${localStorage.getItem('gh_repo')||REPO_CONFIG.repo}/contents/${REPO_CONFIG.path}/${currentImgName}`;
-                await fetch(url, {method:'DELETE', headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({message:`Del ${currentImgName}`, sha:currentImgSHA, branch:'main'})});
-                alert('删除成功'); closeModal(); setTimeout(initGallery,1000);
-            } catch(e){ alert('失败:'+e.message); btn.disabled=false; }
+                const url = `https://api.github.com/repos/${localStorage.getItem('gh_owner') || REPO_CONFIG.owner}/${localStorage.getItem('gh_repo') || REPO_CONFIG.repo}/contents/${REPO_CONFIG.path}/${currentImgName}`;
+                await fetch(url, { method: 'DELETE', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Del ${currentImgName}`, sha: currentImgSHA, branch: 'main' }) });
+                alert(window.i18n ? window.i18n.t('alert_delete_success') : '删除成功'); closeModal(); setTimeout(initGallery, 1000);
+            } catch (e) { alert((window.i18n ? window.i18n.t('alert_delete_fail') : '失败:') + e.message); btn.disabled = false; }
         }
 
         // Functions reused from layout.js settings
-        function openLocalSettings(){ window.openGlobalSettings(); }
-        
-        function triggerUpload(){ el('imgUploadInput').click(); }
-        function prepareUpload(inp){ if(inp.files.length){ pendingFiles=Array.from(inp.files); el('fileCount').innerText=pendingFiles.length; el('uploadConfigModal').classList.add('active'); inp.value=''; } }
-        function closeUploadModal(){ el('uploadConfigModal').classList.remove('active'); }
-        function toggleExampleFields(){ el('exampleFields').style.display = el('isPromptExample').checked ? 'flex' : 'none'; updatePrev(); }
-        function updatePrev(){ const c=el('coreNameInput').value||'Name', v=el('verNameInput').value; el('filenamePreview').innerText=`2025..._${c}${v?`_${v}`:''}_orig.png`; }
-        el('coreNameInput').oninput=updatePrev; el('verNameInput').oninput=updatePrev;
+        function openLocalSettings() { window.openGlobalSettings(); }
 
-        async function confirmUpload(){
-            const isEx=el('isPromptExample').checked, cName=el('coreNameInput').value.trim(), vName=el('verNameInput').value.trim();
-            if(isEx && !cName){ alert('请输入核心名称'); return; }
-            closeUploadModal(); el('upload-toast').style.display='block';
-            const token=localStorage.getItem('gh_token'), owner=localStorage.getItem('gh_owner')||REPO_CONFIG.owner, repo=localStorage.getItem('gh_repo')||REPO_CONFIG.repo;
-            for(let f of pendingFiles){
+        function triggerUpload() { el('imgUploadInput').click(); }
+        function prepareUpload(inp) { if (inp.files.length) { pendingFiles = Array.from(inp.files); el('fileCount').innerText = pendingFiles.length; el('uploadConfigModal').classList.add('active'); inp.value = ''; } }
+        function closeUploadModal() { el('uploadConfigModal').classList.remove('active'); }
+        function toggleExampleFields() { el('exampleFields').style.display = el('isPromptExample').checked ? 'flex' : 'none'; updatePrev(); }
+        function updatePrev() { const c = el('coreNameInput').value || 'Name', v = el('verNameInput').value; el('filenamePreview').innerText = `2025..._${c}${v ? `_${v}` : ''}_orig.png`; }
+        el('coreNameInput').oninput = updatePrev; el('verNameInput').oninput = updatePrev;
+
+        async function confirmUpload() {
+            const isEx = el('isPromptExample').checked, cName = el('coreNameInput').value.trim(), vName = el('verNameInput').value.trim();
+            if (isEx && !cName) { alert(window.i18n ? window.i18n.t('alert_enter_core_name') : '请输入核心名称'); return; }
+            closeUploadModal(); el('upload-toast').style.display = 'block';
+            const token = localStorage.getItem('gh_token'), owner = localStorage.getItem('gh_owner') || REPO_CONFIG.owner, repo = localStorage.getItem('gh_repo') || REPO_CONFIG.repo;
+            for (let f of pendingFiles) {
                 try {
-                    const b64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=()=>r(rd.result.split(',')[1]); rd.readAsDataURL(f)});
-                    const ts=new Date().toISOString().replace(/[-:T.]/g,'').slice(0,14), clean=f.name.replace(/\s+/g,'_');
-                    const fname = isEx ? `${ts}_${cName.replace(/\W/g,'')}${vName?`_${vName}`:''}_${clean}` : `${ts}_${clean}`;
+                    const b64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(f) });
+                    const ts = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14), clean = f.name.replace(/\s+/g, '_');
+                    const fname = isEx ? `${ts}_${cName.replace(/\W/g, '')}${vName ? `_${vName}` : ''}_${clean}` : `${ts}_${clean}`;
                     await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}/${fname}`, {
-                        method:'PUT', headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
-                        body:JSON.stringify({message:`Up ${fname}`, content:b64, branch:'main'})
+                        method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: `Up ${fname}`, content: b64, branch: 'main' })
                     });
-                } catch(e){ console.error(e); }
+                } catch (e) { console.error(e); }
             }
-            el('upload-toast').style.display='none'; alert('上传完成'); setTimeout(initGallery,1000);
+            el('upload-toast').style.display = 'none';
+            const msg = window.i18n ? window.i18n.t('alert_upload_done') : '上传完成';
+            alert(msg);
+            setTimeout(initGallery, 1000);
         }
 
         checkAdmin(); initGallery();
     </script>
 </body>
+
 </html>

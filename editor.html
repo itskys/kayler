@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>在线 Markdown 编辑器 - Kayler | 实时预览与PDF导出</title>
     <meta name="description" content="Kayler 在线 Markdown 编辑器，支持实时预览、代码高亮、一键导出 PDF、生成长图。无广告，支持 GitHub 图床，专为写作者设计的极简工具。">
     <meta name="keywords" content="Markdown编辑器, 在线Markdown, 实时预览, 导出PDF, Markdown转长图, Kayler Editor">
     <meta name="author" content="Kaylerris">
-    
+
     <meta property="og:title" content="在线 Markdown 编辑器 - Kayler">
     <meta property="og:description" content="极简、高效的在线写作工具。支持实时预览、一键导出PDF与长图。">
     <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
@@ -21,33 +22,36 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="i18n.js?v=1.0"></script>
     <script src="layout.js?v=6.1"></script>
-    </head>
+</head>
 
 <body style="padding: 20px; box-sizing: border-box; min-height: 100vh; background-color: #f2f4f7;">
 
     <div class="main-wrapper">
-        
+
         <div class="editor-toolbar-header">
             <div class="page-title">
                 <i class="fa-solid fa-pen-nib" style="color: #666;"></i>
-                <input type="text" id="file-name-input" class="title-input" value="新文档.md" placeholder="文件名 (例如: doc.md)">
+                <input type="text" id="file-name-input" class="title-input" value="新文档.md" data-i18n="editor_input_name"
+                    placeholder="文件名 (例如: doc.md)">
             </div>
-            
+
             <div class="action-group">
                 <button id="btn-setting" class="btn btn-setting" title="GitHub 配置">
                     <i class="fa-solid fa-gear"></i>
                 </button>
-                <button id="btn-save" class="btn btn-save" disabled title="需在设置中配置 Token">
+                <button id="btn-save" class="btn btn-save" disabled title="需在设置中配置 Token"
+                    data-i18n="btn_editor_publish">
                     <i class="fa-solid fa-cloud-arrow-up"></i> 发布
                 </button>
-                <button id="btn-pdf" class="btn btn-pdf" title="导出为 PDF">
+                <button id="btn-pdf" class="btn btn-pdf" title="导出为 PDF" data-i18n="btn_editor_pdf">
                     <i class="fa-solid fa-file-pdf"></i> PDF
                 </button>
-                <button id="btn-md" class="btn btn-md" title="下载 .md 文件">
+                <button id="btn-md" class="btn btn-md" title="下载 .md 文件" data-i18n="btn_editor_md">
                     <i class="fa-solid fa-download"></i> .md
                 </button>
-                <button id="btn-long-img" class="btn btn-long" title="生成分享长图">
+                <button id="btn-long-img" class="btn btn-long" title="生成分享长图" data-i18n="btn_editor_long">
                     <i class="fa-solid fa-image"></i> 转长图
                 </button>
             </div>
@@ -56,24 +60,26 @@
         <div class="editor-container">
             <div class="panel">
                 <div class="panel-header">
-                    <span><i class="fa-brands fa-markdown"></i> Markdown 源码</span>
+                    <span><i class="fa-brands fa-markdown"></i> <span data-i18n="editor_source_title">Markdown
+                            源码</span></span>
                     <div style="display: flex; gap: 15px;">
                         <span id="btn-clear-editor" class="copy-btn" style="color: #e53935;" title="清空内容">
-                            <i class="fa-solid fa-trash-can"></i> 清空
+                            <i class="fa-solid fa-trash-can"></i> <span data-i18n="btn_clear">清空</span>
                         </span>
                         <span id="btn-copy-code" class="copy-btn">
-                            <i class="fa-solid fa-copy"></i> 复制源码
+                            <i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy_source">复制源码</span>
                         </span>
                     </div>
                 </div>
-                <textarea id="editor" class="editor-area" placeholder="# 开始写作...&#10;&#10;支持 Markdown 语法，实时预览。"></textarea>
+                <textarea id="editor" class="editor-area" data-i18n="editor_placeholder"
+                    placeholder="# 开始写作...&#10;&#10;支持 Markdown 语法，实时预览。"></textarea>
             </div>
 
             <div class="panel">
                 <div class="panel-header">
-                    <span><i class="fa-solid fa-eye"></i> 实时预览</span>
+                    <span><i class="fa-solid fa-eye"></i> <span data-i18n="editor_preview_title">实时预览</span></span>
                     <span id="btn-copy-text" class="copy-btn">
-                        <i class="fa-solid fa-copy"></i> 复制文本
+                        <i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy_text">复制文本</span>
                     </span>
                 </div>
                 <div id="preview" class="preview-area markdown-body"></div>
@@ -84,7 +90,7 @@
     <div id="pdf-stage"></div>
 
     <script src="editor.js?v=6.2"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // 初始化编辑器核心功能
@@ -100,7 +106,8 @@
             if (btnClear && editorEl) {
                 btnClear.addEventListener('click', () => {
                     if (editorEl.value.trim() === '') return;
-                    if (confirm('⚠️ 确定要清空编辑器中的所有内容吗？此操作无法撤销。')) {
+                    const msg = window.i18n ? window.i18n.t('alert_clear_confirm') : '⚠️ 确定要清空编辑器中的所有内容吗？此操作无法撤销。';
+                    if (confirm(msg)) {
                         editorEl.value = '';
                         editorEl.dispatchEvent(new Event('input'));
                     }
@@ -110,17 +117,17 @@
             // 数据恢复逻辑
             const importedContent = localStorage.getItem('kayler_editor_cache');
             const importedName = localStorage.getItem('kayler_editor_filename');
-            
+
             if (editorEl) {
                 if (importedName) {
                     editorEl.value = importedContent || "";
                     if (nameEl) nameEl.value = importedName;
-                    localStorage.removeItem('kayler_editor_filename'); 
+                    localStorage.removeItem('kayler_editor_filename');
                 } else if (importedContent) {
                     editorEl.value = importedContent;
                 } else {
                     // 默认欢迎语
-                    editorEl.value = "# 欢迎使用 Kayler 编辑器\n\n请在上方修改文件名，并在设置中配置 Token 以启用发布功能。";
+                    editorEl.value = (window.i18n && window.i18n.t) ? window.i18n.t('editor_placeholder') : "# 欢迎使用 Kayler 编辑器\n\n请在上方修改文件名，并在设置中配置 Token 以启用发布功能。";
                 }
 
                 // 触发首次预览更新
@@ -133,4 +140,5 @@
         });
     </script>
 </body>
+
 </html>

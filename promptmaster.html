@@ -1,253 +1,729 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>AI 提示词管理器 - Kayler Prompt Master | Midjourney & SD 助手</title>
-    
-    <meta name="description" content="专业的 AI 提示词(Prompt)管理与编写工具。内置 Monaco 编辑器，支持 Midjourney、Stable Diffusion、FLUX 等模型的提示词高亮、版本控制、快捷标签插入与一键复制。">
-    
-    <meta name="keywords" content="AI提示词, Prompt Manager, Midjourney提示词, Stable Diffusion, 咒语管理, Kayler Prompt, AI绘画工具, 提示词助手">
+
+    <meta name="description"
+        content="专业的 AI 提示词(Prompt)管理与编写工具。内置 Monaco 编辑器，支持 Midjourney、Stable Diffusion、FLUX 等模型的提示词高亮、版本控制、快捷标签插入与一键复制。">
+
+    <meta name="keywords"
+        content="AI提示词, Prompt Manager, Midjourney提示词, Stable Diffusion, 咒语管理, Kayler Prompt, AI绘画工具, 提示词助手">
     <meta name="author" content="Kaylerris">
-    
+
     <meta property="og:title" content="Kayler Prompt Master - 专业的 AI 提示词管理工具">
     <meta property="og:description" content="高效管理你的 AI 绘画咒语。支持代码高亮、版本管理与快捷标签。">
     <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
     <meta property="og:url" content="https://x.aisai.cc/promptmaster.html">
     <meta property="og:type" content="website">
     <link rel="icon" href="/favicon.png" type="image/png">
-    
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
-    
+
+    <script src="i18n.js?v=1.0"></script>
     <script src="layout.js?v=6.1"></script>
-    
+
     <style>
         /* === 全局变量 === */
         :root {
-            --bg-body: #f2f4f7; --text-color: #2c2c2c;
-            --brand-brown: #8b5e3c; --brand-brown-hover: #6d4c41;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --layout-width: 94%; --layout-max-width: 1600px;
+            --bg-body: #f2f4f7;
+            --text-color: #2c2c2c;
+            --brand-brown: #8b5e3c;
+            --brand-brown-hover: #6d4c41;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --layout-width: 94%;
+            --layout-max-width: 1600px;
         }
-        * { box-sizing: border-box; }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-            background-color: var(--bg-body); margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: var(--text-color);
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
         }
 
         /* 顶部导航由 layout.js 注入 */
-        header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
-        h1 { font-size: 28px; font-weight: 800; color: #333; display: flex; align-items: center; justify-content: center; margin: 0; }
-        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
         /* === 布局容器 (Grid) === */
         .main-container {
-            width: var(--layout-width); max-width: var(--layout-max-width);
-            display: grid; grid-template-columns: 420px 1fr; gap: 30px; /* 左侧加宽适配代码编辑器 */
-            align-items: start; flex: 1;
+            width: var(--layout-width);
+            max-width: var(--layout-max-width);
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 30px;
+            /* 左侧加宽适配代码编辑器 */
+            align-items: start;
+            flex: 1;
         }
 
         /* 通用卡片 */
-        .card { background: white; border-radius: 12px; box-shadow: var(--card-shadow); overflow: hidden; display: flex; flex-direction: column; }
-        .card-header { 
-            padding: 15px 20px; border-bottom: 1px solid #eee; background: #fafafa;
-            display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #555;
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #555;
         }
 
         /* === 左侧：高级撰写助手 (v14.0) === */
-        .builder-tabs { display: flex; border-bottom: 1px solid #eee; background: #fcfcfc; }
-        .tab-btn {
-            flex: 1; padding: 12px 0; text-align: center; cursor: pointer; font-size: 13px; color: #666;
-            border-bottom: 2px solid transparent; transition: 0.2s;
+        .builder-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            background: #fcfcfc;
         }
-        .tab-btn:hover { background: #f0f0f0; }
-        .tab-btn.active { color: var(--brand-brown); border-bottom-color: var(--brand-brown); font-weight: bold; background: white; }
 
-        .builder-body { padding: 20px; display: none; }
-        .builder-body.active { display: block; }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .tab-btn.active {
+            color: var(--brand-brown);
+            border-bottom-color: var(--brand-brown);
+            font-weight: bold;
+            background: white;
+        }
+
+        .builder-body {
+            padding: 20px;
+            display: none;
+        }
+
+        .builder-body.active {
+            display: block;
+        }
 
         /* 仿 IDE 代码编辑器容器 */
         .code-editor-container {
-            border: 1px solid #444; border-radius: 8px; overflow: hidden; margin-bottom: 15px;
-            background: #1e1e1e; /* 深色主题背景 */
-            padding: 0; /* Monaco 自带边距，重置为0 */
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background: #1e1e1e;
+            /* 深色主题背景 */
+            padding: 0;
+            /* Monaco 自带边距，重置为0 */
         }
+
         .code-toolbar {
-            background: #2d2d2d; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center;
+            background: #2d2d2d;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid #333;
         }
-        .lang-badge { font-size: 10px; color: #aaa; background: #333; padding: 2px 6px; border-radius: 3px; }
-        
+
+        .lang-badge {
+            font-size: 10px;
+            color: #aaa;
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
         /* Monaco Editor 容器样式 */
         #monaco-container {
             width: 100%;
-            height: 400px; /* 增加高度，提供更好的编辑体验 */
+            height: 400px;
+            /* 增加高度，提供更好的编辑体验 */
         }
 
         /* 控件样式 */
-        .control-group { margin-bottom: 15px; }
-        .control-label { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; display: block; }
-        
-        /* 比例按钮 */
-        .ar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .ar-btn {
-            border: 1px solid #eee; background: white; padding: 6px; border-radius: 6px;
-            text-align: center; font-size: 12px; cursor: pointer; color: #555; transition: 0.2s;
+        .control-group {
+            margin-bottom: 15px;
         }
-        .ar-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #888;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* 比例按钮 */
+        .ar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .ar-btn {
+            border: 1px solid #eee;
+            background: white;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            cursor: pointer;
+            color: #555;
+            transition: 0.2s;
+        }
+
+        .ar-btn:hover {
+            border-color: var(--brand-brown);
+            color: var(--brand-brown);
+        }
 
         /* 标签云 */
-        .tags-list { display: flex; flex-wrap: wrap; gap: 6px; }
-        .tag {
-            background: #f0f0f0; padding: 4px 10px; border-radius: 4px;
-            font-size: 12px; cursor: pointer; color: #555; transition: 0.2s;
-            border: 1px solid transparent; user-select: none;
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
-        .tag:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: white; }
-        .tag.preset { background: #e0f2f1; color: #00695c; } /* 预设标签颜色 */
-        .tag.style { background: #f3e5f5; color: #7b1fa2; }
+
+        .tag {
+            background: #f0f0f0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #555;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .tag:hover {
+            border-color: var(--brand-brown);
+            color: var(--brand-brown);
+            background: white;
+        }
+
+        .tag.preset {
+            background: #e0f2f1;
+            color: #00695c;
+        }
+
+        /* 预设标签颜色 */
+        .tag.style {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
 
         /* 模型下拉框美化 */
         .model-select {
-            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
-            font-size: 13px; background: #fff; outline: none; cursor: pointer;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff;
+            outline: none;
+            cursor: pointer;
         }
-        .model-select:focus { border-color: var(--brand-brown); }
 
-        .builder-footer { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; background: #fff; }
-        .btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
-        .btn-primary { background: var(--brand-brown); color: white; }
-        .btn-secondary { background: #eee; color: #555; }
-        .btn:hover { opacity: 0.9; }
+        .model-select:focus {
+            border-color: var(--brand-brown);
+        }
+
+        .builder-footer {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            background: #fff;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--brand-brown);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #eee;
+            color: #555;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
 
         /* === 右侧：知识库列表 === */
-        .toolbar { padding: 15px 20px; display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #eee; background: white; }
-        .search-box { flex: 1; position: relative; display: flex; align-items: center; }
-        .search-input {
-            width: 100%; padding: 8px 12px 8px 35px; border: 1px solid #ddd; border-radius: 6px;
-            font-size: 14px; outline: none; transition: 0.2s;
+        .toolbar {
+            padding: 15px 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            background: white;
         }
-        .search-input:focus { border-color: var(--brand-brown); box-shadow: 0 0 0 2px rgba(139, 94, 60, 0.1); }
-        .search-icon { position: absolute; left: 10px; color: #999; font-size: 14px; }
-        
-        .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e8f5e9; color: #2e7d32; display: none; }
-        .status-badge.show { display: inline-block; }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px 8px 35px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--brand-brown);
+            box-shadow: 0 0 0 2px rgba(139, 94, 60, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: none;
+        }
+
+        .status-badge.show {
+            display: inline-block;
+        }
 
         .icon-btn {
-            font-size: 14px; color: #666; cursor: pointer; text-decoration: none; border: 1px solid #ddd;
-            padding: 6px 12px; border-radius: 6px; transition: all 0.2s; background: white;
-            display: flex; align-items: center; gap: 5px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .icon-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        thead { background: #f9f7f1; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        th.sortable { cursor: pointer; user-select: none; }
-        th.sortable:hover { background: #f0ebe4; }
-        th.sortable::after { content: ' ↕'; font-size: 10px; color: #ccc; margin-left: 4px; }
-        th.sortable.asc::after { content: ' ↑'; color: var(--brand-brown); }
-        th.sortable.desc::after { content: ' ↓'; color: var(--brand-brown); }
-        
-        th { font-weight: 600; color: #8b5e3c; }
-        tr:hover { background-color: #fafafa; }
+        .icon-btn:hover {
+            border-color: var(--brand-brown);
+            color: var(--brand-brown);
+        }
 
-        .file-link { color: #333; font-weight: 600; cursor: pointer; text-decoration: none; border-bottom: 1px dashed #ccc; }
-        .file-link:hover { color: var(--brand-brown); border-color: var(--brand-brown); }
-        .example-link { color: #1565c0; cursor: pointer; margin-right: 8px; font-size: 12px; }
-        .example-link:hover { text-decoration: underline; }
-        
-        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; background: #eee; color: #555; }
-        .badge.ver { background: #e8f5e9; color: #2e7d32; font-weight: bold; }
-        .badge.cat { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        thead {
+            background: #f9f7f1;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background: #f0ebe4;
+        }
+
+        th.sortable::after {
+            content: ' ↕';
+            font-size: 10px;
+            color: #ccc;
+            margin-left: 4px;
+        }
+
+        th.sortable.asc::after {
+            content: ' ↑';
+            color: var(--brand-brown);
+        }
+
+        th.sortable.desc::after {
+            content: ' ↓';
+            color: var(--brand-brown);
+        }
+
+        th {
+            font-weight: 600;
+            color: #8b5e3c;
+        }
+
+        tr:hover {
+            background-color: #fafafa;
+        }
+
+        .file-link {
+            color: #333;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .file-link:hover {
+            color: var(--brand-brown);
+            border-color: var(--brand-brown);
+        }
+
+        .example-link {
+            color: #1565c0;
+            cursor: pointer;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+
+        .example-link:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            background: #eee;
+            color: #555;
+        }
+
+        .badge.ver {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .badge.cat {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffe0b2;
+        }
 
         /* === 弹窗 === */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: white; width: 800px; max-width: 90%; height: 80vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.2); position: relative; }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
-        .modal-body { flex: 1; padding: 20px; overflow-y: auto; background: #fff; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
-        .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #fff; }
-        .btn-delete-file { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; display: none; }
-        .btn-delete-file:hover { background: #c62828; color: white; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
 
-        .markdown-body h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 24px; }
-        .markdown-body pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 800px;
+            max-width: 90%;
+            height: 80vh;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .modal-footer {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: #fff;
+        }
+
+        .btn-delete-file {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+            display: none;
+        }
+
+        .btn-delete-file:hover {
+            background: #c62828;
+            color: white;
+        }
+
+        .markdown-body h1 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .markdown-body pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
 
         /* 配置弹窗 */
-        .config-box { background: white; width: 400px; padding: 25px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; }
-        .config-title { font-size: 18px; margin: 0; }
-        .config-row { display: flex; flex-direction: column; gap: 5px; }
-        .config-label { font-size: 12px; font-weight: bold; color: #666; }
-        .config-input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .config-box {
+            background: white;
+            width: 400px;
+            padding: 25px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .config-title {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .config-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .config-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .config-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
 
         /* 灯箱 */
-        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
-        #lightbox.active { display: flex; }
-        #lightbox img, #lightbox video { max-width: 95%; max-height: 85vh; border-radius: 4px; box-shadow: 0 0 30px black; }
-        .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; transition: 0.2s; }
-        .lightbox-close:hover { color: var(--brand-brown); }
+        #lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #lightbox.active {
+            display: flex;
+        }
+
+        #lightbox img,
+        #lightbox video {
+            max-width: 95%;
+            max-height: 85vh;
+            border-radius: 4px;
+            box-shadow: 0 0 30px black;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .lightbox-close:hover {
+            color: var(--brand-brown);
+        }
 
         /* 响应式 */
-        @media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; } .builder-area { order: 1; } }
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .builder-area {
+                order: 1;
+            }
+        }
+
         @media (max-width: 768px) {
-            th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3), th:nth-child(6), td:nth-child(6) { display: none; }
-            th:nth-child(1) { width: 40%; } th:nth-child(4) { width: 30%; } th:nth-child(5) { width: 30%; }
+
+            th:nth-child(2),
+            td:nth-child(2),
+            th:nth-child(3),
+            td:nth-child(3),
+            th:nth-child(6),
+            td:nth-child(6) {
+                display: none;
+            }
+
+            th:nth-child(1) {
+                width: 40%;
+            }
+
+            th:nth-child(4) {
+                width: 30%;
+            }
+
+            th:nth-child(5) {
+                width: 30%;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <header>
-        <h1><img src="/logo.png" style="height:32px; margin-right:10px;">提示词管理器</h1>
+        <h1><img src="/logo.png" style="height:32px; margin-right:10px;"><span data-i18n="prompt_title">提示词管理器</span>
+        </h1>
     </header>
 
     <div class="main-container">
-        
+
         <div class="card builder-area">
             <div class="card-header">
-                <span>🪄 提示词工作台</span>
-                <span style="font-size:12px; cursor:pointer; color:#888;" onclick="clearPrompt()">清空</span>
+                <span data-i18n="prompt_title">🪄 提示词工作台</span>
+                <span style="font-size:12px; cursor:pointer; color:#888;" onclick="clearPrompt()"
+                    data-i18n="btn_clear">清空</span>
             </div>
-            
+
             <div class="builder-tabs">
-                <div class="tab-btn active" onclick="switchTab('basic')">📝 基础</div>
-                <div class="tab-btn" onclick="switchTab('style')">🎨 风格</div>
-                <div class="tab-btn" onclick="switchTab('params')">🎛️ 参数</div>
+                <div class="tab-btn active" onclick="switchTab('basic')" data-i18n="tab_basic">📝 基础</div>
+                <div class="tab-btn" onclick="switchTab('style')" data-i18n="tab_style">🎨 风格</div>
+                <div class="tab-btn" onclick="switchTab('params')" data-i18n="tab_params">🎛️ 参数</div>
             </div>
 
             <div id="tab-basic" class="builder-body active">
                 <div class="code-editor-container">
                     <div class="code-toolbar">
                         <span class="lang-badge">MARKDOWN / PROMPT</span>
-                        <span style="font-size:10px; color:#aaa; cursor:pointer;" onclick="copyPrompt()">📋 复制内容</span>
+                        <span style="font-size:10px; color:#aaa; cursor:pointer;" onclick="copyPrompt()"
+                            data-i18n="btn_copy">📋 复制内容</span>
                     </div>
                     <div id="monaco-container"></div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">⚡ 快捷标签 (预设 + 自定义)</span>
+                    <span class="control-label" data-i18n="lbl_quick_tags">⚡ 快捷标签 (预设 + 自定义)</span>
                     <div class="tags-list" id="quickTagsList"></div>
                     <div style="margin-top:10px;">
-                        <button class="btn btn-secondary" onclick="addNewTag()">+ 添加我的标签</button>
+                        <button class="btn btn-secondary" onclick="addNewTag()" data-i18n="btn_add_tag">+
+                            添加我的标签</button>
                     </div>
                 </div>
             </div>
 
             <div id="tab-style" class="builder-body">
                 <div class="control-group">
-                    <span class="control-label">流行风格</span>
+                    <span class="control-label" data-i18n="lbl_popular_style">流行风格</span>
                     <div class="tags-list" id="styleTagsList"></div>
                 </div>
             </div>
 
             <div id="tab-params" class="builder-body">
                 <div class="control-group">
-                    <span class="control-label">模型版本 (Model)</span>
+                    <span class="control-label" data-i18n="lbl_model_ver">模型版本 (Model)</span>
                     <select id="modelSelect" class="model-select" onchange="insertParam(this.value)">
                         <option value="">-- 选择模型 --</option>
                         <optgroup label="Midjourney">
@@ -267,7 +743,7 @@
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">画幅比例 (--ar)</span>
+                    <span class="control-label" data-i18n="lbl_aspect_ratio">画幅比例 (--ar)</span>
                     <div class="ar-grid">
                         <div class="ar-btn" onclick="insertParam('--ar 1:1')">1:1</div>
                         <div class="ar-btn" onclick="insertParam('--ar 16:9')">16:9</div>
@@ -278,25 +754,26 @@
             </div>
 
             <div class="builder-footer">
-                <button class="btn btn-secondary" onclick="openPreview()">👁️ 预览</button>
-                <button class="btn btn-primary" onclick="copyPrompt()">📋 一键复制</button>
+                <button class="btn btn-secondary" onclick="openPreview()" data-i18n="btn_preview">👁️ 预览</button>
+                <button class="btn btn-primary" onclick="copyPrompt()" data-i18n="btn_copy_onekey">📋 一键复制</button>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <span>📚 提示词库</span>
+                <span data-i18n="header_library">📚 提示词库</span>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <button class="icon-btn" onclick="openLocalSettings()">⚙️</button>
-                    <span id="cacheStatus" class="status-badge">⚡ 缓存</span>
+                    <span id="cacheStatus" class="status-badge" data-i18n="btn_cache">⚡ 缓存</span>
                     <button class="icon-btn" onclick="forceRefresh()">🔄</button>
                 </div>
             </div>
-            
+
             <div class="toolbar">
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="searchInput" class="search-input" placeholder="搜索名称、描述或分类..." oninput="filterFiles()">
+                    <input type="text" id="searchInput" class="search-input" data-i18n="search_prompt_placeholder"
+                        placeholder="搜索名称、描述或分类..." oninput="filterFiles()">
                 </div>
             </div>
 
@@ -307,12 +784,16 @@
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th style="width:25%;" class="sortable" onclick="sortTable('displayName')" data-key="displayName">名称</th>
-                            <th style="width:10%;" class="sortable" onclick="sortTable('version')" data-key="version">版本</th>
-                            <th style="width:10%;" class="sortable" onclick="sortTable('category')" data-key="category">分类</th>
-                            <th style="width:25%;">功能描述</th>
-                            <th style="width:20%;">示例 (自动)</th>
-                            <th style="width:10%;" class="sortable" onclick="sortTable('author')" data-key="author">作者</th>
+                            <th style="width:25%;" class="sortable" onclick="sortTable('displayName')"
+                                data-key="displayName" data-i18n="col_name">名称</th>
+                            <th style="width:10%;" class="sortable" onclick="sortTable('version')" data-key="version"
+                                data-i18n="col_ver">版本</th>
+                            <th style="width:10%;" class="sortable" onclick="sortTable('category')" data-key="category"
+                                data-i18n="col_cat">分类</th>
+                            <th style="width:25%;" data-i18n="col_desc">功能描述</th>
+                            <th style="width:20%;" data-i18n="col_example">示例 (自动)</th>
+                            <th style="width:10%;" class="sortable" onclick="sortTable('author')" data-key="author"
+                                data-i18n="col_author">作者</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -324,38 +805,56 @@
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
         <div class="modal-content">
             <div class="modal-header">
-                <b id="modalTitle">文件预览</b>
+                <b id="modalTitle" data-i18n="modal_file_preview">文件预览</b>
                 <span class="close-btn" onclick="closeModal()" style="cursor:pointer; font-size:20px;">×</span>
             </div>
             <div class="modal-body" id="fileContent">加载中...</div>
             <div class="modal-footer">
-                <button class="btn btn-delete-file" id="btnDelete" onclick="deleteCurrentFile()">🗑️ 删除文件</button>
-                <button class="btn btn-secondary" onclick="downloadFile()">📥 下载 .md</button>
-                <button class="btn btn-primary" id="btnImport" style="display:none;" onclick="importToEditor()">✏️ 导入编辑器</button>
-                <button class="btn btn-primary" onclick="copyContent()">📋 复制</button>
+                <button class="btn btn-delete-file" id="btnDelete" onclick="deleteCurrentFile()"
+                    data-i18n="btn_delete_file">🗑️ 删除文件</button>
+                <button class="btn btn-secondary" onclick="downloadFile()" data-i18n="btn_download_md">📥 下载
+                    .md</button>
+                <button class="btn btn-primary" id="btnImport" style="display:none;" onclick="importToEditor()"
+                    data-i18n="btn_import_editor">✏️ 导入编辑器</button>
+                <button class="btn btn-primary" onclick="copyContent()" data-i18n="btn_copy">📋 复制</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this) closeLocalSettings()">
         <div class="config-box">
-            <h3 class="config-title">⚙️ 全局配置</h3>
-            <div class="config-row"><span class="config-label">GitHub Token <span style="color:red">*</span></span><input type="password" id="confToken" class="config-input"></div>
-            <div class="config-row"><span class="config-label">用户名 (Owner)</span><input type="text" id="confOwner" class="config-input"></div>
-            <div class="config-row"><span class="config-label">仓库名 (Repo)</span><input type="text" id="confRepo" class="config-input"></div>
-            <div style="text-align:right; margin-top:10px;"><button class="btn btn-secondary" onclick="closeLocalSettings()">取消</button> <button class="btn btn-primary" onclick="saveLocalSettings()">💾 保存</button></div>
+            <h3 class="config-title" data-i18n="settings_title">⚙️ 全局配置</h3>
+            <div class="config-row"><span class="config-label">GitHub Token <span
+                        style="color:red">*</span></span><input type="password" id="confToken" class="config-input">
+            </div>
+            <div class="config-row"><span class="config-label">用户名 (Owner)</span><input type="text" id="confOwner"
+                    class="config-input"></div>
+            <div class="config-row"><span class="config-label">仓库名 (Repo)</span><input type="text" id="confRepo"
+                    class="config-input"></div>
+            <div style="text-align:right; margin-top:10px;"><button class="btn btn-secondary"
+                    onclick="closeLocalSettings()">取消</button> <button class="btn btn-primary"
+                    onclick="saveLocalSettings()">💾 保存</button></div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="previewModal" onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')"><div class="modal-content"><div class="modal-header"><b>Markdown 预览</b><span class="close-btn" onclick="document.getElementById('previewModal').classList.remove('active')">×</span></div><div class="modal-body markdown-body" id="previewBody"></div></div></div>
-    <div id="lightbox" onclick="if(event.target===this) closeLightbox()"><span class="lightbox-close" onclick="closeLightbox()">&times;</span><img id="lbImg" style="display:none;"><video id="lbVideo" controls style="display:none;"></video></div>
+    <div class="modal-overlay" id="previewModal"
+        onclick="if(event.target===this) document.getElementById('previewModal').classList.remove('active')">
+        <div class="modal-content">
+            <div class="modal-header"><b>Markdown 预览</b><span class="close-btn"
+                    onclick="document.getElementById('previewModal').classList.remove('active')">×</span></div>
+            <div class="modal-body markdown-body" id="previewBody"></div>
+        </div>
+    </div>
+    <div id="lightbox" onclick="if(event.target===this) closeLightbox()"><span class="lightbox-close"
+            onclick="closeLightbox()">&times;</span><img id="lbImg" style="display:none;"><video id="lbVideo" controls
+            style="display:none;"></video></div>
 
     <script>
         // === 配置与状态 ===
         const CONFIG = { owner: 'itskys', repo: 'kayler', path: 'prompt', branch: 'main' };
         const CACHE_KEY = 'prompt_list_v9'; const CACHE_DURATION = 5 * 60 * 1000;
         let allFiles = []; let displayFiles = []; let currentSort = { key: 'displayName', order: 'asc' }; let currentFile = { name: '', content: '', sha: '' };
-        
+
         // v14.0 预设数据
         const presetTags = ['Best Quality', 'Masterpiece', '8k', 'Ray Tracing', 'HDR', 'Detailed', 'Cinematic Lighting'];
         const defaultStyleTags = ['Cyberpunk', 'Ukiyo-e', 'Studio Ghibli', 'Realistic', 'Anime', 'Oil Painting', 'Watercolor'];
@@ -367,9 +866,9 @@
         let monacoEditor = null;
 
         // 初始化 Monaco Editor
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
-        
-        require(['vs/editor/editor.main'], function() {
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
             monacoEditor = monaco.editor.create(document.getElementById('monaco-container'), {
                 value: '', // 初始内容
                 language: 'markdown', // 使用 Markdown 语法高亮
@@ -402,15 +901,15 @@
         function renderTags() {
             const quickContainer = document.getElementById('quickTagsList');
             const styleContainer = document.getElementById('styleTagsList');
-            
+
             // 预设 + 用户自定义
-            const allQuick = [...presetTags.map(t=>({t, type:'preset'})), ...userTags.map(t=>({t, type:'custom'}))];
-            
-            quickContainer.innerHTML = allQuick.map(item => 
+            const allQuick = [...presetTags.map(t => ({ t, type: 'preset' })), ...userTags.map(t => ({ t, type: 'custom' }))];
+
+            quickContainer.innerHTML = allQuick.map(item =>
                 `<div class="tag ${item.type}" onclick="insertText('${item.t}')">${item.t}</div>`
             ).join('');
-            
-            styleContainer.innerHTML = defaultStyleTags.map(t => 
+
+            styleContainer.innerHTML = defaultStyleTags.map(t =>
                 `<div class="tag style" onclick="insertText('${t}')">${t}</div>`
             ).join('');
         }
@@ -418,27 +917,28 @@
         // 核心：向 Monaco 光标处插入文本
         function insertText(text) {
             if (!monacoEditor) return;
-            
+
             const position = monacoEditor.getPosition();
             // 智能空格：如果需要，可以判断前一个字符是否为空格
             // 这里简单处理，前后加空格
-            const textToInsert = " " + text + " "; 
+            const textToInsert = " " + text + " ";
 
             monacoEditor.executeEdits("", [{
                 range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                 text: textToInsert,
                 forceMoveMarkers: true
             }]);
-            
+
             monacoEditor.focus();
         }
 
         // 兼容原来的调用习惯
         function addTag(txt) { insertText(txt); }
-        function insertParam(val) { if(!val) return; insertText(val); }
+        function insertParam(val) { if (!val) return; insertText(val); }
 
         function addNewTag() {
-            const newTag = prompt("输入新标签内容:");
+            const msg = window.i18n ? window.i18n.t('prompt_new_tag') : "输入新标签内容:";
+            const newTag = prompt(msg);
             if (newTag && !userTags.includes(newTag)) {
                 userTags.push(newTag);
                 localStorage.setItem('kayler_user_tags', JSON.stringify(userTags));
@@ -446,22 +946,24 @@
             }
         }
 
-        function clearPrompt() { 
-            if(confirm('清空内容？') && monacoEditor) {
+        function clearPrompt() {
+            const msg = window.i18n ? window.i18n.t('confirm_clear') : '清空内容？';
+            if (confirm(msg) && monacoEditor) {
                 monacoEditor.setValue('');
             }
         }
 
-        function copyPrompt() { 
-            if(!monacoEditor) return;
+        function copyPrompt() {
+            if (!monacoEditor) return;
             const content = monacoEditor.getValue();
-            navigator.clipboard.writeText(content).then(()=>alert('✅ 已复制到剪贴板')); 
+            const msg = window.i18n ? window.i18n.t('alert_copy_success') : '✅ 已复制到剪贴板';
+            navigator.clipboard.writeText(content).then(() => alert(msg));
         }
 
         function openPreview() {
-            if(!monacoEditor) return;
+            if (!monacoEditor) return;
             const txt = monacoEditor.getValue();
-            if(!txt.trim()) { alert("内容为空"); return; }
+            if (!txt.trim()) { alert(window.i18n ? window.i18n.t('alert_empty') : "内容为空"); return; }
             document.getElementById('previewBody').innerHTML = marked.parse(txt);
             document.getElementById('previewModal').classList.add('active');
         }
@@ -486,7 +988,7 @@
             const table = document.getElementById('dataTable');
             const cacheBadge = document.getElementById('cacheStatus');
             loading.style.display = 'block'; table.style.display = 'none';
-            if(cacheBadge) cacheBadge.classList.remove('show');
+            if (cacheBadge) cacheBadge.classList.remove('show');
 
             if (!force) {
                 const cached = localStorage.getItem(CACHE_KEY);
@@ -496,7 +998,7 @@
                         if (Date.now() - data.ts < CACHE_DURATION && Array.isArray(data.files)) {
                             allFiles = data.files; finishLoad(true); return;
                         }
-                    } catch(e) {}
+                    } catch (e) { }
                 }
             }
 
@@ -510,13 +1012,13 @@
                 const pRes = await fetch(promptUrl, { headers });
                 if (!pRes.ok) throw new Error(`API Error: ${pRes.status}`);
                 const pFiles = await pRes.json();
-                
+
                 let gFiles = [];
                 try {
                     const galleryUrl = `https://api.github.com/repos/${owner}/${repo}/contents/gallery?ref=${CONFIG.branch}&t=${Date.now()}`;
                     const gRes = await fetch(galleryUrl, { headers });
-                    if(gRes.ok) gFiles = await gRes.json();
-                } catch(e) {}
+                    if (gRes.ok) gFiles = await gRes.json();
+                } catch (e) { }
 
                 allFiles = pFiles
                     .filter(f => f.name && (f.name.endsWith('.md') || f.name.endsWith('.txt')))
@@ -528,7 +1030,7 @@
                             const promptKey = meta.pureName.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
                             const imgCore = imgNameLower.replace(/^\d{14}_/, '').replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
                             if (!imgCore.includes(promptKey)) return false;
-                            const currentVer = meta.version.replace(/[vV]/, ''); 
+                            const currentVer = meta.version.replace(/[vV]/, '');
                             const imgVerMatch = imgNameLower.match(/(?:v|ver|_v)(\d+(?:\.\d+)?)/i);
                             if (imgVerMatch) return Math.floor(parseFloat(imgVerMatch[1])) === Math.floor(parseFloat(currentVer));
                             return true;
@@ -548,7 +1050,7 @@
         function finishLoad(isCached) {
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('dataTable').style.display = 'table';
-            if(isCached && document.getElementById('cacheStatus')) document.getElementById('cacheStatus').classList.add('show');
+            if (isCached && document.getElementById('cacheStatus')) document.getElementById('cacheStatus').classList.add('show');
             filterFiles();
         }
         function forceRefresh() { loadData(true); }
@@ -596,11 +1098,11 @@
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-            if(displayFiles.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">暂无数据</td></tr>'; return; }
+            if (displayFiles.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">暂无数据</td></tr>'; return; }
             displayFiles.forEach(item => {
                 let exHtml = '<span style="color:#ccc">-</span>';
                 if (item.examples && item.examples.length) {
-                    exHtml = item.examples.slice(0, 2).map((ex, i) => `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">${ex.type==='video'?'🎬':'🖼️'} 示例${i+1}</a>`).join('');
+                    exHtml = item.examples.slice(0, 2).map((ex, i) => `<a class="example-link" onclick="openLightbox('${ex.url}','${ex.type}')">${ex.type === 'video' ? '🎬' : '🖼️'} 示例${i + 1}</a>`).join('');
                 }
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td><a class="file-link" onclick="viewFile('${item.rawName}', '${item.displayName}', '${item.sha}')">${item.displayName}</a></td><td><span class="badge ver">${item.version}</span></td><td><span class="badge cat">${item.category}</span></td><td style="color:#666; font-size:12px;">${item.desc}</td><td>${exHtml}</td><td>${item.author}</td>`;
@@ -616,57 +1118,58 @@
             const token = localStorage.getItem('gh_token');
             const btnImport = document.getElementById('btnImport');
             const btnDelete = document.getElementById('btnDelete');
-            
-            if(token) { btnImport.style.display = 'inline-block'; btnDelete.style.display = 'inline-block'; }
+
+            if (token) { btnImport.style.display = 'inline-block'; btnDelete.style.display = 'inline-block'; }
             else { btnImport.style.display = 'none'; btnDelete.style.display = 'none'; }
 
             const owner = localStorage.getItem('gh_owner') || CONFIG.owner;
             const repo = localStorage.getItem('gh_repo') || CONFIG.repo;
             const url = `https://raw.githubusercontent.com/${owner}/${repo}/${CONFIG.branch}/${CONFIG.path}/${encodeURIComponent(filename)}`;
 
-            fetch(url).then(r=>r.text()).then(text => {
+            fetch(url).then(r => r.text()).then(text => {
                 document.getElementById('fileContent').innerText = text;
                 currentFile = { name: filename, content: text, sha: sha };
-                if(token) btnImport.disabled = false;
+                if (token) btnImport.disabled = false;
             });
         }
 
         async function deleteCurrentFile() {
-            if(!confirm(`⚠️ 确定删除 "${currentFile.name}" 吗？`)) return;
+            if (!confirm(`⚠️ 确定删除 "${currentFile.name}" 吗？`)) return;
             const token = localStorage.getItem('gh_token');
             const btn = document.getElementById('btnDelete');
             btn.innerText = "⏳..."; btn.disabled = true;
             try {
-                const url = `https://api.github.com/repos/${localStorage.getItem('gh_owner')||CONFIG.owner}/${localStorage.getItem('gh_repo')||CONFIG.repo}/contents/${CONFIG.path}/${encodeURIComponent(currentFile.name)}`;
+                const url = `https://api.github.com/repos/${localStorage.getItem('gh_owner') || CONFIG.owner}/${localStorage.getItem('gh_repo') || CONFIG.repo}/contents/${CONFIG.path}/${encodeURIComponent(currentFile.name)}`;
                 await fetch(url, { method: 'DELETE', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Delete ${currentFile.name}`, sha: currentFile.sha, branch: 'main' }) });
                 alert("删除成功"); closeModal(); forceRefresh();
-            } catch(e) { alert("删除失败"); }
+            } catch (e) { alert("删除失败"); }
             btn.innerText = "🗑️ 删除文件"; btn.disabled = false;
         }
 
-        function importToEditor() { 
+        function importToEditor() {
             // 存入缓存
-            localStorage.setItem('kayler_editor_cache', currentFile.content); 
-            localStorage.setItem('kayler_editor_filename', currentFile.name); 
+            localStorage.setItem('kayler_editor_cache', currentFile.content);
+            localStorage.setItem('kayler_editor_filename', currentFile.name);
             // 如果 Monaco 已加载，直接设置内容
-            if(monacoEditor) {
+            if (monacoEditor) {
                 monacoEditor.setValue(currentFile.content);
                 closeModal();
             } else {
                 // 如果是跳转到 editor.html (如果你有这个独立文件)
                 // window.location.href = 'editor.html'; 
-                
+
                 // 但在这里我们是在本页编辑，所以只需关闭弹窗并设置值
-                 closeModal();
-                 alert('已导入到左侧工作台');
+                closeModal();
+                alert('已导入到左侧工作台');
             }
         }
-        
-        function downloadFile() { const blob = new Blob([currentFile.content], {type:'text/markdown'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentFile.name; a.click(); }
-        function openLightbox(url, type) { const lb = document.getElementById('lightbox'); const img = document.getElementById('lbImg'); const vid = document.getElementById('lbVideo'); lb.classList.add('active'); if(type==='video'){img.style.display='none';vid.style.display='block';vid.src=url;}else{vid.style.display='none';img.style.display='block';img.src=url;} }
+
+        function downloadFile() { const blob = new Blob([currentFile.content], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentFile.name; a.click(); }
+        function openLightbox(url, type) { const lb = document.getElementById('lightbox'); const img = document.getElementById('lbImg'); const vid = document.getElementById('lbVideo'); lb.classList.add('active'); if (type === 'video') { img.style.display = 'none'; vid.style.display = 'block'; vid.src = url; } else { vid.style.display = 'none'; img.style.display = 'block'; img.src = url; } }
         function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); document.getElementById('lbVideo').pause(); }
         function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
-        function copyContent() { navigator.clipboard.writeText(document.getElementById('fileContent').innerText).then(()=>alert('已复制')); }
+        function copyContent() { navigator.clipboard.writeText(document.getElementById('fileContent').innerText).then(() => alert('已复制')); }
     </script>
 </body>
+
 </html>

@@ -1,199 +1,513 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>Kayler 文字卡片生成器 - 在线金句长图制作工具</title>
-    
+
     <meta name="description" content="免费的在线文字卡片生成器。支持小红书风格、智能分页、自动排版、自定义背景与字体。适合制作金句卡片、长图文案、读书笔记分享，支持一键导出图片。">
-    
+
     <meta name="keywords" content="文字卡片, 金句生成器, 小红书排版, 长图生成, 在线工具, Kayler Card, 文字转图片, 朋友圈文案">
     <meta name="author" content="Kaylerris">
-    
+
     <meta property="og:title" content="Kayler 文字卡片生成器 - 唯美长图一键生成">
     <meta property="og:description" content="极简好用的文字卡片工具。支持小红书风格、智能分页、多种字体与背景。">
     <meta property="og:image" content="https://x.aisai.cc/social-cover.png">
     <meta property="og:url" content="https://x.aisai.cc/index.html">
     <meta property="og:type" content="website">
     <link rel="icon" href="/favicon.png" type="image/png">
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+
+    <script src="i18n.js?v=1.0"></script>
     <script src="layout.js?v=6.1"></script>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&display=swap"
+        rel="stylesheet">
+
     <style>
         /* === 全局变量 === */
         :root {
-            --bg-body: #f2f4f7; 
-            --paper-bg: #fdfbf7; 
+            --bg-body: #f2f4f7;
+            --paper-bg: #fdfbf7;
             --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px);
             --text-color: #2c2c2c;
             --title-color: #000;
-            --shadow-color: rgba(0,0,0,0.08);
+            --shadow-color: rgba(0, 0, 0, 0.08);
             --footer-color: #999;
             --brand-brown: #8b5e3c;
             --brand-brown-hover: #6d4c41;
-            --base-font-size: 18px; 
+            --base-font-size: 18px;
             --font-heiti: "PingFang SC", "Microsoft YaHei", sans-serif;
             --font-songti: "Songti SC", "SimSun", serif;
             --font-noto-serif: "Noto Serif SC", serif;
             --font-kaiti: "KaiTi", "STKaiti", serif;
-            --font-handwriting: "Ma Shan Zheng", cursive; 
+            --font-handwriting: "Ma Shan Zheng", cursive;
             --font-xiaowei: "ZCOOL XiaoWei", serif;
         }
 
         /* === 主题配置 === */
-        [data-theme="default"] { --paper-bg: #f9f7f1; --text-color: #2c2c2c; --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px); }
-        [data-theme="white"] { --paper-bg: #ffffff; --text-color: #333333; --paper-texture: none; }
-        [data-theme="green"] { --paper-bg: #f0f9eb; --text-color: #2b402b; --paper-texture: none; }
-        [data-theme="blue"] { --paper-bg: #f0f4f8; --text-color: #2c3e50; --paper-texture: none; }
-        [data-theme="kraft"] { --paper-bg: #e8dcc5; --text-color: #3e2b1d; --paper-texture: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjRThEQ0M1Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IixDOUNDOEYiIG9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4='); }
-        [data-theme="dark"] { --paper-bg: #1a1a1a; --text-color: #e0e0e0; --paper-texture: none; --shadow-color: rgba(0,0,0,0.5); --title-color: #fff; }
-        [data-theme="pink"] { --paper-bg: #fff0f5; --text-color: #5c3a45; --paper-texture: none; }
-        [data-theme="grey"] { --paper-bg: #f5f5f5; --text-color: #333; --paper-texture: none; }
-        [data-theme="mint"] { --paper-bg: #e0f2f1; --text-color: #004d40; --paper-texture: none; }
-        [data-theme="deepblue"] { --paper-bg: #263238; --text-color: #eceff1; --title-color: #fff; --paper-texture: none; --shadow-color: rgba(0,0,0,0.5); }
+        [data-theme="default"] {
+            --paper-bg: #f9f7f1;
+            --text-color: #2c2c2c;
+            --paper-texture: radial-gradient(#e6e2d8 1px, transparent 1px);
+        }
+
+        [data-theme="white"] {
+            --paper-bg: #ffffff;
+            --text-color: #333333;
+            --paper-texture: none;
+        }
+
+        [data-theme="green"] {
+            --paper-bg: #f0f9eb;
+            --text-color: #2b402b;
+            --paper-texture: none;
+        }
+
+        [data-theme="blue"] {
+            --paper-bg: #f0f4f8;
+            --text-color: #2c3e50;
+            --paper-texture: none;
+        }
+
+        [data-theme="kraft"] {
+            --paper-bg: #e8dcc5;
+            --text-color: #3e2b1d;
+            --paper-texture: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjRThEQ0M1Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IixDOUNDOEYiIG9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4=');
+        }
+
+        [data-theme="dark"] {
+            --paper-bg: #1a1a1a;
+            --text-color: #e0e0e0;
+            --paper-texture: none;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --title-color: #fff;
+        }
+
+        [data-theme="pink"] {
+            --paper-bg: #fff0f5;
+            --text-color: #5c3a45;
+            --paper-texture: none;
+        }
+
+        [data-theme="grey"] {
+            --paper-bg: #f5f5f5;
+            --text-color: #333;
+            --paper-texture: none;
+        }
+
+        [data-theme="mint"] {
+            --paper-bg: #e0f2f1;
+            --text-color: #004d40;
+            --paper-texture: none;
+        }
+
+        [data-theme="deepblue"] {
+            --paper-bg: #263238;
+            --text-color: #eceff1;
+            --title-color: #fff;
+            --paper-texture: none;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
 
         body {
             font-family: var(--font-heiti);
             background-color: var(--bg-body);
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
         }
 
-        header { text-align: center; width: 100%; max-width: 800px; margin-bottom: 20px; margin-top: 10px; }
-        h1 { 
-            font-size: 32px; margin: 0 0 8px 0; font-weight: 800; letter-spacing: -1px; color: #222; 
-            display: flex; align-items: center; justify-content: center;
+        header {
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            margin-top: 10px;
         }
-        
+
+        h1 {
+            font-size: 32px;
+            margin: 0 0 8px 0;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .global-counter {
-            font-size: 14px; color: #888; font-family: "PingFang SC", sans-serif;
-            font-weight: 500; letter-spacing: 0.5px;
+            font-size: 14px;
+            color: #888;
+            font-family: "PingFang SC", sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
 
         /* === 布局容器优化 === */
-        
+
         /* 1. 工具栏 (Themes/Fonts) */
         .toolbar-wrapper {
-            background: white; padding: 15px 25px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
             margin-bottom: 12px;
-            display: flex; flex-direction: column; gap: 12px;
-            width: 100%; max-width: 1200px; box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 1200px;
+            box-sizing: border-box;
         }
 
         /* 2. Emoji 栏独立容器 - 全宽显示 */
         .emoji-wrapper {
-            background: white; padding: 10px 20px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            background: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
             margin-bottom: 12px;
-            width: 100%; max-width: 1200px; box-sizing: border-box;
-            display: flex; flex-wrap: wrap; align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            box-sizing: border-box;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .emoji-bar {
-            display: flex; gap: 8px; 
-            flex-wrap: wrap; /* 允许换行 */
-            align-items: center; 
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            /* 允许换行 */
+            align-items: center;
             width: 100%;
         }
+
         .emoji-item {
-            font-size: 20px; cursor: pointer; padding: 5px;
-            border-radius: 6px; transition: background 0.2s; user-select: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            user-select: none;
         }
-        .emoji-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
+
+        .emoji-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
 
         /* 3. 主双栏结构 */
         .container {
-            display: flex; 
-            gap: 12px; /* 3mm 间距 */
-            width: 100%; max-width: 1200px; 
-            flex-wrap: wrap; justify-content: center; align-items: flex-start;
+            display: flex;
+            gap: 12px;
+            /* 3mm 间距 */
+            width: 100%;
+            max-width: 1200px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
         }
 
         /* 左侧输入区 */
-        .input-area { 
-            flex: 1; min-width: 320px; 
-            display: flex; flex-direction: column; 
+        .input-area {
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
         }
 
         /* 右侧预览区 */
-        .preview-area { 
-            flex: 1; min-width: 350px; 
-            display: flex; flex-direction: column; 
-            align-items: flex-end; /* 强制右对齐 */
+        .preview-area {
+            flex: 1;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            /* 强制右对齐 */
         }
 
         /* 工具栏通用样式 */
-        .tool-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
-        .tool-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .tool-label { font-size: 13px; color: #999; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-        .tool-divider { width: 100%; height: 1px; background: #f0f0f0; margin: 2px 0; }
-        
-        .theme-btn { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #f0f0f0; cursor: pointer; transition: all 0.2s; position: relative; }
-        .theme-btn:hover { transform: scale(1.1); border-color: #ddd; }
-        .theme-btn.active { border-color: var(--brand-brown); transform: scale(1.2); box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 2; }
-        
-        .bg-default { background: #f9f7f1; } .bg-white { background: #ffffff; border:1px solid #eee; }
-        .bg-green { background: #f0f9eb; } .bg-blue { background: #f0f4f8; }
-        .bg-kraft { background: #e8dcc5; } .bg-dark { background: #1a1a1a; }
-        .bg-pink { background: #fff0f5; } .bg-grey { background: #f5f5f5; }
-        .bg-mint { background: #e0f2f1; } .bg-deepblue { background: #263238; }
-
-        .select-ui, .input-ui { padding: 6px 10px; border-radius: 6px; background: #f9f9f9; border: 1px solid #eee; font-size: 13px; color: #555; outline: none; transition: all 0.2s; }
-        .select-ui:hover, .input-ui:hover { background: #fff; border-color: #ddd; }
-        .select-ui:focus, .input-ui:focus { border-color: var(--brand-brown); background: #fff; }
-
-        .upload-btn { font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px dashed #ccc; background: #fff; color: #666; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
-        .upload-btn:hover { border-color: var(--brand-brown); color: var(--brand-brown); background: #fafafa; }
-        
-        .slider-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
-        input[type=range] { width: 80px; cursor: pointer; height: 4px; border-radius: 2px; accent-color: var(--brand-brown); }
-
-        .textarea-wrapper { position: relative; width: 100%; }
-        
-        textarea {
-            width: 100%; padding: 25px; padding-bottom: 40px;
-            border: none; border-radius: 12px;
-            font-size: 16px; line-height: 1.6;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            resize: none; overflow-y: hidden; outline: none;
-            min-height: 500px; font-family: inherit; background: #fff;
-            transition: box-shadow 0.3s; box-sizing: border-box;
+        .tool-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        textarea:focus { box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
 
-        .word-count { position: absolute; bottom: 15px; right: 20px; font-size: 12px; color: #bbb; pointer-events: none; }
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
 
-        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px; }
-        
-        .btn-base { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; min-width: 100px; }
-        .btn-base:active { transform: scale(0.98); }
+        .tool-label {
+            font-size: 13px;
+            color: #999;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
 
-        .btn-download { background-color: var(--brand-brown); color: #fff; box-shadow: 0 4px 15px rgba(139, 94, 60, 0.2); }
-        .btn-download:hover { background-color: var(--brand-brown-hover); box-shadow: 0 6px 20px rgba(139, 94, 60, 0.3); }
-        .btn-copy { background-color: #e3f2fd; color: #1565c0; }
-        .btn-copy:hover { background-color: #bbdefb; }
-        .btn-publish { background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: none; }
-        .btn-publish:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3); }
+        .tool-divider {
+            width: 100%;
+            height: 1px;
+            background: #f0f0f0;
+            margin: 2px 0;
+        }
 
-        .hint-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
+        .theme-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: #ddd;
+        }
+
+        .theme-btn.active {
+            border-color: var(--brand-brown);
+            transform: scale(1.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        .bg-default {
+            background: #f9f7f1;
+        }
+
+        .bg-white {
+            background: #ffffff;
+            border: 1px solid #eee;
+        }
+
+        .bg-green {
+            background: #f0f9eb;
+        }
+
+        .bg-blue {
+            background: #f0f4f8;
+        }
+
+        .bg-kraft {
+            background: #e8dcc5;
+        }
+
+        .bg-dark {
+            background: #1a1a1a;
+        }
+
+        .bg-pink {
+            background: #fff0f5;
+        }
+
+        .bg-grey {
+            background: #f5f5f5;
+        }
+
+        .bg-mint {
+            background: #e0f2f1;
+        }
+
+        .bg-deepblue {
+            background: #263238;
+        }
+
+        .select-ui,
+        .input-ui {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            font-size: 13px;
+            color: #555;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .select-ui:hover,
+        .input-ui:hover {
+            background: #fff;
+            border-color: #ddd;
+        }
+
+        .select-ui:focus,
+        .input-ui:focus {
+            border-color: var(--brand-brown);
+            background: #fff;
+        }
+
+        .upload-btn {
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px dashed #ccc;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .upload-btn:hover {
+            border-color: var(--brand-brown);
+            color: var(--brand-brown);
+            background: #fafafa;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        input[type=range] {
+            width: 80px;
+            cursor: pointer;
+            height: 4px;
+            border-radius: 2px;
+            accent-color: var(--brand-brown);
+        }
+
+        .textarea-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 25px;
+            padding-bottom: 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            resize: none;
+            overflow-y: hidden;
+            outline: none;
+            min-height: 500px;
+            font-family: inherit;
+            background: #fff;
+            transition: box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .word-count {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-size: 12px;
+            color: #bbb;
+            pointer-events: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .btn-base {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            min-width: 100px;
+        }
+
+        .btn-base:active {
+            transform: scale(0.98);
+        }
+
+        .btn-download {
+            background-color: var(--brand-brown);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(139, 94, 60, 0.2);
+        }
+
+        .btn-download:hover {
+            background-color: var(--brand-brown-hover);
+            box-shadow: 0 6px 20px rgba(139, 94, 60, 0.3);
+        }
+
+        .btn-copy {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .btn-copy:hover {
+            background-color: #bbdefb;
+        }
+
+        .btn-publish {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: none;
+        }
+
+        .btn-publish:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
+        }
+
+        .hint-text {
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+            margin-top: 10px;
+        }
 
         .card-container {
-            width: 100%; 
-            max-width: 680px; 
-            display: flex; flex-direction: column; gap: 10px;
+            width: 100%;
+            max-width: 680px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .paper-card {
-            width: 100%; 
+            width: 100%;
             background-color: var(--paper-bg);
             background-image: var(--paper-texture);
             background-size: 20px 20px;
@@ -202,44 +516,191 @@
             border-radius: 6px;
             color: var(--text-color);
             transition: all 0.3s ease;
-            position: relative; 
-            overflow: hidden; 
+            position: relative;
+            overflow: hidden;
             box-sizing: border-box;
         }
 
-        .card-bg-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-position: top center; background-repeat: repeat-y; background-size: 100% auto; z-index: 0; pointer-events: none; }
+        .card-bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-position: top center;
+            background-repeat: repeat-y;
+            background-size: 100% auto;
+            z-index: 0;
+            pointer-events: none;
+        }
 
-        .card-toolbar { display: flex; justify-content: flex-end; gap: 10px; padding: 0 5px; opacity: 0.8; }
-        .mini-btn { font-size: 12px; padding: 5px 10px; border-radius: 6px; border: none; background: rgba(0,0,0,0.05); color: #666; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
-        .mini-btn:hover { background: #e3f2fd; color: #1565c0; }
+        .card-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 0 5px;
+            opacity: 0.8;
+        }
 
-        .paper-content, .paper-footer, .paper-title, .paper-subtitle, .page-indicator { position: relative; z-index: 1; }
-        .paper-content { font-family: var(--active-font-family); font-size: var(--base-font-size); line-height: 1.75; text-align: justify; min-height: 200px; }
-        .paper-title { font-family: var(--active-font-family); font-size: calc(var(--base-font-size) * 1.5); font-weight: bold; text-align: center; margin-bottom: 25px; color: var(--title-color); line-height: 1.3; }
-        .paper-subtitle { font-family: var(--active-font-family); font-size: calc(var(--base-font-size) * 1.2); font-weight: bold; text-align: center; margin-top: -15px; margin-bottom: 30px; color: var(--title-color); opacity: 0.85; letter-spacing: 1px; }
+        .mini-btn {
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-        .paper-p { margin: 0; margin-top: 10pt; }
-        .indent-cn { text-indent: 2em; }
-        .indent-en { text-indent: 1.37cm; }
+        .mini-btn:hover {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
 
-        .paper-footer { margin-top: 60px; text-align: right; font-size: 14px; color: var(--footer-color); border-top: 1px solid rgba(0,0,0,0.06); padding-top: 18px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-        .paper-footer a { color: inherit; text-decoration: none; border-bottom: 1px dashed currentColor; font-weight: 600; }
+        .paper-content,
+        .paper-footer,
+        .paper-title,
+        .paper-subtitle,
+        .page-indicator {
+            position: relative;
+            z-index: 1;
+        }
 
-        .page-indicator { position: absolute; top: -25px; left: 0; font-size: 12px; color: #ccc; font-weight: bold; }
+        .paper-content {
+            font-family: var(--active-font-family);
+            font-size: var(--base-font-size);
+            line-height: 1.75;
+            text-align: justify;
+            min-height: 200px;
+        }
 
-        #loading-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 30px; border-radius: 8px; font-size: 16px; z-index: 99999; display: none; }
+        .paper-title {
+            font-family: var(--active-font-family);
+            font-size: calc(var(--base-font-size) * 1.5);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--title-color);
+            line-height: 1.3;
+        }
+
+        .paper-subtitle {
+            font-family: var(--active-font-family);
+            font-size: calc(var(--base-font-size) * 1.2);
+            font-weight: bold;
+            text-align: center;
+            margin-top: -15px;
+            margin-bottom: 30px;
+            color: var(--title-color);
+            opacity: 0.85;
+            letter-spacing: 1px;
+        }
+
+        .paper-p {
+            margin: 0;
+            margin-top: 10pt;
+        }
+
+        .indent-cn {
+            text-indent: 2em;
+        }
+
+        .indent-en {
+            text-indent: 1.37cm;
+        }
+
+        .paper-footer {
+            margin-top: 60px;
+            text-align: right;
+            font-size: 14px;
+            color: var(--footer-color);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding-top: 18px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .paper-footer a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px dashed currentColor;
+            font-weight: 600;
+        }
+
+        .page-indicator {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            font-size: 12px;
+            color: #ccc;
+            font-weight: bold;
+        }
+
+        #loading-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            z-index: 99999;
+            display: none;
+        }
 
         @media (max-width: 768px) {
-            .container { gap: 30px; flex-direction: column; }
-            body { padding: 10px; }
-            h1 { font-size: 24px; }
-            .paper-card { padding: 30px 20px; }
-            .toolbar-wrapper, .emoji-wrapper { padding: 15px; width: 100%; gap: 15px; }
-            .tool-row { justify-content: flex-start; gap: 10px; }
-            .tool-group { width: 100%; justify-content: space-between; }
-            .tool-group:first-child { justify-content: flex-start; }
-            .preview-area { align-items: center; width: 100%; }
-            .card-container { width: 100%; max-width: 100%; }
+            .container {
+                gap: 30px;
+                flex-direction: column;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .paper-card {
+                padding: 30px 20px;
+            }
+
+            .toolbar-wrapper,
+            .emoji-wrapper {
+                padding: 15px;
+                width: 100%;
+                gap: 15px;
+            }
+
+            .tool-row {
+                justify-content: flex-start;
+                gap: 10px;
+            }
+
+            .tool-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .tool-group:first-child {
+                justify-content: flex-start;
+            }
+
+            .preview-area {
+                align-items: center;
+                width: 100%;
+            }
+
+            .card-container {
+                width: 100%;
+                max-width: 100%;
+            }
         }
 
         /* === 小红书模式专用样式 === */
@@ -247,26 +708,30 @@
             font-weight: 900 !important;
             color: #333 !important;
         }
+
         .xhs-tag-style {
             margin-top: 30px;
             font-size: 14px;
             font-weight: bold;
-            color: #1c4c96; /* 小红书话题蓝 */
+            color: #1c4c96;
+            /* 小红书话题蓝 */
             line-height: 1.6;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }
     </style>
 </head>
+
 <body>
-    
-    <div id="loading-toast">☁️ 正在发布到画廊...</div>
+
+    <div id="loading-toast" data-i18n="toast_publishing">☁️ 正在发布到画廊...</div>
 
     <header>
         <h1>
-            <img src="/logo.png" alt="Logo" style="height: 40px; vertical-align: middle; margin-right: 10px; margin-top: -6px;">
+            <img src="/logo.png" alt="Logo"
+                style="height: 40px; vertical-align: middle; margin-right: 10px; margin-top: -6px;">
             Kayler文字卡片生成器
         </h1>
-        <div class="global-counter" id="counterDisplay">
+        <div class="global-counter" id="counterDisplay" data-i18n="app_counter">
             ✨ 已累计协助生成 <span id="totalCount">...</span> 张精致卡片
         </div>
     </header>
@@ -274,27 +739,38 @@
     <div class="toolbar-wrapper">
         <div class="tool-row">
             <div class="tool-group">
-                <span class="tool-label">🎨 主题:</span>
-                <div class="theme-btn bg-default active" onclick="setTheme('default', this)" title="经典羊皮"></div>
-                <div class="theme-btn bg-white" onclick="setTheme('white', this)" title="极简纯白"></div>
-                <div class="theme-btn bg-pink" onclick="setTheme('pink', this)" title="樱花粉"></div>
-                <div class="theme-btn bg-green" onclick="setTheme('green', this)" title="护眼绿"></div>
-                <div class="theme-btn bg-mint" onclick="setTheme('mint', this)" title="薄荷绿"></div>
-                <div class="theme-btn bg-blue" onclick="setTheme('blue', this)" title="静谧蓝"></div>
-                <div class="theme-btn bg-grey" onclick="setTheme('grey', this)" title="极简灰"></div>
-                <div class="theme-btn bg-kraft" onclick="setTheme('kraft', this)" title="复古牛皮"></div>
-                <div class="theme-btn bg-deepblue" onclick="setTheme('deepblue', this)" title="深海蓝"></div>
-                <div class="theme-btn bg-dark" onclick="setTheme('dark', this)" title="暗夜极客"></div>
+                <span class="tool-label" data-i18n="tool_theme">🎨 主题:</span>
+                <div class="theme-btn bg-default active" onclick="setTheme('default', this)" data-i18n="theme_default"
+                    data-i18n-attr="title" title="经典羊皮"></div>
+                <div class="theme-btn bg-white" onclick="setTheme('white', this)" data-i18n="theme_white"
+                    data-i18n-attr="title" title="极简纯白"></div>
+                <div class="theme-btn bg-pink" onclick="setTheme('pink', this)" data-i18n="theme_pink"
+                    data-i18n-attr="title" title="樱花粉"></div>
+                <div class="theme-btn bg-green" onclick="setTheme('green', this)" data-i18n="theme_green"
+                    data-i18n-attr="title" title="护眼绿"></div>
+                <div class="theme-btn bg-mint" onclick="setTheme('mint', this)" data-i18n="theme_mint"
+                    data-i18n-attr="title" title="薄荷绿"></div>
+                <div class="theme-btn bg-blue" onclick="setTheme('blue', this)" data-i18n="theme_blue"
+                    data-i18n-attr="title" title="静谧蓝"></div>
+                <div class="theme-btn bg-grey" onclick="setTheme('grey', this)" data-i18n="theme_grey"
+                    data-i18n-attr="title" title="极简灰"></div>
+                <div class="theme-btn bg-kraft" onclick="setTheme('kraft', this)" data-i18n="theme_kraft"
+                    data-i18n-attr="title" title="复古牛皮"></div>
+                <div class="theme-btn bg-deepblue" onclick="setTheme('deepblue', this)" data-i18n="theme_deepblue"
+                    data-i18n-attr="title" title="深海蓝"></div>
+                <div class="theme-btn bg-dark" onclick="setTheme('dark', this)" data-i18n="theme_dark"
+                    data-i18n-attr="title" title="暗夜极客"></div>
             </div>
 
             <div class="tool-group">
                 <input type="file" id="bgInput" accept="image/*" style="display: none;" onchange="handleBgUpload(this)">
                 <button id="uploadBtn" class="upload-btn" onclick="document.getElementById('bgInput').click()">
-                    <span>🖼️ 背景图</span>
+                    <span data-i18n="tool_bg">🖼️ 背景图</span>
                 </button>
                 <div class="slider-container">
-                    <span>透明度:</span>
-                    <input type="range" id="opacitySlider" min="0.05" max="0.8" step="0.05" value="0.15" oninput="updateOpacity(this.value)">
+                    <span data-i18n="tool_opacity">透明度:</span>
+                    <input type="range" id="opacitySlider" min="0.05" max="0.8" step="0.05" value="0.15"
+                        oninput="updateOpacity(this.value)">
                     <span id="opacityValue">15%</span>
                 </div>
             </div>
@@ -304,41 +780,45 @@
 
         <div class="tool-row">
             <div class="tool-group">
-                <span class="tool-label">🅰️ 字体:</span>
+                <span class="tool-label" data-i18n="tool_font">🅰️ 字体:</span>
                 <select class="select-ui" onchange="setFontFamily(this.value)">
-                    <option value="heiti" selected>现代黑体</option>
-                    <option value="songti">文艺宋体</option>
-                    <option value="noto">思源宋体</option>
-                    <option value="kaiti">楷体</option>
-                    <option value="xiaowei">文艺体</option>
-                    <option value="handwriting">优雅手写</option>
+                    <option value="heiti" selected data-i18n="font_heiti">现代黑体</option>
+                    <option value="songti" data-i18n="font_songti">文艺宋体</option>
+                    <option value="noto" data-i18n="font_noto">思源宋体</option>
+                    <option value="kaiti" data-i18n="font_kaiti">楷体</option>
+                    <option value="xiaowei" data-i18n="font_xiaowei">文艺体</option>
+                    <option value="handwriting" data-i18n="font_handwriting">优雅手写</option>
                 </select>
             </div>
-            
+
             <div class="tool-group">
-                <span class="tool-label">📏 字号:</span>
+                <span class="tool-label" data-i18n="tool_size">📏 字号:</span>
                 <input type="range" min="14" max="24" value="18" oninput="setFontSize(this.value)" style="width:60px;">
                 <span id="fontSizeDisplay" style="font-size:12px; color:#888;">18px</span>
             </div>
 
             <div class="tool-group">
-                <span class="tool-label">✍️ 签名:</span>
-                <input type="text" class="input-ui" style="width:100px;" id="signatureInput" placeholder="Kaylerris" value="Kaylerris" oninput="updateSignature(this.value)">
+                <span class="tool-label" data-i18n="tool_sign">✍️ 签名:</span>
+                <input type="text" class="input-ui" style="width:100px;" id="signatureInput" placeholder="Kaylerris"
+                    value="Kaylerris" oninput="updateSignature(this.value)">
             </div>
 
             <div class="tool-group" style="margin-left: 5px;">
-                <input type="checkbox" id="xhsStyleToggle" onchange="renderCards()" style="accent-color: #ff2442; cursor: pointer; margin-right: 4px;">
-                <label for="xhsStyleToggle" class="tool-label" style="cursor: pointer; color: #333;">📕 小红书风</label>
+                <input type="checkbox" id="xhsStyleToggle" onchange="renderCards()"
+                    style="accent-color: #ff2442; cursor: pointer; margin-right: 4px;">
+                <label for="xhsStyleToggle" class="tool-label" style="cursor: pointer; color: #333;"
+                    data-i18n="tool_xhs">📕 小红书风</label>
             </div>
 
             <div class="tool-group">
-                <span class="tool-label">📄 分页:</span>
+                <span class="tool-label" data-i18n="tool_split">📄 分页:</span>
                 <select id="splitMode" class="select-ui" onchange="renderCards()">
-                    <option value="count" selected>等分 X 张</option>
-                    <option value="single">单张长图</option>
-                    <option value="length">1k字/张</option>
+                    <option value="count" selected data-i18n="opt_split_count">等分 X 张</option>
+                    <option value="single" data-i18n="opt_split_single">单张长图</option>
+                    <option value="length" data-i18n="opt_split_length">1k字/张</option>
                 </select>
-                <input type="number" id="splitCount" class="input-ui" style="width:40px; padding:6px;" value="2" min="2" max="10" onchange="renderCards()">
+                <input type="number" id="splitCount" class="input-ui" style="width:40px; padding:6px;" value="2" min="2"
+                    max="10" onchange="renderCards()">
             </div>
         </div>
     </div>
@@ -392,30 +872,33 @@
     <div class="container">
         <div class="input-area">
             <div class="textarea-wrapper">
-                <textarea id="inputText" placeholder="在此粘贴文章...&#10;&#10;自动保存功能已启用，不用担心内容丢失。&#10;可以在上方工具栏修改 @署名。"></textarea>
+                <textarea id="inputText" data-i18n="placeholder_input"
+                    placeholder="在此粘贴文章...&#10;&#10;自动保存功能已启用，不用担心内容丢失。&#10;可以在上方工具栏修改 @署名。"></textarea>
                 <div id="wordCount" class="word-count">0 字</div>
             </div>
-            
+
             <div class="action-buttons">
                 <button class="btn-base btn-download" onclick="generateBatch('download')">
-                    <span>💾 批量下载</span>
+                    <span data-i18n="btn_batch_download">💾 批量下载</span>
                 </button>
                 <button id="btnCopy" class="btn-base btn-copy" onclick="generateBatch('copy')">
-                    <span>📋 复制第一张</span>
+                    <span data-i18n="btn_copy_first">📋 复制第一张</span>
                 </button>
-                <button id="btnPublish" class="btn-base btn-publish" onclick="publishToGallery()">
+                <button id="btnPublish" class="btn-base btn-publish" onclick="publishToGallery()"
+                    data-i18n="btn_publish_gallery">
                     ☁️ 发布到画廊
                 </button>
             </div>
-            
-            <p class="hint-text">
+
+            <p class="hint-text" data-i18n="hint_right_area">
                 提示：右侧每张卡片下方均可单独复制或保存
             </p>
         </div>
 
         <div class="preview-area" id="previewContainerWrapper">
-            <div id="previewContainer" style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;">
-                </div>
+            <div id="previewContainer"
+                style="width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:20px;">
+            </div>
         </div>
     </div>
 
@@ -433,43 +916,43 @@
         const toast = document.getElementById('loading-toast');
 
         let customBgUrl = null;
-        let currentOpacity = 0.15; 
+        let currentOpacity = 0.15;
         let currentFont = 'heiti';
         let currentSignature = 'Kaylerris';
 
         const savedDraft = localStorage.getItem('kayler_draft');
         if (savedDraft) { inputText.value = savedDraft; }
-        
-        const BASE_COUNT = 12580; 
+
+        const BASE_COUNT = 12580;
         async function updateCounter() {
             let userCount = parseInt(localStorage.getItem('kayler_usage_count') || '0');
             let githubCount = 0;
             try {
                 const res = await fetch(`https://api.github.com/repos/itskys/kayler/contents/gallery`);
-                if(res.ok) {
+                if (res.ok) {
                     const files = await res.json();
                     githubCount = files.length * 10;
                 }
-            } catch(e) {}
+            } catch (e) { }
             let total = BASE_COUNT + githubCount + userCount;
             counterDisplay.innerText = total.toLocaleString();
         }
         updateCounter();
 
         function checkAdmin() {
-            if(localStorage.getItem('gh_token')) {
+            if (localStorage.getItem('gh_token')) {
                 btnPublish.style.display = 'flex';
             }
         }
         window.addEventListener('auth-updated', checkAdmin);
         checkAdmin();
 
-        inputText.addEventListener('input', function() {
+        inputText.addEventListener('input', function () {
             this.style.height = 'auto';
-            this.style.height = Math.max(500, this.scrollHeight) + 'px'; 
+            this.style.height = Math.max(500, this.scrollHeight) + 'px';
             wordCountEl.innerText = `${this.value.length} 字`;
             localStorage.setItem('kayler_draft', this.value);
-            renderCards(); 
+            renderCards();
         });
 
         function setFontFamily(font) {
@@ -525,8 +1008,9 @@
             const isXhsMode = document.getElementById('xhsStyleToggle') && document.getElementById('xhsStyleToggle').checked;
 
             const lines = rawText.split('\n');
-            let mainTitle = lines.length > 0 ? lines[0].trim() : "无标题";
-            
+            let mainTitle = lines.length > 0 ? lines[0].trim() : (window.i18n ? window.i18n.t('no_title') : "无标题");
+            if (window.i18n && mainTitle === 'no_title') mainTitle = "无标题"; // Fallback
+
             // 2. 小红书模式：标题装饰
             if (isXhsMode) {
                 mainTitle = `✨ ${mainTitle} ✨`;
@@ -568,25 +1052,27 @@
             if (pages.length === 0) pages.push([]);
 
             let html = '';
-            
+
             // 小红书模式使用的装饰符号 (固定顺序以防输入时闪烁)
-            const xhsBullets = ['👉', '✅', '🔸', '📝', '💡']; 
+            const xhsBullets = ['👉', '✅', '🔸', '📝', '💡'];
             const xhsTags = ['#干货分享', '#日常', '#笔记', '#生活记录', '#实用'];
 
             pages.forEach((pageParas, index) => {
                 let cardContent = "";
-                
+
                 // 3. 渲染标题 (添加特定样式类)
                 const titleClass = isXhsMode ? "paper-title xhs-title-style" : "paper-title";
-                
+
                 if (index === 0) {
                     cardContent += `<div class="${titleClass}">${escapeHtml(mainTitle)}</div>`;
                 } else {
-                    const suffix = index + 1; 
+                    const suffix = index + 1;
                     cardContent += `<div class="${titleClass}" style="margin-bottom:15px">${escapeHtml(mainTitle)}</div>`;
-                    cardContent += `<div class="paper-subtitle">（续${suffix}）</div>`;
+                    const contPrefix = window.i18n ? window.i18n.t('card_continued') : "（续";
+                    const contSuffix = window.i18n ? window.i18n.t('card_continued_suffix') : "）";
+                    cardContent += `<div class="paper-subtitle">${contPrefix}${suffix}${contSuffix}</div>`;
                 }
-                
+
                 // 4. 渲染段落 (小红书模式加Emoji)
                 pageParas.forEach((p, pIndex) => {
                     let text = escapeHtml(p);
@@ -595,7 +1081,7 @@
                         const bullet = xhsBullets[pIndex % xhsBullets.length];
                         text = `${bullet} ${text}`;
                     }
-                    
+
                     const indentClass = /[\u4e00-\u9fa5]/.test(p) ? 'indent-cn' : 'indent-en';
                     // 小红书模式通常不需要首行缩进，这里可以根据喜好去掉 indentClass
                     cardContent += `<div class="paper-p ${indentClass}">${text}</div>`;
@@ -608,7 +1094,12 @@
                     cardContent += `<div class="xhs-tag-style">${randomTags}</div>`;
                 }
 
-                let pageIndicator = pages.length > 1 ? `<div class="page-indicator">第 ${index+1} / ${pages.length} 页</div>` : '';
+                const pagePrefix = window.i18n ? window.i18n.t('card_page_prefix') : "第";
+                const pageSuffix = window.i18n ? window.i18n.t('card_page_suffix') : "页";
+                // Only show prefix if it's not empty (e.g. for English "Page 1" vs Chinese "第 1 页")
+                const pageStr = `${pagePrefix} ${index + 1} ${pageSuffix}`;
+
+                let pageIndicator = pages.length > 1 ? `<div class="page-indicator">${pageStr} / ${pages.length}</div>` : '';
                 let bgStyle = customBgUrl ? `background-image: url('${customBgUrl}'); opacity: ${currentOpacity};` : `opacity: 0;`;
 
                 html += `
@@ -634,26 +1125,26 @@
             const token = localStorage.getItem('gh_token');
             const owner = localStorage.getItem('gh_owner');
             const repo = localStorage.getItem('gh_repo');
-            
-            if(!token) { alert("Token 丢失，请重新登录"); return; }
-            if(!inputText.value.trim()) { alert("内容为空，无法生成"); return; }
 
-            const confirmUpload = confirm("确定要将第一张卡片发布到「AI 图片展」吗？");
-            if(!confirmUpload) return;
+            if (!token) { alert(window.i18n ? window.i18n.t('settings_desc') : "Token 丢失，请重新登录"); return; }
+            if (!inputText.value.trim()) { alert("Content is empty"); return; }
+
+            const confirmUpload = confirm(window.i18n ? window.i18n.t('confirm_publish') : "确定要将第一张卡片发布到「AI 图片展」吗？");
+            if (!confirmUpload) return;
 
             toast.style.display = 'block';
-            
+
             try {
                 const card = document.getElementById('card-0');
                 const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null });
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                
+
                 const reader = new FileReader();
                 reader.readAsDataURL(blob);
                 reader.onloadend = async () => {
                     const base64Content = reader.result.split(',')[1];
                     const titleLine = inputText.value.split('\n')[0].trim().substring(0, 10).replace(/[\\/:*?"<>|]/g, "");
-                    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
                     const filename = `${dateStr}_${titleLine}.png`;
                     const path = `gallery/${filename}`;
 
@@ -671,15 +1162,15 @@
                         })
                     });
 
-                    if(res.ok) {
-                        alert("✅ 发布成功！\n图片已上传至画廊，稍后即可在 AI 图片展中看到。");
+                    if (res.ok) {
+                        alert(window.i18n ? window.i18n.t('alert_publish_success') : "✅ 发布成功！\n图片已上传至画廊，稍后即可在 AI 图片展中看到。");
                     } else {
                         const err = await res.json();
                         throw new Error(err.message);
                     }
                     toast.style.display = 'none';
                 };
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
                 alert("发布失败: " + e.message);
                 toast.style.display = 'none';
@@ -687,7 +1178,7 @@
         }
 
         function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-        
+
         function handleBgUpload(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -704,7 +1195,7 @@
             const card = document.getElementById(`card-${index}`);
             html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `card_${index+1}.png`;
+                link.download = `card_${index + 1}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
@@ -724,15 +1215,21 @@
         }
         async function generateBatch(action) {
             const cards = document.querySelectorAll('.paper-card');
-            if(action === 'copy') { copySingle(0, document.getElementById('btnCopy')); return; }
-            for(let i=0; i<cards.length; i++) {
+            if (action === 'copy') { copySingle(0, document.getElementById('btnCopy')); return; }
+            for (let i = 0; i < cards.length; i++) {
                 downloadSingle(i);
                 await new Promise(r => setTimeout(r, 500));
             }
         }
 
-        if(inputText.value.trim() === "") inputText.value = "欢迎使用 Kayler 文字卡片生成器！...";
+        if (inputText.value.trim() === "") inputText.value = (window.i18n && window.i18n.t) ? window.i18n.t('placeholder_input') : "欢迎使用 Kayler 文字卡片生成器！...";
         inputText.dispatchEvent(new Event('input'));
+
+        // Listen for language change event to re-render cards
+        window.addEventListener('lang-changed', () => {
+            renderCards();
+        });
     </script>
 </body>
+
 </html>
