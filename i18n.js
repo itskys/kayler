@@ -257,7 +257,7 @@ const i18n = {
             settings_btn_magic: "⚡ Generate Magic Link",
             settings_alert_saved: "✅ Configuration saved!",
 
-            app_title: "Kayler Card Generator",
+            app_title: "Kayler Text Card Generator",
             app_counter: "✨ Assisted in creating <span id='totalCount'>...</span> cards",
 
             tool_theme: "🎨 Theme:",
@@ -308,10 +308,10 @@ const i18n = {
             font_handwriting: "Handwriting"
         },
         ja: {
-            nav_home: "🏠 カード作成",
-            nav_editor: "📝 エディター",
-            nav_prompt: "💡 プロンプト",
-            nav_gallery: "🖼️ ギャラリー",
+            nav_home: "🏠 テキストカード生成",
+            nav_editor: "📝 Markdownエディタ",
+            nav_prompt: "💡 プロンプト管理",
+            nav_gallery: "🖼️ AI ギャラリー",
             nav_contact: "📩 お問い合わせ",
             footer_copyright: "© 2025 Kaylerris. All rights reserved.",
             footer_admin_login: "✅ 管理者ログイン中",
@@ -328,7 +328,7 @@ const i18n = {
             settings_btn_magic: "⚡ マジックリンク生成",
             settings_alert_saved: "✅ 設定を保存しました。",
 
-            app_title: "Kayler カードジェネレーター",
+            app_title: "Kayler テキストカード生成ツール",
             app_counter: "✨ 作成されたカード総数: <span id='totalCount'>...</span>",
 
             tool_theme: "🎨 テーマ:",
@@ -379,10 +379,10 @@ const i18n = {
             font_handwriting: "手書き風"
         },
         es: {
-            nav_home: "🏠 Generador",
-            nav_editor: "📝 Editor",
-            nav_prompt: "💡 Prompts",
-            nav_gallery: "🖼️ Galería",
+            nav_home: "🏠 Generador de Tarjetas",
+            nav_editor: "📝 Editor Markdown",
+            nav_prompt: "💡 Gestor de Prompts",
+            nav_gallery: "🖼️ Galería de IA",
             nav_contact: "📩 Contacto",
             footer_copyright: "© 2025 Kaylerris. Todos los derechos reservados.",
             footer_admin_login: "✅ Admin Conectado",
@@ -399,7 +399,7 @@ const i18n = {
             settings_btn_magic: "⚡ Enlace Mágico",
             settings_alert_saved: "✅ Configuración guardada.",
 
-            app_title: "Generador de Tarjetas Kayler",
+            app_title: "Generador de Tarjetas de Texto Kayler",
             app_counter: "✨ Tarjetas generadas: <span id='totalCount'>...</span>",
 
             tool_theme: "🎨 Tema:",
@@ -450,10 +450,10 @@ const i18n = {
             font_handwriting: "Manuscrito"
         },
         fr: {
-            nav_home: "🏠 Générateur",
-            nav_editor: "📝 Éditeur",
-            nav_prompt: "💡 Prompts",
-            nav_gallery: "🖼️ Galerie",
+            nav_home: "🏠 Générateur de Cartes",
+            nav_editor: "📝 Éditeur Markdown",
+            nav_prompt: "💡 Gestionnaire de Prompts",
+            nav_gallery: "🖼️ Galerie IA",
             nav_contact: "📩 Contact",
             footer_copyright: "© 2025 Kaylerris. Tous droits réservés.",
             footer_admin_login: "✅ Admin Connecté",
@@ -470,7 +470,7 @@ const i18n = {
             settings_btn_magic: "⚡ Lien Magique",
             settings_alert_saved: "✅ Configuration enregistrée.",
 
-            app_title: "Générateur de Cartes Kayler",
+            app_title: "Générateur de Cartes Textuelles Kayler",
             app_counter: "✨ Cartes générées : <span id='totalCount'>...</span>",
 
             tool_theme: "🎨 Thème:",
