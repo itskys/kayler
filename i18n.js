@@ -1,5 +1,5 @@
 /**
- * Kayler i18n Module v1.0
+ * Kayler i18n Module v0.11
  * Supports: zh, tw, en, ja, es, fr
  */
 

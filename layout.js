@@ -1,4 +1,5 @@
-// === Kayler 全站核心脚本 v6.0 (最终定稿) ===
+// === Kayler 全站核心脚本 v0.11 ===
+// Last Updated: 2025-12-30
 
 document.addEventListener('DOMContentLoaded', () => {
     checkMagicLogin(); // 1. 检查魔法链接
@@ -138,7 +139,7 @@ function injectHeader() {
             <a href="contact.html" class="global-nav-link" data-i18n="nav_contact">📩 联系博主</a>
             <select id="nav-lang-select" class="nav-lang-select" onchange="i18n.setLanguage(this.value)">
                 <option value="zh">🇨🇳 中文</option>
-                <option value="tw">🇹🇼 繁體中文</option>
+                <option value="tw">Tr 繁体中文</option>
                 <option value="en">🇺🇸 English</option>
                 <option value="ja">🇯🇵 日本語</option>
                 <option value="es">🇪🇸 Español</option>
@@ -216,7 +217,7 @@ function injectAuthModal() {
                 <label class="gsm-label" data-i18n="settings_label_lang">语言 / Language</label>
                 <select id="gsm-lang" class="gsm-input" onchange="i18n.setLanguage(this.value)">
                     <option value="zh">🇨🇳 中文 (简体)</option>
-                    <option value="tw">🇹🇼 繁體中文</option>
+                    <option value="tw">Tr 繁体中文</option>
                     <option value="en">🇺🇸 English</option>
                     <option value="ja">🇯🇵 日本語</option>
                     <option value="es">🇪🇸 Español</option>
