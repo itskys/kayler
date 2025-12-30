@@ -1,11 +1,165 @@
 /**
  * Kayler i18n Module v1.0
- * Supports: zh, en, ja, es, fr
+ * Supports: zh, tw, en, ja, es, fr
  */
 
 const i18n = {
     currentLang: 'zh',
     translations: {
+        tw: {
+            // == Navigation & Layout ==
+            nav_home: "🏠 卡片產生器",
+            nav_editor: "📝 線上編輯器",
+            nav_prompt: "💡 提示詞管理器",
+            nav_gallery: "🖼️ AI 畫廊",
+            nav_contact: "📩 聯絡博主",
+            footer_copyright: "© 2025 Kaylerris 保留所有權利.",
+            footer_admin_login: "✅ 管理員已登入",
+            footer_admin_config: "⚙️ 管理員配置",
+
+            // == Settings Modal ==
+            settings_title: "⚙️ 全站配置",
+            settings_desc: "配置 GitHub Token 以解鎖編輯器發布、畫廊無限載入等功能。",
+            settings_label_owner: "GitHub 使用者名稱 (Owner)",
+            settings_label_repo: "倉庫名 (Repo)",
+            settings_label_token: "Token (需 repo 權限)",
+            settings_label_lang: "語言 / Language",
+            settings_btn_cancel: "取消",
+            settings_btn_save: "儲存配置",
+            settings_btn_magic: "⚡ 產生跨裝置登入連結",
+            settings_alert_saved: "✅ 配置已儲存！全站生效。",
+
+            // == Index Page ==
+            app_title: "Kayler文字卡片產生器",
+            app_counter: "✨ 已累計協助產生 <span id='totalCount'>...</span> 張精緻卡片",
+
+            tool_theme: "🎨 主題:",
+            tool_bg: "🖼️ 背景圖",
+            tool_opacity: "透明度:",
+            tool_font: "🅰️ 字體:",
+            tool_size: "📏 字號:",
+            tool_sign: "✍️ 簽名:",
+            tool_xhs: "📕 小紅書風",
+            tool_split: "📄 分頁:",
+
+            opt_split_count: "等分 X 張",
+            opt_split_single: "單張長圖",
+            opt_split_length: "1k字/張",
+
+            placeholder_input: "在此貼上文章...\n\n自動儲存功能已啟用，不用擔心內容遺失。\n可以在上方工具列修改 @署名。",
+            hint_right_area: "提示：右側每張卡片下方均可單獨複製或儲存",
+
+            btn_batch_download: "💾 批次下載",
+            btn_copy_first: "📋 複製第一張",
+            btn_publish_gallery: "☁️ 發布到畫廊",
+
+            card_page_prefix: "第",
+            card_page_suffix: "頁",
+            card_continued: "（續",
+            card_continued_suffix: "）",
+
+            toast_publishing: "☁️ 正在發布到畫廊...",
+            alert_publish_success: "✅ 發布成功！\n圖片已上傳至畫廊，稍後即可在 AI 圖片展中看到。",
+            confirm_publish: "確定要將第一張卡片發布到「AI 圖片展」嗎？",
+
+            // == Themes ==
+            theme_default: "經典羊皮",
+            theme_white: "極簡純白",
+            theme_pink: "櫻花粉",
+            theme_green: "護眼綠",
+            theme_mint: "薄荷綠",
+            theme_blue: "靜謐藍",
+            theme_grey: "極簡灰",
+            theme_kraft: "復古牛皮",
+            theme_deepblue: "深海藍",
+            theme_dark: "暗夜極客",
+
+            // == Fonts ==
+            font_heiti: "現代黑體",
+            font_songti: "文藝宋體",
+            font_noto: "思源宋體",
+            font_kaiti: "楷體",
+            font_xiaowei: "文藝體",
+            font_handwriting: "優雅手寫",
+
+            // === Editor Page ===
+            editor_title: "線上 Markdown 編輯器",
+            editor_input_name: "檔名 (例如: doc.md)",
+            btn_editor_publish: "發布",
+            btn_editor_pdf: "PDF",
+            btn_editor_md: ".md",
+            btn_editor_long: "轉長圖",
+            editor_source_title: "Markdown 原始碼",
+            btn_clear: "清空",
+            btn_copy_source: "複製原始碼",
+            editor_preview_title: "即時預覽",
+            btn_copy_text: "複製文字",
+            alert_clear_confirm: "⚠️ 確定要清空編輯器中的所有內容嗎？此操作無法復原。",
+            editor_placeholder: "# 開始寫作...\n\n支援 Markdown 語法，即時預覽。",
+
+            // === Prompt Master Page ===
+            prompt_title: "提示詞管理器",
+            tab_basic: "📝 基礎",
+            tab_style: "🎨 風格",
+            tab_params: "🎛️ 參數",
+            lbl_quick_tags: "⚡ 快速標籤 (預設 + 自定義)",
+            btn_add_tag: "+ 新增我的標籤",
+            lbl_popular_style: "流行風格",
+            lbl_model_ver: "模型版本 (Model)",
+            lbl_aspect_ratio: "畫幅比例 (--ar)",
+            btn_preview: "👁️ 預覽",
+            btn_copy_onekey: "📋 一鍵複製",
+            header_library: "📚 提示詞庫",
+            btn_cache: "⚡ 快取",
+            search_prompt_placeholder: "搜尋名稱、描述或分類...",
+            col_name: "名稱",
+            col_ver: "版本",
+            col_cat: "分類",
+            col_desc: "功能描述",
+            col_example: "範例 (自動)",
+            col_author: "作者",
+            modal_file_preview: "檔案預覽",
+            btn_delete_file: "🗑️ 刪除檔案",
+            btn_download_md: "📥 下載 .md",
+            btn_import_editor: "✏️ 匯入編輯器",
+            btn_copy: "📋 複製",
+            alert_copy_success: "✅ 已複製到剪貼簿",
+
+            // === AI Gallery Page ===
+            gallery_title: "AI 畫廊",
+            search_gallery_placeholder: "搜尋圖片...",
+            btn_refresh: "🔄 重新整理",
+            btn_upload: "☁️ 上傳",
+            btn_settings: "⚙️ 設定",
+            tag_all: "全部",
+            modal_delete_img: "🗑️ 刪除此圖",
+            modal_upload_title: "📤 上傳圖片",
+            lbl_file_count: "個檔案",
+            lbl_selected: "已選",
+            lbl_is_example: "🔗 設為提示詞範例",
+            lbl_core_name: "核心名稱",
+            lbl_ver_name: "版本號 (可選)",
+            btn_start_upload: "開始上傳",
+            alert_upload_done: "上傳完成",
+
+            // === Contact Page ===
+            contact_title: "聯絡博主",
+            contact_subtitle: "Contact Me",
+            contact_twitter: "X (Twitter)",
+            contact_email: "Email",
+            contact_email_desc: "點擊傳送電子郵件",
+            contact_note: "👋 感謝關注。<br>若有業務合作、推廣等事宜，歡迎隨時聯繫。",
+
+            // Missing JS Alerts
+            prompt_new_tag: "輸入新標籤內容:",
+            confirm_clear: "清空內容？",
+            alert_empty: "內容為空",
+            alert_enter_core_name: "請輸入核心名稱",
+            confirm_delete: "確定永久刪除？",
+            alert_delete_success: "刪除成功",
+            alert_delete_fail: "刪除失敗: ",
+            alert_filename_copied: "檔名已複製"
+        },
         zh: {
             // == Navigation & Layout ==
             nav_home: "🏠 卡片生成器",
@@ -373,9 +527,11 @@ const i18n = {
         if (saved) {
             this.currentLang = saved;
         } else {
-            const browser = navigator.language.slice(0, 2);
-            if (['en', 'ja', 'es', 'fr'].includes(browser)) {
-                this.currentLang = browser;
+            const browser = navigator.language.toLowerCase();
+            if (['zh-tw', 'zh-hk'].includes(browser)) {
+                this.currentLang = 'tw';
+            } else if (['en', 'ja', 'es', 'fr'].includes(browser.slice(0, 2))) {
+                this.currentLang = browser.slice(0, 2);
             } else {
                 this.currentLang = 'zh';
             }
