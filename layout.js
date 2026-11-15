@@ -168,6 +168,7 @@ function injectFooter() {
     // 检查登录状态
     const isLogged = localStorage.getItem('gh_token');
     const adminKey = isLogged ? "footer_admin_login" : "footer_admin_config";
+    const adminText = (window.i18n && window.i18n.t) ? window.i18n.t(adminKey) : (isLogged ? "✅ 管理员已登录" : "⚙️ 管理员配置");
 
     const footerContent = `
         <p>

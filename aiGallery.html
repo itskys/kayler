@@ -678,6 +678,7 @@
                 // 确保标题更新
                 document.title = "AI 画廊 - Kayler";
                 const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${REPO_CONFIG.path}?ref=${REPO_CONFIG.branch}&t=${Date.now()}`, { headers });
+                if (res.status === 404) { el('loadingState').innerText = "暂无内容"; return; }
                 if (!res.ok) throw new Error(await res.text());
                 const files = await res.json();
                 allImages = files.filter(f => /\.(jpg|jpeg|png|gif|webp|mp4)$/i.test(f.name)).sort((a, b) => b.name.localeCompare(a.name));
