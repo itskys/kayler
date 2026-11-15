@@ -1230,6 +1230,19 @@
             renderCards();
         });
     </script>
+    <!-- AISAI Telemetry Beacon -->
+    <script defer>
+        (function(){
+            try {
+                var beaconUrl = "https://aisai.cc/api/stats?site=x&inc=1";
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(beaconUrl);
+                } else {
+                    fetch(beaconUrl, { mode: "no-cors", keepalive: true }).catch(function(){});
+                }
+            } catch(e){}
+        })();
+    </script>
 </body>
 
 </html>
